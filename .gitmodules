@@ -1,0 +1,6 @@
+[submodule "SABNAtk"]
+	path = SABNAtk
+	url = git@gitlab.com:SCoRe-Group/SABNAtk.git
+[submodule "utils"]
+	path = utils
+	url = git@github.com:asrivast28/cpp-utils.git

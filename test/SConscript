@@ -1,0 +1,21 @@
+##
+# @file SConscript
+# @brief Provides functionality for building the test suite.
+import os
+
+Import('env')
+
+gTestLibs = [
+             'gtest',
+             'pthread'
+            ]
+
+srcFiles = [
+            'test.cpp',
+            ]
+
+allLibs = env.get('LIBS', [])
+
+env.Program(target=env.testName, source=srcFiles, LIBS=allLibs+gTestLibs)
+
+env.Install(env.testDir, env.testName)
