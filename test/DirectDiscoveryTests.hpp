@@ -114,4 +114,136 @@ TEST_F(CoronaryTest, DirectDiscovery_InterIAMB) {
   EXPECT_EQ(computedFamilyMB, trueFamilyMB);
 }
 
+TEST_F(AsiaTest, DirectDiscovery_GSMB) {
+  GSMB<decltype(data), uint8_t> gs(data);
+
+  uint8_t target = data.varIndex("asia");
+  std::set<uint8_t> trueAsiaMB = data.varIndices({});
+  std::set<uint8_t> computedAsiaMB = gs.getMB(target);
+  EXPECT_EQ(computedAsiaMB, trueAsiaMB);
+
+  target = data.varIndex("smoke");
+  std::set<uint8_t> trueSmokeMB = data.varIndices({"bronc"});
+  std::set<uint8_t> computedSmokeMB = gs.getMB(target);
+  EXPECT_EQ(computedSmokeMB, trueSmokeMB);
+
+  target = data.varIndex("tub");
+  std::set<uint8_t> trueTubMB = data.varIndices({"either", "lung"});
+  std::set<uint8_t> computedTubMB = gs.getMB(target);
+  EXPECT_EQ(computedTubMB, trueTubMB);
+
+  target = data.varIndex("lung");
+  std::set<uint8_t> trueLungMB = data.varIndices({"either", "tub"});
+  std::set<uint8_t> computedLungMB = gs.getMB(target);
+  EXPECT_EQ(computedLungMB, trueLungMB);
+
+  target = data.varIndex("bronc");
+  std::set<uint8_t> trueBroncMB = data.varIndices({"dysp", "smoke"});
+  std::set<uint8_t> computedBroncMB = gs.getMB(target);
+  EXPECT_EQ(computedBroncMB, trueBroncMB);
+
+  target = data.varIndex("either");
+  std::set<uint8_t> trueEitherMB = data.varIndices({"lung", "tub"});
+  std::set<uint8_t> computedEitherMB = gs.getMB(target);
+  EXPECT_EQ(computedEitherMB, trueEitherMB);
+
+  target = data.varIndex("xray");
+  std::set<uint8_t> trueXrayMB = data.varIndices({});
+  std::set<uint8_t> computedXrayMB = gs.getMB(target);
+  EXPECT_EQ(computedXrayMB, trueXrayMB);
+
+  target = data.varIndex("dysp");
+  std::set<uint8_t> trueDyspMB = data.varIndices({"bronc"});
+  std::set<uint8_t> computedDyspMB = gs.getMB(target);
+  EXPECT_EQ(computedDyspMB, trueDyspMB);
+}
+
+TEST_F(AsiaTest, DirectDiscovery_IAMB) {
+  IAMB<decltype(data), uint8_t> ia(data);
+
+  uint8_t target = data.varIndex("asia");
+  std::set<uint8_t> trueAsiaMB = data.varIndices({});
+  std::set<uint8_t> computedAsiaMB = ia.getMB(target);
+  EXPECT_EQ(computedAsiaMB, trueAsiaMB);
+
+  target = data.varIndex("smoke");
+  std::set<uint8_t> trueSmokeMB = data.varIndices({"bronc"});
+  std::set<uint8_t> computedSmokeMB = ia.getMB(target);
+  EXPECT_EQ(computedSmokeMB, trueSmokeMB);
+
+  target = data.varIndex("tub");
+  std::set<uint8_t> trueTubMB = data.varIndices({"either", "lung"});
+  std::set<uint8_t> computedTubMB = ia.getMB(target);
+  EXPECT_EQ(computedTubMB, trueTubMB);
+
+  target = data.varIndex("lung");
+  std::set<uint8_t> trueLungMB = data.varIndices({"either", "tub"});
+  std::set<uint8_t> computedLungMB = ia.getMB(target);
+  EXPECT_EQ(computedLungMB, trueLungMB);
+
+  target = data.varIndex("bronc");
+  std::set<uint8_t> trueBroncMB = data.varIndices({"dysp", "smoke"});
+  std::set<uint8_t> computedBroncMB = ia.getMB(target);
+  EXPECT_EQ(computedBroncMB, trueBroncMB);
+
+  target = data.varIndex("either");
+  std::set<uint8_t> trueEitherMB = data.varIndices({"lung", "tub"});
+  std::set<uint8_t> computedEitherMB = ia.getMB(target);
+  EXPECT_EQ(computedEitherMB, trueEitherMB);
+
+  target = data.varIndex("xray");
+  std::set<uint8_t> trueXrayMB = data.varIndices({});
+  std::set<uint8_t> computedXrayMB = ia.getMB(target);
+  EXPECT_EQ(computedXrayMB, trueXrayMB);
+
+  target = data.varIndex("dysp");
+  std::set<uint8_t> trueDyspMB = data.varIndices({"bronc"});
+  std::set<uint8_t> computedDyspMB = ia.getMB(target);
+  EXPECT_EQ(computedDyspMB, trueDyspMB);
+}
+
+TEST_F(AsiaTest, DirectDiscovery_InterIAMB) {
+  InterIAMB<decltype(data), uint8_t> inter(data);
+
+  uint8_t target = data.varIndex("asia");
+  std::set<uint8_t> trueAsiaMB = data.varIndices({});
+  std::set<uint8_t> computedAsiaMB = inter.getMB(target);
+  EXPECT_EQ(computedAsiaMB, trueAsiaMB);
+
+  target = data.varIndex("smoke");
+  std::set<uint8_t> trueSmokeMB = data.varIndices({"bronc"});
+  std::set<uint8_t> computedSmokeMB = inter.getMB(target);
+  EXPECT_EQ(computedSmokeMB, trueSmokeMB);
+
+  target = data.varIndex("tub");
+  std::set<uint8_t> trueTubMB = data.varIndices({"either", "lung"});
+  std::set<uint8_t> computedTubMB = inter.getMB(target);
+  EXPECT_EQ(computedTubMB, trueTubMB);
+
+  target = data.varIndex("lung");
+  std::set<uint8_t> trueLungMB = data.varIndices({"either", "tub"});
+  std::set<uint8_t> computedLungMB = inter.getMB(target);
+  EXPECT_EQ(computedLungMB, trueLungMB);
+
+  target = data.varIndex("bronc");
+  std::set<uint8_t> trueBroncMB = data.varIndices({"dysp", "smoke"});
+  std::set<uint8_t> computedBroncMB = inter.getMB(target);
+  EXPECT_EQ(computedBroncMB, trueBroncMB);
+
+  target = data.varIndex("either");
+  std::set<uint8_t> trueEitherMB = data.varIndices({"lung", "tub"});
+  std::set<uint8_t> computedEitherMB = inter.getMB(target);
+  EXPECT_EQ(computedEitherMB, trueEitherMB);
+
+  target = data.varIndex("xray");
+  std::set<uint8_t> trueXrayMB = data.varIndices({});
+  std::set<uint8_t> computedXrayMB = inter.getMB(target);
+  EXPECT_EQ(computedXrayMB, trueXrayMB);
+
+  target = data.varIndex("dysp");
+  std::set<uint8_t> trueDyspMB = data.varIndices({"bronc"});
+  std::set<uint8_t> computedDyspMB = inter.getMB(target);
+  EXPECT_EQ(computedDyspMB, trueDyspMB);
+}
+
 #endif // TEST_DIRECTDISCOVERY_HPP_

@@ -73,4 +73,21 @@ protected:
   Data<BVCounter<1>, uint8_t> data;
 }; // class CoronaryTest
 
+/**
+ * @brief Helper for running unit tests on the coronary dataset.
+ */
+class AsiaTest: public testing::Test {
+protected:
+  void
+  SetUp() override {
+    uint32_t n = 8;
+    uint32_t m = 5000;
+    SeparatedFile<uint8_t> dataFile("asia.csv", n, m, ',', true, true);
+    auto bvc = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
+    data = Data<BVCounter<1>, uint8_t>(bvc, dataFile.header());
+  }
+
+  Data<BVCounter<1>, uint8_t> data;
+}; // class AsiaTest
+
 #endif // TEST_COMMON_HPP_

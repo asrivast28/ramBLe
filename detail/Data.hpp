@@ -506,11 +506,9 @@ Data<CounterType, VarType>::pValue(
   const SetType& given
 ) const
 {
-  auto retVal = this->gSquare(x, y, given);
-  auto df = retVal.first;
-  auto gSquare = retVal.second;
-  boost::math::chi_squared dist(df);
-  auto pValue = 1.0 - boost::math::cdf(dist, gSquare);
+  auto ret = this->gSquare(x, y, given);
+  boost::math::chi_squared dist(ret.first);
+  double pValue = 1.0 - boost::math::cdf(dist, ret.second);
   LOG_MESSAGE(debug, "pValue=%g", pValue);
   return pValue;
 }
@@ -595,7 +593,7 @@ Data<CounterType, VarType>::minAssocScore(
 ) const
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
-  double minScore = 1.0;
+  double minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<VarType, SetType> sit(given, i);
     do {
@@ -633,7 +631,7 @@ Data<CounterType, VarType>::minAssocScoreSubset(
 ) const
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
-  double minScore = 1.0;
+  double minScore = std::numeric_limits<double>::max();
   SetType z;
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<VarType, SetType> sit(given, i);

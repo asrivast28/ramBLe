@@ -75,7 +75,7 @@ TopologicalDiscovery<DataType, VarType>::removeFalsePC(
     cpc.erase(x);
     LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
     if (this->m_data.isIndependentAnySubset(target, x, cpc)) {
-      LOG_MESSAGE(info, "False Positive: Removing %s from the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "False Positive: Removing %s from the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
     }
     else {
@@ -104,7 +104,7 @@ TopologicalDiscovery<DataType, VarType>::symmetryCorrectPC(
     auto candidatesX = this->getCandidates(x);
     auto cpcX = this->getCandidatePC(x, std::move(candidatesX));
     if (cpcX.find(target) == cpcX.end()) {
-      LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.erase(x);
     }
   }
@@ -198,9 +198,9 @@ MMPC<DataType, VarType>::getCandidatePC_impl(
     // Find the variable which maximizes the minimum association score with the target,
     // given any subset of the current candidate PC
     VarType x;
-    double scoreX = 0.0;
+    double scoreX = std::numeric_limits<double>::lowest();
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "MMPC: Evaluating %s for the next candidate", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (std::isless(scoreX, scoreY)) {
         x = y;
@@ -219,6 +219,7 @@ MMPC<DataType, VarType>::getCandidatePC_impl(
   }
   // Remove false positives from the candidate PC
   this->removeFalsePC(target, cpc);
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
 }
 
@@ -241,7 +242,7 @@ HITON<DataType, VarType>::getCandidatePC_impl(
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
     VarType x;
-    double scoreX = 0.0;
+    double scoreX = std::numeric_limits<double>::lowest();
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for the next candidate", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
@@ -252,12 +253,13 @@ HITON<DataType, VarType>::getCandidatePC_impl(
     }
     LOG_MESSAGE(debug, "HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC
-    LOG_MESSAGE(info, "HITON-PC: Adding %s to the candidate PC", this->m_data.varName(x));
+    LOG_MESSAGE(info, "HITON-PC: Adding %s to the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
     cpc.insert(x);
     candidates.erase(x);
     // Remove false positives from the candidate PC
     this->removeFalsePC(target, cpc);
   }
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
 }
 
@@ -283,7 +285,7 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
     // Find the variable which maximizes the minimum association score with the target,
     // given any subset of the current candidate PC
     VarType x;
-    double scoreX = 0.0;
+    double scoreX = std::numeric_limits<double>::lowest();
     std::set<VarType> remove;
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
@@ -307,7 +309,7 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
     // Add the variable to the candidate PC if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "GetPC: Adding %s to the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "GetPC: Adding %s to the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.insert(x);
       changed = true;
     }
@@ -315,6 +317,7 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
     // Remove false positives from the candidate PC
     this->removeFalsePC(target, cpc);
   }
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
 }
 
