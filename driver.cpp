@@ -58,6 +58,10 @@ getAlgorithm(
     return std::make_unique<HITON<DataType, VarType>>(data);
   }
   ss << "hiton,";
+  if (algoName.compare("si.hiton.pc") == 0) {
+    return std::make_unique<SemiInterleavedHITON<DataType, VarType>>(data);
+  }
+  ss << "si.hiton.pc,";
   if (algoName.compare("getpc") == 0) {
     return std::make_unique<GetPC<DataType, VarType>>(data);
   }

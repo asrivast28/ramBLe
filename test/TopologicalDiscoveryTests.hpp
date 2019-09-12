@@ -43,37 +43,37 @@ TEST_F(CoronaryTest, TopologicalDiscovery_MMPC) {
   EXPECT_EQ(computedFamilyPC, trueFamilyPC);
 }
 
-TEST_F(CoronaryTest, TopologicalDiscovery_HITON) {
-  HITON<decltype(data), uint8_t> hiton(data);
+TEST_F(CoronaryTest, TopologicalDiscovery_SemiInterleavedHITON) {
+  SemiInterleavedHITON<decltype(data), uint8_t> sih(data);
 
   uint8_t target = data.varIndex("Smoking");
   std::set<uint8_t> trueSmokingPC = data.varIndices({"M. Work", "P. Work", "Pressure", "Proteins"});
-  std::set<uint8_t> computedSmokingPC = hiton.getCorrectPC(target);
+  std::set<uint8_t> computedSmokingPC = sih.getCorrectPC(target);
   EXPECT_EQ(computedSmokingPC, trueSmokingPC);
 
   target = data.varIndex("M. Work");
   std::set<uint8_t> trueMWorkPC = data.varIndices({"Smoking", "P. Work", "Pressure", "Proteins", "Family"});
-  std::set<uint8_t> computedMWorkPC = hiton.getCorrectPC(target);
+  std::set<uint8_t> computedMWorkPC = sih.getCorrectPC(target);
   EXPECT_EQ(computedMWorkPC, trueMWorkPC);
 
   target = data.varIndex("P. Work");
   std::set<uint8_t> truePWorkPC = data.varIndices({"Smoking", "M. Work"});
-  std::set<uint8_t> computedPWorkPC = hiton.getCorrectPC(target);
+  std::set<uint8_t> computedPWorkPC = sih.getCorrectPC(target);
   EXPECT_EQ(computedPWorkPC, truePWorkPC);
 
   target = data.varIndex("Pressure");
   std::set<uint8_t> truePressurePC = data.varIndices({"Smoking", "M. Work", "Proteins"});
-  std::set<uint8_t> computedPressurePC = hiton.getCorrectPC(target);
+  std::set<uint8_t> computedPressurePC = sih.getCorrectPC(target);
   EXPECT_EQ(computedPressurePC, truePressurePC);
 
   target = data.varIndex("Proteins");
   std::set<uint8_t> trueProteinsPC = data.varIndices({"Smoking", "M. Work", "Pressure"});
-  std::set<uint8_t> computedProteinsPC = hiton.getCorrectPC(target);
+  std::set<uint8_t> computedProteinsPC = sih.getCorrectPC(target);
   EXPECT_EQ(computedProteinsPC, trueProteinsPC);
 
   target = data.varIndex("Family");
   std::set<uint8_t> trueFamilyPC = data.varIndices({"M. Work"});
-  std::set<uint8_t> computedFamilyPC = hiton.getCorrectPC(target);
+  std::set<uint8_t> computedFamilyPC = sih.getCorrectPC(target);
   EXPECT_EQ(computedFamilyPC, trueFamilyPC);
 }
 
@@ -152,6 +152,50 @@ TEST_F(AsiaTest, TopologicalDiscovery_MMPC) {
   target = data.varIndex("dysp");
   std::set<uint8_t> trueDyspPC = data.varIndices({"bronc"});
   std::set<uint8_t> computedDyspPC = mm.getCorrectPC(target);
+  EXPECT_EQ(computedDyspPC, trueDyspPC);
+}
+
+TEST_F(AsiaTest, TopologicalDiscovery_SemiInterleavedHITON) {
+  SemiInterleavedHITON<decltype(data), uint8_t> sih(data);
+
+  uint8_t target = data.varIndex("asia");
+  std::set<uint8_t> trueAsiaPC = data.varIndices({});
+  std::set<uint8_t> computedAsiaPC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedAsiaPC, trueAsiaPC);
+
+  target = data.varIndex("smoke");
+  std::set<uint8_t> trueSmokePC = data.varIndices({"bronc", "lung"});
+  std::set<uint8_t> computedSmokePC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedSmokePC, trueSmokePC);
+
+  target = data.varIndex("tub");
+  std::set<uint8_t> trueTubPC = data.varIndices({"either"});
+  std::set<uint8_t> computedTubPC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedTubPC, trueTubPC);
+
+  target = data.varIndex("lung");
+  std::set<uint8_t> trueLungPC = data.varIndices({"either", "smoke"});
+  std::set<uint8_t> computedLungPC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedLungPC, trueLungPC);
+
+  target = data.varIndex("bronc");
+  std::set<uint8_t> trueBroncPC = data.varIndices({"dysp", "smoke"});
+  std::set<uint8_t> computedBroncPC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedBroncPC, trueBroncPC);
+
+  target = data.varIndex("either");
+  std::set<uint8_t> trueEitherPC = data.varIndices({"lung", "tub"});
+  std::set<uint8_t> computedEitherPC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedEitherPC, trueEitherPC);
+
+  target = data.varIndex("xray");
+  std::set<uint8_t> trueXrayPC = data.varIndices({});
+  std::set<uint8_t> computedXrayPC = sih.getCorrectPC(target);
+  EXPECT_EQ(computedXrayPC, trueXrayPC);
+
+  target = data.varIndex("dysp");
+  std::set<uint8_t> trueDyspPC = data.varIndices({"bronc"});
+  std::set<uint8_t> computedDyspPC = sih.getCorrectPC(target);
   EXPECT_EQ(computedDyspPC, trueDyspPC);
 }
 

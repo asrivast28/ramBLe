@@ -264,6 +264,60 @@ HITON<DataType, VarType>::getCandidatePC_impl(
 }
 
 template <typename DataType, typename VarType>
+SemiInterleavedHITON<DataType, VarType>::SemiInterleavedHITON(
+  const DataType& data
+) : TopologicalDiscovery<DataType, VarType>(data)
+{
+}
+
+template <typename DataType, typename VarType>
+std::set<VarType>
+SemiInterleavedHITON<DataType, VarType>::getCandidatePC_impl(
+  const VarType target,
+  std::set<VarType> candidates
+) const
+{
+  LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
+  std::set<VarType> cpc;
+  while (candidates.size() > 0) {
+    // Find the variable which maximizes the marginal association score with the target
+    VarType x;
+    double scoreX = std::numeric_limits<double>::lowest();
+    std::set<VarType> remove;
+    for (const VarType y: candidates) {
+      LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      double scoreY = this->m_data.assocScore(target, y);
+      if (this->m_data.isIndependent(scoreY)) {
+        LOG_MESSAGE(debug, "SI-HITON-PC: Marking %s for removal from the candidates", this->m_data.varName(y));
+        // Can not be added to the candidate PC, mark for removal
+        remove.insert(y);
+        continue;
+      }
+      if (std::isless(scoreX, scoreY)) {
+        x = y;
+        scoreX = scoreY;
+      }
+    }
+    // Remove all the candidates which can not be added
+    for (const VarType y: remove) {
+      candidates.erase(y);
+    }
+    if (candidates.empty()) {
+      continue;
+    }
+    LOG_MESSAGE(debug, "SI-HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
+    // Add the variable to the candidate PC
+    LOG_MESSAGE(info, "SI-HITON-PC: Adding %s to the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
+    cpc.insert(x);
+    candidates.erase(x);
+    // Remove false positives from the candidate PC
+    this->removeFalsePC(target, cpc);
+  }
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
+  return cpc;
+}
+
+template <typename DataType, typename VarType>
 GetPC<DataType, VarType>::GetPC(
   const DataType& data
 ) : TopologicalDiscovery<DataType, VarType>(data)
@@ -304,6 +358,9 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
     // Remove all the candidates which can not be added
     for (const VarType y: remove) {
       candidates.erase(y);
+    }
+    if (candidates.empty()) {
+      continue;
     }
     LOG_MESSAGE(debug, "GetPC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC if it is not

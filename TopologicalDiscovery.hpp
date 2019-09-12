@@ -52,7 +52,7 @@ private:
 
 
 /**
- * @brief Class that implements Max-Min strategy for MB discovery,
+ * @brief Class that implements Max-Min algorithm for PC discovery,
  *        as described by Tsamardinos et al.
  *
  * @tparam DataType Type of the object which is used for querying the data.
@@ -69,7 +69,7 @@ protected:
 }; // class MMPC
 
 /**
- * @brief Class that implements HITON strategy for MB discovery,
+ * @brief Class that implements HITON algorithm for PC discovery,
  *        as described by Aliferis et al.
  *
  * @tparam DataType Type of the object which is used for querying the data.
@@ -86,7 +86,24 @@ protected:
 }; // class HITON
 
 /**
- * @brief Class that implements GetPC strategy for MB discovery,
+ * @brief Class that implements Semi-interleaved HITON algorithm for PC discovery,
+ *        as described by Aliferis et al.
+ *
+ * @tparam DataType Type of the object which is used for querying the data.
+ * @tparam VarType Type of variable indices (expected to be an integer type).
+ */
+template <typename DataType, typename VarType>
+class SemiInterleavedHITON: public TopologicalDiscovery<DataType, VarType> {
+public:
+  SemiInterleavedHITON(const DataType&);
+
+protected:
+  std::set<VarType>
+  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
+}; // class SemiInterleavedHITON
+
+/**
+ * @brief Class that implements GetPC algorithm for PC discovery,
  *        as described by Pena et al.
  *
  * @tparam DataType Type of the object which is used for querying the data.
