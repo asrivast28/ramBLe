@@ -61,6 +61,10 @@ public:
   isIndependent(const double) const;
 
   template <typename SetType>
+  double
+  minAssocScore(const VarType&, const VarType&, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+
+  template <typename SetType>
   std::pair<double, SetType>
   minAssocScoreSubset(const VarType&, const VarType&, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 

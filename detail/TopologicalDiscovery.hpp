@@ -173,10 +173,10 @@ MMPC<DataType, VarType>::getCandidatePC(
     double scoreX = 0.0;
     for (const VarType y: candidates) {
       DEBUG_LOG(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
-      auto result = this->m_data.minAssocScoreSubset(target, y, cpc);
-      if (std::isless(scoreX, result.first)) {
+      auto scoreY = this->m_data.minAssocScore(target, y, cpc);
+      if (std::isless(scoreX, scoreY)) {
         x = y;
-        scoreX = result.first;
+        scoreX = scoreY;
       }
     }
     DEBUG_LOG(debug, "MMPC: %s chosen as the best candidate", this->m_data.varName(x));
@@ -259,16 +259,16 @@ GetPC<DataType, VarType>::getCandidatePC(
     std::set<VarType> remove;
     for (const VarType y: candidates) {
       DEBUG_LOG(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
-      auto result = this->m_data.minAssocScoreSubset(target, y, cpc);
-      if (this->m_data.isIndependent(result.first)) {
+      auto scoreY = this->m_data.minAssocScore(target, y, cpc);
+      if (this->m_data.isIndependent(scoreY)) {
         DEBUG_LOG(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
         // Can not be added to the candidate PC, mark for removal
         remove.insert(y);
         continue;
       }
-      if (std::isless(scoreX, result.first)) {
+      if (std::isless(scoreX, scoreY)) {
         x = y;
-        scoreX = result.first;
+        scoreX = scoreY;
       }
     }
     // Remove all the candidates which can not be added
