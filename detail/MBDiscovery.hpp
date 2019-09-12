@@ -61,7 +61,7 @@ MBDiscovery<DataType, VarType>::symmetryCorrectMB(
     auto candidatesX = this->getCandidates(x);
     auto cmbX = this->getCandidateMB(x, std::move(candidatesX));
     if (cmbX.find(target) == cmbX.end()) {
-      DEBUG_LOG(info, "Symmetry Correction: Removing %s from the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate MB", this->m_data.varName(x));
       cmb.erase(x);
     }
   }

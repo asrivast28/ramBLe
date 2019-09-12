@@ -63,8 +63,17 @@ else:
     targetName += '_debug'
     testName += '_debug'
 
-if not releaseBuild:
+enableLogging = ARGUMENTS.get('LOGGING', None)
+if enableLogging is not None:
+  # use the user provided option for enabling/disabling logging
+  enableLogging = False if enableLogging in [0, '0'] else True
+else:
+  # otherwise, enable logging only in debug build
+  enableLogging = not releaseBuild
+
+if enableLogging:
   # logging libraries
+  cppDefs.append('LOGGING')
   allLibs.extend(['boost_log', 'boost_system', 'pthread'])
 
 env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LIBS=allLibs)

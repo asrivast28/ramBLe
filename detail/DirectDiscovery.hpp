@@ -46,9 +46,9 @@ DirectDiscovery<DataType, VarType>::shrinkMB(
   auto initial = cmb;
   for (const VarType x: initial) {
     cmb.erase(x);
-    DEBUG_LOG(debug, "Shrink Phase: Evaluating %s for removal from the MB", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "Shrink Phase: Evaluating %s for removal from the MB", this->m_data.varName(x));
     if (this->m_data.isIndependent(target, x, cmb)) {
-      DEBUG_LOG(info, "Shrink Phase: Removing %s from the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "Shrink Phase: Removing %s from the candidate MB", this->m_data.varName(x));
       removed.insert(x);
     }
     else {
@@ -72,7 +72,7 @@ GSMB<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
@@ -84,18 +84,18 @@ GSMB<DataType, VarType>::getCandidateMB(
       VarType x;
       double scoreX = 0.0;
       for (const VarType y: thisCandidates) {
-        DEBUG_LOG(debug, "GSMB: Evaluating %s for the next candidate", this->m_data.varName(y));
+        LOG_MESSAGE(debug, "GSMB: Evaluating %s for the next candidate", this->m_data.varName(y));
         double scoreY = this->m_data.assocScore(target, y);
         if (std::isless(scoreX, scoreY)) {
           x = y;
           scoreX = scoreY;
         }
       }
-      DEBUG_LOG(debug, "GSMB: %s chosen as the best candidate", this->m_data.varName(x));
+      LOG_MESSAGE(debug, "GSMB: %s chosen as the best candidate", this->m_data.varName(x));
       // Add the variable to the candidate MB if it is not
       // independedent of the target, given the current MB
       if (!this->m_data.isIndependent(target, x, cmb)) {
-        DEBUG_LOG(info, "GSMB: Adding %s to the candidate MB", this->m_data.varName(x));
+        LOG_MESSAGE(info, "GSMB: Adding %s to the candidate MB", this->m_data.varName(x));
         cmb.insert(x);
         candidates.erase(x);
         changed = true;
@@ -121,7 +121,7 @@ IAMB<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
@@ -131,18 +131,18 @@ IAMB<DataType, VarType>::getCandidateMB(
     VarType x;
     double scoreX = 0.0;
     for (const VarType y: candidates) {
-      DEBUG_LOG(debug, "IAMB: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "IAMB: Evaluating %s for the next candidate", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y, cmb);
       if (std::isless(scoreX, scoreY)) {
         x = y;
         scoreX = scoreY;
       }
     }
-    DEBUG_LOG(debug, "IAMB: %s chosen as the best candidate", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "IAMB: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate MB if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      DEBUG_LOG(info, "IAMB: Adding %s to the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "IAMB: Adding %s to the candidate MB", this->m_data.varName(x));
       cmb.insert(x);
       candidates.erase(x);
       changed = true;
@@ -166,7 +166,7 @@ InterIAMB<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
@@ -176,18 +176,18 @@ InterIAMB<DataType, VarType>::getCandidateMB(
     VarType x;
     double scoreX = 0.0;
     for (const VarType y: candidates) {
-      DEBUG_LOG(debug, "InterIAMB: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "InterIAMB: Evaluating %s for the next candidate", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y, cmb);
       if (std::isless(scoreX, scoreY)) {
         x = y;
         scoreX = scoreY;
       }
     }
-    DEBUG_LOG(debug, "InterIAMB: %s chosen as the best candidate", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "InterIAMB: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate MB if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      DEBUG_LOG(info, "InterIAMB: Adding %s to the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "InterIAMB: Adding %s to the candidate MB", this->m_data.varName(x));
       cmb.insert(x);
       candidates.erase(x);
       changed = true;

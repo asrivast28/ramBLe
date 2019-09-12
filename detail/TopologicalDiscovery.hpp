@@ -46,7 +46,7 @@ TopologicalDiscovery<DataType, VarType>::getCandidatePC(
     return cpc;
   }
   else {
-    DEBUG_LOG(debug, "Found candidate PC for %s in the cache", this->m_data.varName(target));
+    LOG_MESSAGE(debug, "Found candidate PC for %s in the cache", this->m_data.varName(target));
     return cacheIt->second;
   }
 }
@@ -73,9 +73,9 @@ TopologicalDiscovery<DataType, VarType>::removeFalsePC(
   auto initial = cpc;
   for (const VarType x: initial) {
     cpc.erase(x);
-    DEBUG_LOG(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
     if (this->m_data.isIndependentAnySubset(target, x, cpc)) {
-      DEBUG_LOG(info, "False Positive: Removing %s from the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "False Positive: Removing %s from the candidate PC", this->m_data.varName(x));
       removed.insert(x);
     }
     else {
@@ -104,7 +104,7 @@ TopologicalDiscovery<DataType, VarType>::symmetryCorrectPC(
     auto candidatesX = this->getCandidates(x);
     auto cpcX = this->getCandidatePC(x, std::move(candidatesX));
     if (cpcX.find(target) == cpcX.end()) {
-      DEBUG_LOG(info, "Symmetry Correction: Removing %s from the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate PC", this->m_data.varName(x));
       cpc.erase(x);
     }
   }
@@ -148,24 +148,24 @@ TopologicalDiscovery<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "Getting MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   auto cpc = this->getCorrectPC(target);
   for (const VarType y: cpc) {
-    DEBUG_LOG(info, "Parent/Child: Adding %s to the candidate MB", this->m_data.varName(y));
+    LOG_MESSAGE(info, "Parent/Child: Adding %s to the candidate MB", this->m_data.varName(y));
     cmb.insert(y);
     auto cpcY = this->getCorrectPC(y);
     for (const VarType x: cpcY) {
       if ((x != target) && (cpc.find(x) == cpc.end())) {
         candidates.erase(x);
-        DEBUG_LOG(debug, "Checking %s for addition to MB", this->m_data.varName(x));
+        LOG_MESSAGE(debug, "Checking %s for addition to MB", this->m_data.varName(x));
         auto ret = this->m_data.minAssocScoreSubset(target, x, candidates);
         if (this->m_data.isIndependent(ret.first)) {
-          DEBUG_LOG(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
+          LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
           auto& z = ret.second;
           z.insert(y);
           if (!this->m_data.isIndependent(target, x, z)) {
-            DEBUG_LOG(info, "Spouse: Adding %s to the candidate MB", this->m_data.varName(x));
+            LOG_MESSAGE(info, "Spouse: Adding %s to the candidate MB", this->m_data.varName(x));
             cmb.insert(x);
           }
         }
@@ -190,7 +190,7 @@ MMPC<DataType, VarType>::getCandidatePC_impl(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
@@ -200,18 +200,18 @@ MMPC<DataType, VarType>::getCandidatePC_impl(
     VarType x;
     double scoreX = 0.0;
     for (const VarType y: candidates) {
-      DEBUG_LOG(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (std::isless(scoreX, scoreY)) {
         x = y;
         scoreX = scoreY;
       }
     }
-    DEBUG_LOG(debug, "MMPC: %s chosen as the best candidate", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "MMPC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      DEBUG_LOG(info, "MMPC: Adding %s to the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "MMPC: Adding %s to the candidate PC", this->m_data.varName(x));
       cpc.insert(x);
       changed = true;
     }
@@ -236,23 +236,23 @@ HITON<DataType, VarType>::getCandidatePC_impl(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
     VarType x;
     double scoreX = 0.0;
     for (const VarType y: candidates) {
-      DEBUG_LOG(debug, "HITON-PC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for the next candidate", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
       if (std::isless(scoreX, scoreY)) {
         x = y;
         scoreX = scoreY;
       }
     }
-    DEBUG_LOG(debug, "HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC
-    DEBUG_LOG(info, "HITON-PC: Adding %s to the candidate PC", this->m_data.varName(x));
+    LOG_MESSAGE(info, "HITON-PC: Adding %s to the candidate PC", this->m_data.varName(x));
     cpc.insert(x);
     candidates.erase(x);
     // Remove false positives from the candidate PC
@@ -275,7 +275,7 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
   std::set<VarType> candidates
 ) const
 {
-  DEBUG_LOG(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
@@ -286,10 +286,10 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
     double scoreX = 0.0;
     std::set<VarType> remove;
     for (const VarType y: candidates) {
-      DEBUG_LOG(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (this->m_data.isIndependent(scoreY)) {
-        DEBUG_LOG(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
+        LOG_MESSAGE(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
         // Can not be added to the candidate PC, mark for removal
         remove.insert(y);
         continue;
@@ -303,11 +303,11 @@ GetPC<DataType, VarType>::getCandidatePC_impl(
     for (const VarType y: remove) {
       candidates.erase(y);
     }
-    DEBUG_LOG(debug, "GetPC: %s chosen as the best candidate", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "GetPC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      DEBUG_LOG(info, "GetPC: Adding %s to the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "GetPC: Adding %s to the candidate PC", this->m_data.varName(x));
       cpc.insert(x);
       changed = true;
     }

@@ -304,7 +304,7 @@ Data<CounterType, VarType>::Data(
     m_varNames(varNames),
     m_threshold(threshold)
 {
-  DEBUG_LOG_IF(numVars() != varNames.size(), error, "Number of variables (%d) != Number of variable names", counter.n(), varNames.size());
+  LOG_MESSAGE_IF(numVars() != varNames.size(), error, "Number of variables (%d) != Number of variable names", counter.n(), varNames.size());
 }
 
 template <typename CounterType, typename VarType>
@@ -342,7 +342,7 @@ Data<CounterType, VarType>::varName(
   const VarType x
 ) const
 {
-  DEBUG_LOG_IF(x >= m_varNames.size(), error, "Variable index %d out of range.", static_cast<uint32_t>(x));
+  LOG_MESSAGE_IF(x >= m_varNames.size(), error, "Variable index %d out of range.", static_cast<uint32_t>(x));
   return m_varNames[x];
 }
 
@@ -364,7 +364,7 @@ Data<CounterType, VarType>::varNames(
   std::vector<std::string> names(vars.size());
   auto i = 0u;
   for (const auto var: vars) {
-    DEBUG_LOG_IF(var >= m_varNames.size(), error, "Variable index %d out of range.", static_cast<uint32_t>(var));
+    LOG_MESSAGE_IF(var >= m_varNames.size(), error, "Variable index %d out of range.", static_cast<uint32_t>(var));
     names[i++] = m_varNames[var];
   }
   return names;
@@ -390,7 +390,7 @@ Data<CounterType, VarType>::varIndex(
     }
     ++x;
   }
-  DEBUG_LOG_IF(x == numVars(), error, "Variable with name %s not found.", name);
+  LOG_MESSAGE_IF(x == numVars(), error, "Variable with name %s not found.", name);
   return x;
 }
 
@@ -440,7 +440,7 @@ Data<CounterType, VarType>::gSquare(
   using set_type = typename CounterType::set_type;
 
   uint32_t df = (m_counter.r(x) - 1) * (m_counter.r(y) - 1);
-  DEBUG_LOG(trace, "r_x=%d,r_y=%d", m_counter.r(x), m_counter.r(y));
+  LOG_MESSAGE(trace, "r_x=%d,r_y=%d", m_counter.r(x), m_counter.r(y));
   double gSquare = 0.0;
 
   std::vector<data_type> r(given.size());
@@ -480,12 +480,12 @@ Data<CounterType, VarType>::gSquare(
           continue;
         }
         gSquare += sijk * log(static_cast<double>(sijk * sk)/(sik * sjk));
-        DEBUG_LOG(trace, "sk=%d,sik=%d,sjk=%d,sijk=%d", sk, sik, sjk, sijk);
+        LOG_MESSAGE(trace, "sk=%d,sik=%d,sjk=%d,sijk=%d", sk, sik, sjk, sijk);
       }
     }
   }
   gSquare *= 2.0;
-  DEBUG_LOG(debug, "df=%d,gSquare=%g", df, gSquare);
+  LOG_MESSAGE(debug, "df=%d,gSquare=%g", df, gSquare);
   return std::make_pair(df, gSquare);
 }
 
@@ -511,7 +511,7 @@ Data<CounterType, VarType>::pValue(
   auto gSquare = retVal.second;
   boost::math::chi_squared dist(df);
   auto pValue = 1.0 - boost::math::cdf(dist, gSquare);
-  DEBUG_LOG(debug, "pValue=%g", pValue);
+  LOG_MESSAGE(debug, "pValue=%g", pValue);
   return pValue;
 }
 
@@ -606,7 +606,7 @@ Data<CounterType, VarType>::minAssocScore(
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
   }
-  DEBUG_LOG(debug, "minAssocScore=%g", minScore);
+  LOG_MESSAGE(debug, "minAssocScore=%g", minScore);
   return minScore;
 }
 
@@ -647,7 +647,7 @@ Data<CounterType, VarType>::minAssocScoreSubset(
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
   }
-  DEBUG_LOG(debug, "minAssocScore=%g", minScore);
+  LOG_MESSAGE(debug, "minAssocScore=%g", minScore);
   return std::make_pair(minScore, z);
 }
 
