@@ -25,6 +25,34 @@ TopologicalDiscovery<DataType, VarType>::TopologicalDiscovery(
 
 template <typename DataType, typename VarType>
 /**
+ * @brief Finds the candidate PC for every variable, and caches the result.
+ *
+ * @param target The index of the target variable.
+ * @param candidates The indices of all the candidate variables.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the candidate PC of the given target variable.
+ */
+std::set<VarType>
+TopologicalDiscovery<DataType, VarType>::getCandidatePC(
+  const VarType target,
+  std::set<VarType> candidates
+) const
+{
+  auto cacheIt = m_cachedPC.find(target);
+  if (cacheIt == m_cachedPC.end()) {
+    auto cpc = this->getCandidatePC_impl(target, std::move(candidates));
+    m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
+    return cpc;
+  }
+  else {
+    DEBUG_LOG(debug, "Found candidate PC for %s in the cache", this->m_data.varName(target));
+    return cacheIt->second;
+  }
+}
+
+template <typename DataType, typename VarType>
+/**
  * @brief Removes false positives from the given candidate PC set
  *        for the given target variable.
  *
@@ -157,7 +185,7 @@ MMPC<DataType, VarType>::MMPC(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-MMPC<DataType, VarType>::getCandidatePC(
+MMPC<DataType, VarType>::getCandidatePC_impl(
   const VarType target,
   std::set<VarType> candidates
 ) const
@@ -203,7 +231,7 @@ HITON<DataType, VarType>::HITON(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-HITON<DataType, VarType>::getCandidatePC(
+HITON<DataType, VarType>::getCandidatePC_impl(
   const VarType target,
   std::set<VarType> candidates
 ) const
@@ -242,7 +270,7 @@ GetPC<DataType, VarType>::GetPC(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-GetPC<DataType, VarType>::getCandidatePC(
+GetPC<DataType, VarType>::getCandidatePC_impl(
   const VarType target,
   std::set<VarType> candidates
 ) const

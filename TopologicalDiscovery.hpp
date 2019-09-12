@@ -9,6 +9,7 @@
 #include "MBDiscovery.hpp"
 
 #include <set>
+#include <unordered_map>
 
 
 /**
@@ -22,9 +23,8 @@ class TopologicalDiscovery : public MBDiscovery<DataType, VarType> {
 public:
   TopologicalDiscovery(const DataType&);
 
-  virtual
   std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const = 0;
+  getCandidatePC(const VarType, std::set<VarType>) const;
 
   std::set<VarType>
   removeFalsePC(const VarType, std::set<VarType>&) const;
@@ -40,6 +40,14 @@ public:
 
   virtual
   ~TopologicalDiscovery() { }
+
+protected:
+  virtual
+  std::set<VarType>
+  getCandidatePC_impl(const VarType, std::set<VarType>) const = 0;
+
+private:
+  mutable std::unordered_map<VarType, std::set<VarType>> m_cachedPC;
 }; // class TopologicalDiscovery
 
 
@@ -55,8 +63,9 @@ class MMPC: public TopologicalDiscovery<DataType, VarType> {
 public:
   MMPC(const DataType&);
 
+protected:
   std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
 }; // class MMPC
 
 /**
@@ -71,8 +80,9 @@ class HITON: public TopologicalDiscovery<DataType, VarType> {
 public:
   HITON(const DataType&);
 
+protected:
   std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
 }; // class HITON
 
 /**
@@ -87,8 +97,9 @@ class GetPC: public TopologicalDiscovery<DataType, VarType> {
 public:
   GetPC(const DataType&);
 
+protected:
   std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
 }; // class GetPC
 
 #include "detail/TopologicalDiscovery.hpp"
