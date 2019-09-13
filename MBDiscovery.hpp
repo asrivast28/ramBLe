@@ -21,14 +21,7 @@ public:
   MBDiscovery(const DataType&);
 
   std::set<VarType>
-  getCandidates(const VarType) const;
-
-  virtual
-  std::set<VarType>
-  getCandidateMB(const VarType, std::set<VarType>) const = 0;
-
-  void
-  symmetryCorrectMB(const VarType, std::set<VarType>&) const;
+  getPC(const VarType) const;
 
   std::set<VarType>
   getMB(const VarType) const;
@@ -37,14 +30,36 @@ public:
   ~MBDiscovery() { };
 
 protected:
+  std::set<VarType>
+  getCandidates(const VarType) const;
+
+  virtual
+  std::set<VarType>
+  getCandidatePC(const VarType, std::set<VarType>) const = 0;
+
+  virtual
+  std::set<VarType>
+  getCandidateMB(const VarType, std::set<VarType>) const = 0;
+
+private:
+  std::set<VarType>
+  getCandidatePC_cache(const VarType, std::set<VarType>) const;
+
+  void
+  symmetryCorrectPC(const VarType, std::set<VarType>&) const;
+
+  std::set<VarType>
+  getCandidateMB_cache(const VarType, std::set<VarType>) const;
+
+  void
+  symmetryCorrectMB(const VarType, std::set<VarType>&) const;
+
+protected:
   const DataType m_data;
   std::set<VarType> m_vars;
 
 private:
-  std::set<VarType>
-  getCandidateMB_cache(const VarType, std::set<VarType>) const;
-
-private:
+  mutable std::unordered_map<VarType, std::set<VarType>> m_cachedPC;
   mutable std::unordered_map<VarType, std::set<VarType>> m_cachedMB;
 }; // class MBDiscovery
 

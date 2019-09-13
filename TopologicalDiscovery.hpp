@@ -23,31 +23,14 @@ class TopologicalDiscovery : public MBDiscovery<DataType, VarType> {
 public:
   TopologicalDiscovery(const DataType&);
 
-  virtual
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const = 0;
-
   std::set<VarType>
   removeFalsePC(const VarType, std::set<VarType>&) const;
-
-  void
-  symmetryCorrectPC(const VarType, std::set<VarType>&) const;
-
-  std::set<VarType>
-  getCorrectPC(const VarType) const;
 
   std::set<VarType>
   getCandidateMB(const VarType, std::set<VarType>) const override;
 
   virtual
   ~TopologicalDiscovery() { }
-
-private:
-  std::set<VarType>
-  getCandidatePC_cache(const VarType, std::set<VarType>) const;
-
-private:
-  mutable std::unordered_map<VarType, std::set<VarType>> m_cachedPC;
 }; // class TopologicalDiscovery
 
 

@@ -44,6 +44,80 @@ MBDiscovery<DataType, VarType>::getCandidates(
 
 template <typename DataType, typename VarType>
 /**
+ * @brief Finds the candidate PC for a variable, and caches the result.
+ *
+ * @param target The index of the target variable.
+ * @param candidates The indices of all the candidate variables.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the candidate PC of the given target variable.
+ */
+std::set<VarType>
+MBDiscovery<DataType, VarType>::getCandidatePC_cache(
+  const VarType target,
+  std::set<VarType> candidates
+) const
+{
+  auto cacheIt = m_cachedPC.find(target);
+  if (cacheIt == m_cachedPC.end()) {
+    auto cpc = this->getCandidatePC(target, std::move(candidates));
+    m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
+    return cpc;
+  }
+  else {
+    LOG_MESSAGE(debug, "* Found candidate PC for %s in the cache", this->m_data.varName(target))
+    return cacheIt->second;
+  }
+}
+
+template <typename DataType, typename VarType>
+/**
+ * @brief Performs symmetry correction on the given PC set for the given variable.
+ *
+ * @param target The index of the target variable.
+ * @param cpc The set containing the indices of all the variables in
+ *            the candidate PC set.
+ */
+void
+MBDiscovery<DataType, VarType>::symmetryCorrectPC(
+  const VarType target,
+  std::set<VarType>& cpc
+) const
+{
+  auto initial = cpc;
+  for (const VarType x: initial) {
+    auto candidatesX = this->getCandidates(x);
+    auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX));
+    if (cpcX.find(target) == cpcX.end()) {
+      LOG_MESSAGE(info, "- Removing %s from the PC of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
+      cpc.erase(x);
+    }
+  }
+}
+
+template <typename DataType, typename VarType>
+/**
+ * @brief The top level function for getting the correct PC set
+ *        for the given target variable.
+ *
+ * @param target The index of the target variable.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the correct PC set of the target variable.
+ */
+std::set<VarType>
+MBDiscovery<DataType, VarType>::getPC(
+  const VarType target
+) const
+{
+  auto candidates = this->getCandidates(target);
+  auto cpc = this->getCandidatePC_cache(target, std::move(candidates));
+  this->symmetryCorrectPC(target, cpc);
+  return cpc;
+}
+
+template <typename DataType, typename VarType>
+/**
  * @brief Finds the candidate MB for a variable, and caches the result.
  *
  * @param target The index of the target variable.
@@ -65,7 +139,7 @@ MBDiscovery<DataType, VarType>::getCandidateMB_cache(
     return cpc;
   }
   else {
-    LOG_MESSAGE(debug, "Found candidate MB for %s in the cache", this->m_data.varName(target));
+    LOG_MESSAGE(debug, "* Found candidate MB for %s in the cache", this->m_data.varName(target));
     return cacheIt->second;
   }
 }
@@ -89,7 +163,7 @@ MBDiscovery<DataType, VarType>::symmetryCorrectMB(
     auto candidatesX = this->getCandidates(x);
     auto cmbX = this->getCandidateMB_cache(x, std::move(candidatesX));
     if (cmbX.find(target) == cmbX.end()) {
-      LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "- Removing %s from the MB of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cmb.erase(x);
     }
   }

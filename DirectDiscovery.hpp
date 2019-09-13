@@ -23,6 +23,9 @@ public:
   DirectDiscovery(const DataType&);
 
   std::set<VarType>
+  getCandidatePC(const VarType, std::set<VarType>) const override;
+
+  std::set<VarType>
   shrinkMB(const VarType, std::set<VarType>&) const;
 
   virtual

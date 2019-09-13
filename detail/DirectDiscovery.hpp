@@ -46,9 +46,9 @@ DirectDiscovery<DataType, VarType>::shrinkMB(
   auto initial = cmb;
   for (const VarType x: initial) {
     cmb.erase(x);
-    LOG_MESSAGE(debug, "Shrink Phase: Evaluating %s for removal from the MB", this->m_data.varName(x));
+    LOG_MESSAGE(debug, "Shrink Phase: Evaluating %s for removal from the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
     if (this->m_data.isIndependent(target, x, cmb)) {
-      LOG_MESSAGE(info, "Shrink Phase: Removing %s from the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "- Removing %s from the MB of %s (shrink)", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
     }
     else {
@@ -56,6 +56,46 @@ DirectDiscovery<DataType, VarType>::shrinkMB(
     }
   }
   return removed;
+}
+
+template <typename DataType, typename VarType>
+/**
+ * @brief The top level function for getting the candidate PC for the given
+ *        target variable, using the MB of the variable.
+ *
+ * @param target The index of the target variable.
+ * @param candidates The indices of all the candidate variables.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the PC of the given target variable.
+ */
+std::set<VarType>
+DirectDiscovery<DataType, VarType>::getCandidatePC(
+  const VarType target,
+  std::set<VarType> candidates
+) const
+{
+  LOG_MESSAGE(info, "Direct Discovery: Getting PC from MB for %s", this->m_data.varName(target));
+  std::set<VarType> cpc;
+  auto mb = this->getMB(target);
+  for (const VarType y: mb) {
+    LOG_MESSAGE(debug, "Checking %s for addition to MB", this->m_data.varName(y));
+    auto mbTest = mb;
+    auto mbY = this->getMB(y);
+    // Pick the smaller of the two MBs
+    if (mbY.size() > mb.size()) {
+      mbTest.erase(y);
+    }
+    else {
+      mbTest = mbY;
+      mbTest.erase(target);
+    }
+    if (!this->m_data.isIndependentAnySubset(target, y, mbTest)) {
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(y), this->m_data.varName(target));
+      cpc.insert(y);
+    }
+  }
+  return cpc;
 }
 
 template <typename DataType, typename VarType>
@@ -72,6 +112,7 @@ GSMB<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   bool changed = true;
@@ -95,7 +136,7 @@ GSMB<DataType, VarType>::getCandidateMB(
       // Add the variable to the candidate MB if it is not
       // independedent of the target, given the current MB
       if (!this->m_data.isIndependent(target, x, cmb)) {
-        LOG_MESSAGE(info, "GSMB: Adding %s to the candidate MB", this->m_data.varName(x));
+        LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
         cmb.insert(x);
         candidates.erase(x);
         changed = true;
@@ -104,6 +145,7 @@ GSMB<DataType, VarType>::getCandidateMB(
     }
   }
   this->shrinkMB(target, cmb);
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cmb;
 }
 
@@ -121,6 +163,7 @@ IAMB<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   bool changed = true;
@@ -142,13 +185,14 @@ IAMB<DataType, VarType>::getCandidateMB(
     // Add the variable to the candidate MB if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "IAMB: Adding %s to the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
       cmb.insert(x);
       candidates.erase(x);
       changed = true;
     }
   }
   this->shrinkMB(target, cmb);
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cmb;
 }
 
@@ -166,6 +210,7 @@ InterIAMB<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
   bool changed = true;
@@ -187,7 +232,7 @@ InterIAMB<DataType, VarType>::getCandidateMB(
     // Add the variable to the candidate MB if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "InterIAMB: Adding %s to the candidate MB", this->m_data.varName(x));
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
       cmb.insert(x);
       candidates.erase(x);
       changed = true;
@@ -206,6 +251,7 @@ InterIAMB<DataType, VarType>::getCandidateMB(
       }
     }
   }
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cmb;
 }
 

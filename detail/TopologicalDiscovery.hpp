@@ -25,34 +25,6 @@ TopologicalDiscovery<DataType, VarType>::TopologicalDiscovery(
 
 template <typename DataType, typename VarType>
 /**
- * @brief Finds the candidate PC for a variable, and caches the result.
- *
- * @param target The index of the target variable.
- * @param candidates The indices of all the candidate variables.
- *
- * @return A set containing the indices of all the variables
- *         in the candidate PC of the given target variable.
- */
-std::set<VarType>
-TopologicalDiscovery<DataType, VarType>::getCandidatePC_cache(
-  const VarType target,
-  std::set<VarType> candidates
-) const
-{
-  auto cacheIt = m_cachedPC.find(target);
-  if (cacheIt == m_cachedPC.end()) {
-    auto cpc = this->getCandidatePC(target, std::move(candidates));
-    m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
-    return cpc;
-  }
-  else {
-    LOG_MESSAGE(debug, "Found candidate PC for %s in the cache", this->m_data.varName(target));
-    return cacheIt->second;
-  }
-}
-
-template <typename DataType, typename VarType>
-/**
  * @brief Removes false positives from the given candidate PC set
  *        for the given target variable.
  *
@@ -75,7 +47,7 @@ TopologicalDiscovery<DataType, VarType>::removeFalsePC(
     cpc.erase(x);
     LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
     if (this->m_data.isIndependentAnySubset(target, x, cpc)) {
-      LOG_MESSAGE(info, "False Positive: Removing %s from the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
+      LOG_MESSAGE(info, "- Removing %s from the PC of %s (FP)", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
     }
     else {
@@ -87,54 +59,9 @@ TopologicalDiscovery<DataType, VarType>::removeFalsePC(
 
 template <typename DataType, typename VarType>
 /**
- * @brief Performs symmetry correction on the given PC set for the given variable.
- *
- * @param target The index of the target variable.
- * @param cpc The set containing the indices of all the variables in
- *            the candidate PC set.
- */
-void
-TopologicalDiscovery<DataType, VarType>::symmetryCorrectPC(
-  const VarType target,
-  std::set<VarType>& cpc
-) const
-{
-  auto initial = cpc;
-  for (const VarType x: initial) {
-    auto candidatesX = this->getCandidates(x);
-    auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX));
-    if (cpcX.find(target) == cpcX.end()) {
-      LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
-      cpc.erase(x);
-    }
-  }
-}
-
-template <typename DataType, typename VarType>
-/**
- * @brief The top level function for getting the correct PC set
- *        for the given target variable.
- *
- * @param target The index of the target variable.
- *
- * @return A set containing the indices of all the variables
- *         in the correct PC set of the target variable.
- */
-std::set<VarType>
-TopologicalDiscovery<DataType, VarType>::getCorrectPC(
-  const VarType target
-) const
-{
-  auto candidates = this->getCandidates(target);
-  auto cpc = this->getCandidatePC_cache(target, std::move(candidates));
-  this->symmetryCorrectPC(target, cpc);
-  return cpc;
-}
-
-template <typename DataType, typename VarType>
-/**
- * @brief The top level function for getting candidate MB for the given
- *        target variable, as per the algorithm proposed by Pena et al.
+ * @brief The top level function for getting the candidate MB for the given
+ *        target variable, using the PC sets, as per the algorithm proposed
+ *        by Pena et al.
  *
  * @param target The index of the target variable.
  * @param candidates The indices of all the candidate variables.
@@ -148,15 +75,15 @@ TopologicalDiscovery<DataType, VarType>::getCandidateMB(
   std::set<VarType> candidates
 ) const
 {
-  LOG_MESSAGE(info, "Getting MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
   std::set<VarType> cmb;
-  auto cpc = this->getCorrectPC(target);
-  for (const VarType y: cpc) {
-    LOG_MESSAGE(info, "Parent/Child: Adding %s to the candidate MB", this->m_data.varName(y));
+  auto pc = this->getPC(target);
+  for (const VarType y: pc) {
+    LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)", this->m_data.varName(y), this->m_data.varName(target));
     cmb.insert(y);
-    auto cpcY = this->getCorrectPC(y);
-    for (const VarType x: cpcY) {
-      if ((x != target) && (cpc.find(x) == cpc.end())) {
+    auto pcY = this->getPC(y);
+    for (const VarType x: pcY) {
+      if ((x != target) && (pc.find(x) == pc.end())) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Checking %s for addition to MB", this->m_data.varName(x));
         auto ret = this->m_data.minAssocScoreSubset(target, x, candidates);
@@ -165,7 +92,7 @@ TopologicalDiscovery<DataType, VarType>::getCandidateMB(
           auto& z = ret.second;
           z.insert(y);
           if (!this->m_data.isIndependent(target, x, z)) {
-            LOG_MESSAGE(info, "Spouse: Adding %s to the candidate MB", this->m_data.varName(x));
+            LOG_MESSAGE(info, "+ Adding %s to the MB of %s (spouse)", this->m_data.varName(x), this->m_data.varName(target));
             cmb.insert(x);
           }
         }
@@ -190,6 +117,7 @@ MMPC<DataType, VarType>::getCandidatePC(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   bool changed = true;
@@ -211,7 +139,7 @@ MMPC<DataType, VarType>::getCandidatePC(
     // Add the variable to the candidate PC if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "MMPC: Adding %s to the candidate PC", this->m_data.varName(x));
+      LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.insert(x);
       changed = true;
     }
@@ -237,6 +165,7 @@ HITON<DataType, VarType>::getCandidatePC(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   while (candidates.size() > 0) {
@@ -253,7 +182,7 @@ HITON<DataType, VarType>::getCandidatePC(
     }
     LOG_MESSAGE(debug, "HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC
-    LOG_MESSAGE(info, "HITON-PC: Adding %s to the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
+    LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
     cpc.insert(x);
     candidates.erase(x);
     // Remove false positives from the candidate PC
@@ -277,6 +206,7 @@ SemiInterleavedHITON<DataType, VarType>::getCandidatePC(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   while (candidates.size() > 0) {
@@ -307,7 +237,7 @@ SemiInterleavedHITON<DataType, VarType>::getCandidatePC(
     }
     LOG_MESSAGE(debug, "SI-HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC
-    LOG_MESSAGE(info, "SI-HITON-PC: Adding %s to the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
+    LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
     cpc.insert(x);
     candidates.erase(x);
     // Remove false positives from the candidate PC
@@ -331,6 +261,7 @@ GetPC<DataType, VarType>::getCandidatePC(
   std::set<VarType> candidates
 ) const
 {
+  LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
   std::set<VarType> cpc;
   bool changed = true;
@@ -366,7 +297,7 @@ GetPC<DataType, VarType>::getCandidatePC(
     // Add the variable to the candidate PC if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "GetPC: Adding %s to the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
+      LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.insert(x);
       changed = true;
     }
