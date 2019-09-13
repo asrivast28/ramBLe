@@ -52,3 +52,27 @@ Once the project has been built, the executable can be used for MB discovery as 
 Please execute the following for more information on all the options that the executable accepts:
 <pre><code>./mb --help 
 </code></pre>
+
+## Algorithms
+
+### Direct Discovery
+This class of algorithms directly finds the MB of the variable.
+We have added a symmetry correction step to all these algorithms.
+* `gs`  
+[Grow-Shrink (GS)](https://papers.nips.cc/paper/1685-bayesian-network-induction-via-local-neighborhoods) algorithm by Margaritis & Thrun.
+* `iamb`  
+[Incremental Association MB (IAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) algorithm by Tsamardinos et al.
+* `inter.iamb`  
+[Interleaved Incremental Association MB (InterIAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) by Tsamardinos et al.
+
+### Topological Discovery
+This class of algorithms find the parent-child (PC) sets of nodes, as an intermediate step.
+Then, they use the PC sets for generating the MB of the variable.
+* `mmpc`  
+[Max-Min PC (MMPC)](https://link.springer.com/article/10.1007/s10994-006-6889-7) algorithm by Tsamardinos et al. and corrected by Pena et al.
+* `hiton`  
+[HITON-PC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1480117/) algorithm by Aliferis et al. and corrected by Pena et al.
+* `si.hiton.pc`  
+[Semi-interleaved HITON-PC](http://www.jmlr.org/papers/v11/aliferis10a.html) algorithm by Aliferis et al.
+* `getpc`  
+[Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
