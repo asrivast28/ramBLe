@@ -6,6 +6,7 @@
 #define MBDISCOVERY_HPP_
 
 #include <set>
+#include <unordered_map>
 
 
 /**
@@ -38,6 +39,13 @@ public:
 protected:
   const DataType m_data;
   std::set<VarType> m_vars;
+
+private:
+  std::set<VarType>
+  getCandidateMB_cache(const VarType, std::set<VarType>) const;
+
+private:
+  mutable std::unordered_map<VarType, std::set<VarType>> m_cachedMB;
 }; // class MBDiscovery
 
 #include "detail/MBDiscovery.hpp"

@@ -44,6 +44,34 @@ MBDiscovery<DataType, VarType>::getCandidates(
 
 template <typename DataType, typename VarType>
 /**
+ * @brief Finds the candidate MB for a variable, and caches the result.
+ *
+ * @param target The index of the target variable.
+ * @param candidates The indices of all the candidate variables.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the candidate MB of the given target variable.
+ */
+std::set<VarType>
+MBDiscovery<DataType, VarType>::getCandidateMB_cache(
+  const VarType target,
+  std::set<VarType> candidates
+) const
+{
+  auto cacheIt = m_cachedMB.find(target);
+  if (cacheIt == m_cachedMB.end()) {
+    auto cpc = this->getCandidateMB(target, std::move(candidates));
+    m_cachedMB.insert(cacheIt, std::make_pair(target, cpc));
+    return cpc;
+  }
+  else {
+    LOG_MESSAGE(debug, "Found candidate MB for %s in the cache", this->m_data.varName(target));
+    return cacheIt->second;
+  }
+}
+
+template <typename DataType, typename VarType>
+/**
  * @brief Symmetry corrects the candidate MB of the target variable.
  *
  * @param target The index of the target variable.
@@ -59,7 +87,7 @@ MBDiscovery<DataType, VarType>::symmetryCorrectMB(
   auto initial = cmb;
   for (const VarType x: initial) {
     auto candidatesX = this->getCandidates(x);
-    auto cmbX = this->getCandidateMB(x, std::move(candidatesX));
+    auto cmbX = this->getCandidateMB_cache(x, std::move(candidatesX));
     if (cmbX.find(target) == cmbX.end()) {
       LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate MB", this->m_data.varName(x));
       cmb.erase(x);
@@ -79,7 +107,7 @@ MBDiscovery<DataType, VarType>::getMB(
 ) const
 {
   auto candidates = this->getCandidates(target);
-  auto cmb = this->getCandidateMB(target, std::move(candidates));
+  auto cmb = this->getCandidateMB_cache(target, std::move(candidates));
   this->symmetryCorrectMB(target, cmb);
   return cmb;
 }
