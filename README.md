@@ -16,7 +16,7 @@ SCons, a cross-platform Python based build environment, is required for building
   Logging functionality from the repository is used.
 * **[Google Test](https://github.com/google/googletest)** (optional)   
 Google Test framework is used for unit testing in this project.  
-This dependency can be avoided by not building the unit tests. See "Building" section for more information.   
+This dependency can be avoided by not building the unit tests. See the relevant section in [Building](#unit-tests) for more information.   
 
 ## Building
 After all the dependencies have been installed, the project can be built as:  
@@ -27,18 +27,18 @@ Path to the Boost libraries can be specified as:
 <pre><code>scons BOOSTLIBPATH=&lt;Boost library path, default is /usr/lib/x86_64-lib-gnu&gt;
 </code></pre>
 
-### Unit Tests
+#### Unit Tests
 The unit tests are built by default. The following can be executed for building only the executable:  
 <pre><code>scons TEST=0
 </code></pre>  
 
-### Debug
+#### Debug
 For building the debug version of the executable, the following can be executed:
 <pre><code>scons DEBUG=1
 </code></pre>  
 Debug version of the executable is named `mb_debug`.
 
-### Logging
+#### Logging
 By default, logging is disabled in the release build and enabled in the debug build.
 In order to change the default behavior, `LOGGING=[0,1]` argument can be passed to `scons`:  
 <pre><code>scons LOGGING=1 # Enables logging in the release build
