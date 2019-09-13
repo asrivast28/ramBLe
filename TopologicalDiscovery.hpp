@@ -23,8 +23,9 @@ class TopologicalDiscovery : public MBDiscovery<DataType, VarType> {
 public:
   TopologicalDiscovery(const DataType&);
 
+  virtual
   std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const;
+  getCandidatePC(const VarType, std::set<VarType>) const = 0;
 
   std::set<VarType>
   removeFalsePC(const VarType, std::set<VarType>&) const;
@@ -41,10 +42,9 @@ public:
   virtual
   ~TopologicalDiscovery() { }
 
-protected:
-  virtual
+private:
   std::set<VarType>
-  getCandidatePC_impl(const VarType, std::set<VarType>) const = 0;
+  getCandidatePC_cache(const VarType, std::set<VarType>) const;
 
 private:
   mutable std::unordered_map<VarType, std::set<VarType>> m_cachedPC;
@@ -63,9 +63,8 @@ class MMPC: public TopologicalDiscovery<DataType, VarType> {
 public:
   MMPC(const DataType&);
 
-protected:
   std::set<VarType>
-  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
+  getCandidatePC(const VarType, std::set<VarType>) const override;
 }; // class MMPC
 
 /**
@@ -80,9 +79,8 @@ class HITON: public TopologicalDiscovery<DataType, VarType> {
 public:
   HITON(const DataType&);
 
-protected:
   std::set<VarType>
-  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
+  getCandidatePC(const VarType, std::set<VarType>) const override;
 }; // class HITON
 
 /**
@@ -97,9 +95,8 @@ class SemiInterleavedHITON: public TopologicalDiscovery<DataType, VarType> {
 public:
   SemiInterleavedHITON(const DataType&);
 
-protected:
   std::set<VarType>
-  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
+  getCandidatePC(const VarType, std::set<VarType>) const override;
 }; // class SemiInterleavedHITON
 
 /**
@@ -114,9 +111,8 @@ class GetPC: public TopologicalDiscovery<DataType, VarType> {
 public:
   GetPC(const DataType&);
 
-protected:
   std::set<VarType>
-  getCandidatePC_impl(const VarType, std::set<VarType>) const override;
+  getCandidatePC(const VarType, std::set<VarType>) const override;
 }; // class GetPC
 
 #include "detail/TopologicalDiscovery.hpp"

@@ -25,7 +25,7 @@ TopologicalDiscovery<DataType, VarType>::TopologicalDiscovery(
 
 template <typename DataType, typename VarType>
 /**
- * @brief Finds the candidate PC for every variable, and caches the result.
+ * @brief Finds the candidate PC for a variable, and caches the result.
  *
  * @param target The index of the target variable.
  * @param candidates The indices of all the candidate variables.
@@ -34,14 +34,14 @@ template <typename DataType, typename VarType>
  *         in the candidate PC of the given target variable.
  */
 std::set<VarType>
-TopologicalDiscovery<DataType, VarType>::getCandidatePC(
+TopologicalDiscovery<DataType, VarType>::getCandidatePC_cache(
   const VarType target,
   std::set<VarType> candidates
 ) const
 {
   auto cacheIt = m_cachedPC.find(target);
   if (cacheIt == m_cachedPC.end()) {
-    auto cpc = this->getCandidatePC_impl(target, std::move(candidates));
+    auto cpc = this->getCandidatePC(target, std::move(candidates));
     m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
     return cpc;
   }
@@ -102,7 +102,7 @@ TopologicalDiscovery<DataType, VarType>::symmetryCorrectPC(
   auto initial = cpc;
   for (const VarType x: initial) {
     auto candidatesX = this->getCandidates(x);
-    auto cpcX = this->getCandidatePC(x, std::move(candidatesX));
+    auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX));
     if (cpcX.find(target) == cpcX.end()) {
       LOG_MESSAGE(info, "Symmetry Correction: Removing %s from the candidate PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.erase(x);
@@ -126,7 +126,7 @@ TopologicalDiscovery<DataType, VarType>::getCorrectPC(
 ) const
 {
   auto candidates = this->getCandidates(target);
-  auto cpc = this->getCandidatePC(target, std::move(candidates));
+  auto cpc = this->getCandidatePC_cache(target, std::move(candidates));
   this->symmetryCorrectPC(target, cpc);
   return cpc;
 }
@@ -185,7 +185,7 @@ MMPC<DataType, VarType>::MMPC(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-MMPC<DataType, VarType>::getCandidatePC_impl(
+MMPC<DataType, VarType>::getCandidatePC(
   const VarType target,
   std::set<VarType> candidates
 ) const
@@ -232,7 +232,7 @@ HITON<DataType, VarType>::HITON(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-HITON<DataType, VarType>::getCandidatePC_impl(
+HITON<DataType, VarType>::getCandidatePC(
   const VarType target,
   std::set<VarType> candidates
 ) const
@@ -272,7 +272,7 @@ SemiInterleavedHITON<DataType, VarType>::SemiInterleavedHITON(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-SemiInterleavedHITON<DataType, VarType>::getCandidatePC_impl(
+SemiInterleavedHITON<DataType, VarType>::getCandidatePC(
   const VarType target,
   std::set<VarType> candidates
 ) const
@@ -326,7 +326,7 @@ GetPC<DataType, VarType>::GetPC(
 
 template <typename DataType, typename VarType>
 std::set<VarType>
-GetPC<DataType, VarType>::getCandidatePC_impl(
+GetPC<DataType, VarType>::getCandidatePC(
   const VarType target,
   std::set<VarType> candidates
 ) const
