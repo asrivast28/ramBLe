@@ -91,7 +91,7 @@ DirectDiscovery<DataType, VarType>::getCandidatePC(
       mbTest.erase(target);
     }
     if (!this->m_data.isIndependentAnySubset(target, y, mbTest)) {
-      LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(y), this->m_data.varName(target));
+      LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(y), this->m_data.varName(target));
       cpc.insert(y);
     }
   }
