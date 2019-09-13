@@ -11,19 +11,19 @@
 #include <algorithm>
 
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Constructs the object with the given data.
  *
  * @param data Reference to an object of the DataType.
  */
-TopologicalDiscovery<DataType, VarType>::TopologicalDiscovery(
+TopologicalDiscovery<DataType, VarType, SetType>::TopologicalDiscovery(
   const DataType& data
-) : MBDiscovery<DataType, VarType>(data)
+) : MBDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Removes false positives from the given candidate PC set
  *        for the given target variable.
@@ -35,13 +35,13 @@ template <typename DataType, typename VarType>
  * @return A set containing the indices of all the variables removed
  *         from the candidate PC set.
  */
-std::set<VarType>
-TopologicalDiscovery<DataType, VarType>::removeFalsePC(
+SetType
+TopologicalDiscovery<DataType, VarType, SetType>::removeFalsePC(
   const VarType target,
-  std::set<VarType>& cpc
+  SetType& cpc
 ) const
 {
-  std::set<VarType> removed;
+  SetType removed;
   auto initial = cpc;
   for (const VarType x: initial) {
     cpc.erase(x);
@@ -57,7 +57,7 @@ TopologicalDiscovery<DataType, VarType>::removeFalsePC(
   return removed;
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief The top level function for getting the candidate MB for the given
  *        target variable, using the PC sets, as per the algorithm proposed
@@ -69,14 +69,14 @@ template <typename DataType, typename VarType>
  * @return A set containing the indices of all the variables
  *         in the MB of the given target variable.
  */
-std::set<VarType>
-TopologicalDiscovery<DataType, VarType>::getCandidateMB(
+SetType
+TopologicalDiscovery<DataType, VarType, SetType>::getCandidateMB(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
-  std::set<VarType> cmb;
+  SetType cmb;
   auto pc = this->getPC(target);
   for (const VarType y: pc) {
     LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)", this->m_data.varName(y), this->m_data.varName(target));
@@ -103,23 +103,23 @@ TopologicalDiscovery<DataType, VarType>::getCandidateMB(
   return cmb;
 }
 
-template <typename DataType, typename VarType>
-MMPC<DataType, VarType>::MMPC(
+template <typename DataType, typename VarType, typename SetType>
+MMPC<DataType, VarType, SetType>::MMPC(
   const DataType& data
-) : TopologicalDiscovery<DataType, VarType>(data)
+) : TopologicalDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-MMPC<DataType, VarType>::getCandidatePC(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+MMPC<DataType, VarType, SetType>::getCandidatePC(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
-  std::set<VarType> cpc;
+  SetType cpc;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -151,23 +151,23 @@ MMPC<DataType, VarType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType>
-HITON<DataType, VarType>::HITON(
+template <typename DataType, typename VarType, typename SetType>
+HITON<DataType, VarType, SetType>::HITON(
   const DataType& data
-) : TopologicalDiscovery<DataType, VarType>(data)
+) : TopologicalDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-HITON<DataType, VarType>::getCandidatePC(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+HITON<DataType, VarType, SetType>::getCandidatePC(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  std::set<VarType> cpc;
+  SetType cpc;
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
     VarType x;
@@ -192,28 +192,28 @@ HITON<DataType, VarType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType>
-SemiInterleavedHITON<DataType, VarType>::SemiInterleavedHITON(
+template <typename DataType, typename VarType, typename SetType>
+SemiInterleavedHITON<DataType, VarType, SetType>::SemiInterleavedHITON(
   const DataType& data
-) : TopologicalDiscovery<DataType, VarType>(data)
+) : TopologicalDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-SemiInterleavedHITON<DataType, VarType>::getCandidatePC(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+SemiInterleavedHITON<DataType, VarType, SetType>::getCandidatePC(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  std::set<VarType> cpc;
+  SetType cpc;
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
     VarType x;
     double scoreX = std::numeric_limits<double>::lowest();
-    std::set<VarType> remove;
+    SetType remove;
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
@@ -247,23 +247,23 @@ SemiInterleavedHITON<DataType, VarType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType>
-GetPC<DataType, VarType>::GetPC(
+template <typename DataType, typename VarType, typename SetType>
+GetPC<DataType, VarType, SetType>::GetPC(
   const DataType& data
-) : TopologicalDiscovery<DataType, VarType>(data)
+) : TopologicalDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-GetPC<DataType, VarType>::getCandidatePC(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+GetPC<DataType, VarType, SetType>::getCandidatePC(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
-  std::set<VarType> cpc;
+  SetType cpc;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -271,7 +271,7 @@ GetPC<DataType, VarType>::getCandidatePC(
     // given any subset of the current candidate PC
     VarType x;
     double scoreX = std::numeric_limits<double>::lowest();
-    std::set<VarType> remove;
+    SetType remove;
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);

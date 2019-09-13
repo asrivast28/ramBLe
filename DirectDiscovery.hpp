@@ -16,17 +16,18 @@
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class DirectDiscovery : public MBDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class DirectDiscovery : public MBDiscovery<DataType, VarType, SetType> {
 public:
   DirectDiscovery(const DataType&);
 
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidatePC(const VarType, SetType) const override;
 
-  std::set<VarType>
-  shrinkMB(const VarType, std::set<VarType>&) const;
+  SetType
+  shrinkMB(const VarType, SetType&) const;
 
   virtual
   ~DirectDiscovery() { }
@@ -38,14 +39,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class GSMB: public DirectDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class GSMB: public DirectDiscovery<DataType, VarType, SetType> {
 public:
   GSMB(const DataType&);
 
-  std::set<VarType>
-  getCandidateMB(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidateMB(const VarType, SetType) const override;
 }; // class GSMB
 
 /**
@@ -54,14 +56,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class IAMB: public DirectDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class IAMB: public DirectDiscovery<DataType, VarType, SetType> {
 public:
   IAMB(const DataType&);
 
-  std::set<VarType>
-  getCandidateMB(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidateMB(const VarType, SetType) const override;
 }; // class IAMB
 
 /**
@@ -70,14 +73,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class InterIAMB: public DirectDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class InterIAMB: public DirectDiscovery<DataType, VarType, SetType> {
 public:
   InterIAMB(const DataType&);
 
-  std::set<VarType>
-  getCandidateMB(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidateMB(const VarType, SetType) const override;
 }; // class InterIAMB
 
 #include "detail/DirectDiscovery.hpp"

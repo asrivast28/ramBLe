@@ -11,19 +11,19 @@
 #include <numeric>
 
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Constructs the object with the given data.
  *
  * @param data Reference to an object of the DataType.
  */
-DirectDiscovery<DataType, VarType>::DirectDiscovery(
+DirectDiscovery<DataType, VarType, SetType>::DirectDiscovery(
   const DataType& data
-) : MBDiscovery<DataType, VarType>(data)
+) : MBDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Function that shrinks the given candidate MB.
  *
@@ -33,13 +33,13 @@ template <typename DataType, typename VarType>
  *
  * @return The indices of the variables that were removed from the candidate MB.
  */
-std::set<VarType>
-DirectDiscovery<DataType, VarType>::shrinkMB(
+SetType
+DirectDiscovery<DataType, VarType, SetType>::shrinkMB(
   const VarType target,
-  std::set<VarType>& cmb
+  SetType& cmb
 ) const
 {
-  std::set<VarType> removed;
+  SetType removed;
   if (cmb.empty()) {
     return removed;
   }
@@ -58,7 +58,7 @@ DirectDiscovery<DataType, VarType>::shrinkMB(
   return removed;
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief The top level function for getting the candidate PC for the given
  *        target variable, using the MB of the variable.
@@ -69,14 +69,14 @@ template <typename DataType, typename VarType>
  * @return A set containing the indices of all the variables
  *         in the PC of the given target variable.
  */
-std::set<VarType>
-DirectDiscovery<DataType, VarType>::getCandidatePC(
+SetType
+DirectDiscovery<DataType, VarType, SetType>::getCandidatePC(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "Direct Discovery: Getting PC from MB for %s", this->m_data.varName(target));
-  std::set<VarType> cpc;
+  SetType cpc;
   auto mb = this->getMB(target);
   for (const VarType y: mb) {
     LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC", this->m_data.varName(y));
@@ -98,23 +98,23 @@ DirectDiscovery<DataType, VarType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType>
-GSMB<DataType, VarType>::GSMB(
+template <typename DataType, typename VarType, typename SetType>
+GSMB<DataType, VarType, SetType>::GSMB(
   const DataType& data
-) : DirectDiscovery<DataType, VarType>(data)
+) : DirectDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-GSMB<DataType, VarType>::getCandidateMB(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+GSMB<DataType, VarType, SetType>::getCandidateMB(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
-  std::set<VarType> cmb;
+  SetType cmb;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -122,7 +122,7 @@ GSMB<DataType, VarType>::getCandidateMB(
     while (thisCandidates.size() > 0) {
       // Find the variable with the maximum marginal
       // association score with target
-      VarType x;
+      VarType x = this->m_data.numVars();
       double scoreX = 0.0;
       for (const VarType y: thisCandidates) {
         LOG_MESSAGE(debug, "GSMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
@@ -149,29 +149,29 @@ GSMB<DataType, VarType>::getCandidateMB(
   return cmb;
 }
 
-template <typename DataType, typename VarType>
-IAMB<DataType, VarType>::IAMB(
+template <typename DataType, typename VarType, typename SetType>
+IAMB<DataType, VarType, SetType>::IAMB(
   const DataType& data
-) : DirectDiscovery<DataType, VarType>(data)
+) : DirectDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-IAMB<DataType, VarType>::getCandidateMB(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+IAMB<DataType, VarType, SetType>::getCandidateMB(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
-  std::set<VarType> cmb;
+  SetType cmb;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
     // Find the variable with the maximum association score with target,
     // given the current candidate MB
-    VarType x;
+    VarType x = this->m_data.numVars();
     double scoreX = 0.0;
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "IAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
@@ -196,29 +196,29 @@ IAMB<DataType, VarType>::getCandidateMB(
   return cmb;
 }
 
-template <typename DataType, typename VarType>
-InterIAMB<DataType, VarType>::InterIAMB(
+template <typename DataType, typename VarType, typename SetType>
+InterIAMB<DataType, VarType, SetType>::InterIAMB(
   const DataType& data
-) : DirectDiscovery<DataType, VarType>(data)
+) : DirectDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
-template <typename DataType, typename VarType>
-std::set<VarType>
-InterIAMB<DataType, VarType>::getCandidateMB(
+template <typename DataType, typename VarType, typename SetType>
+SetType
+InterIAMB<DataType, VarType, SetType>::getCandidateMB(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
-  std::set<VarType> cmb;
+  SetType cmb;
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
     // Find the variable with the maximum association score with target,
     // given the current candidate MB
-    VarType x;
+    VarType x = this->m_data.numVars();
     double scoreX = 0.0;
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "InterIAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
@@ -241,8 +241,8 @@ InterIAMB<DataType, VarType>::getCandidateMB(
       auto removed = this->shrinkMB(target, cmb);
       // If the last added variable was removed then the candidate MB
       // did not really change
-      if (removed != std::set<VarType>{x}) {
-        std::set<VarType> temp;
+      if (removed != SetType{x}) {
+        SetType temp;
         std::set_union(candidates.begin(), candidates.end(), removed.begin(), removed.end(), std::inserter(temp, temp.begin()));
         candidates = temp;
       }

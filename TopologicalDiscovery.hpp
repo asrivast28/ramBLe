@@ -17,17 +17,18 @@
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class TopologicalDiscovery : public MBDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class TopologicalDiscovery : public MBDiscovery<DataType, VarType, SetType> {
 public:
   TopologicalDiscovery(const DataType&);
 
-  std::set<VarType>
-  removeFalsePC(const VarType, std::set<VarType>&) const;
+  SetType
+  removeFalsePC(const VarType, SetType&) const;
 
-  std::set<VarType>
-  getCandidateMB(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidateMB(const VarType, SetType) const override;
 
   virtual
   ~TopologicalDiscovery() { }
@@ -40,14 +41,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class MMPC: public TopologicalDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class MMPC: public TopologicalDiscovery<DataType, VarType, SetType> {
 public:
   MMPC(const DataType&);
 
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidatePC(const VarType, SetType) const override;
 }; // class MMPC
 
 /**
@@ -56,14 +58,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class HITON: public TopologicalDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class HITON: public TopologicalDiscovery<DataType, VarType, SetType> {
 public:
   HITON(const DataType&);
 
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidatePC(const VarType, SetType) const override;
 }; // class HITON
 
 /**
@@ -72,14 +75,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class SemiInterleavedHITON: public TopologicalDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class SemiInterleavedHITON: public TopologicalDiscovery<DataType, VarType, SetType> {
 public:
   SemiInterleavedHITON(const DataType&);
 
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidatePC(const VarType, SetType) const override;
 }; // class SemiInterleavedHITON
 
 /**
@@ -88,14 +92,15 @@ public:
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
-class GetPC: public TopologicalDiscovery<DataType, VarType> {
+template <typename DataType, typename VarType, typename SetType>
+class GetPC: public TopologicalDiscovery<DataType, VarType, SetType> {
 public:
   GetPC(const DataType&);
 
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const override;
+  SetType
+  getCandidatePC(const VarType, SetType) const override;
 }; // class GetPC
 
 #include "detail/TopologicalDiscovery.hpp"

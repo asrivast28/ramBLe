@@ -8,13 +8,13 @@
 #include "utils/Logging.hpp"
 
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Constructs the object with the given data.
  *
  * @param data Reference to an object of the DataType.
  */
-MBDiscovery<DataType, VarType>::MBDiscovery(
+MBDiscovery<DataType, VarType, SetType>::MBDiscovery(
   const DataType& data
 ) : m_data(data),
     m_vars()
@@ -24,7 +24,7 @@ MBDiscovery<DataType, VarType>::MBDiscovery(
   }
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Function for getting all the candidates for the given target variable.
  *
@@ -32,8 +32,8 @@ template <typename DataType, typename VarType>
  *
  * @return The indices of all the variables except the target.
  */
-std::set<VarType>
-MBDiscovery<DataType, VarType>::getCandidates(
+SetType
+MBDiscovery<DataType, VarType, SetType>::getCandidates(
   const VarType target
 ) const
 {
@@ -42,7 +42,7 @@ MBDiscovery<DataType, VarType>::getCandidates(
   return candidates;
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Finds the candidate PC for a variable, and caches the result.
  *
@@ -52,10 +52,10 @@ template <typename DataType, typename VarType>
  * @return A set containing the indices of all the variables
  *         in the candidate PC of the given target variable.
  */
-std::set<VarType>
-MBDiscovery<DataType, VarType>::getCandidatePC_cache(
+SetType
+MBDiscovery<DataType, VarType, SetType>::getCandidatePC_cache(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   auto cacheIt = m_cachedPC.find(target);
@@ -70,7 +70,7 @@ MBDiscovery<DataType, VarType>::getCandidatePC_cache(
   }
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Performs symmetry correction on the given PC set for the given variable.
  *
@@ -79,9 +79,9 @@ template <typename DataType, typename VarType>
  *            the candidate PC set.
  */
 void
-MBDiscovery<DataType, VarType>::symmetryCorrectPC(
+MBDiscovery<DataType, VarType, SetType>::symmetryCorrectPC(
   const VarType target,
-  std::set<VarType>& cpc
+  SetType& cpc
 ) const
 {
   auto initial = cpc;
@@ -95,7 +95,7 @@ MBDiscovery<DataType, VarType>::symmetryCorrectPC(
   }
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief The top level function for getting the correct PC set
  *        for the given target variable.
@@ -105,8 +105,8 @@ template <typename DataType, typename VarType>
  * @return A set containing the indices of all the variables
  *         in the correct PC set of the target variable.
  */
-std::set<VarType>
-MBDiscovery<DataType, VarType>::getPC(
+SetType
+MBDiscovery<DataType, VarType, SetType>::getPC(
   const VarType target
 ) const
 {
@@ -116,7 +116,7 @@ MBDiscovery<DataType, VarType>::getPC(
   return cpc;
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Finds the candidate MB for a variable, and caches the result.
  *
@@ -126,10 +126,10 @@ template <typename DataType, typename VarType>
  * @return A set containing the indices of all the variables
  *         in the candidate MB of the given target variable.
  */
-std::set<VarType>
-MBDiscovery<DataType, VarType>::getCandidateMB_cache(
+SetType
+MBDiscovery<DataType, VarType, SetType>::getCandidateMB_cache(
   const VarType target,
-  std::set<VarType> candidates
+  SetType candidates
 ) const
 {
   auto cacheIt = m_cachedMB.find(target);
@@ -144,7 +144,7 @@ MBDiscovery<DataType, VarType>::getCandidateMB_cache(
   }
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Symmetry corrects the candidate MB of the target variable.
  *
@@ -153,9 +153,9 @@ template <typename DataType, typename VarType>
  *                The function removes the indices from the candidate set.
  */
 void
-MBDiscovery<DataType, VarType>::symmetryCorrectMB(
+MBDiscovery<DataType, VarType, SetType>::symmetryCorrectMB(
   const VarType target,
-  std::set<VarType>& cmb
+  SetType& cmb
 ) const
 {
   auto initial = cmb;
@@ -169,14 +169,14 @@ MBDiscovery<DataType, VarType>::symmetryCorrectMB(
   }
 }
 
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Top level function for getting the MB of the target variable.
  *
  * @param target The index of the target variable.
  */
-std::set<VarType>
-MBDiscovery<DataType, VarType>::getMB(
+SetType
+MBDiscovery<DataType, VarType, SetType>::getMB(
   const VarType target
 ) const
 {

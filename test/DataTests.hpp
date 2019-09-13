@@ -6,6 +6,7 @@
 #define TEST_DATA_HPP_
 
 #include "Common.hpp"
+#include "UintSet.hpp"
 
 
 TEST_F(NeapolitanTest, MarginalPValue) {
@@ -31,15 +32,15 @@ TEST_F(LizardsTest, MarginalPValue) {
 }
 
 TEST_F(LizardsTest, ConditionalPValue) {
-  std::set<uint8_t> given{2};
+  UintSet<uint8_t> given{2};
   double spec_diam  = data.pValue(0, 1, given);
   EXPECT_NEAR(spec_diam, 0.0009009, 0.0001);
 
-  given = std::set<uint8_t>{1};
+  given = UintSet<uint8_t>{1};
   double spec_hght = data.pValue(0, 2, given);
   EXPECT_NEAR(spec_hght, 0.002708, 0.0001);
 
-  given = std::set<uint8_t>{0};
+  given = UintSet<uint8_t>{0};
   double diam_hght = data.pValue(1, 2, given);
   EXPECT_NEAR(diam_hght, 0.3632, 0.0001);
 }
@@ -63,7 +64,7 @@ TEST_F(CoronaryTest, MarginalPValue) {
 }
 
 TEST_F(CoronaryTest, ConditionalPValue) {
-  std::set<uint8_t> given{0};
+  UintSet<uint8_t> given{0};
   double press_family  = data.pValue(3, 5, given);
   EXPECT_NEAR(press_family, 0.3172, 0.0001);
 

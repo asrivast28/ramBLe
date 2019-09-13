@@ -14,53 +14,54 @@
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
+ * @tparam SetType Type of set container.
  */
-template <typename DataType, typename VarType>
+template <typename DataType, typename VarType, typename SetType>
 class MBDiscovery {
 public:
   MBDiscovery(const DataType&);
 
-  std::set<VarType>
+  SetType
   getPC(const VarType) const;
 
-  std::set<VarType>
+  SetType
   getMB(const VarType) const;
 
   virtual
   ~MBDiscovery() { };
 
 protected:
-  std::set<VarType>
+  SetType
   getCandidates(const VarType) const;
 
   virtual
-  std::set<VarType>
-  getCandidatePC(const VarType, std::set<VarType>) const = 0;
+  SetType
+  getCandidatePC(const VarType, SetType) const = 0;
 
   virtual
-  std::set<VarType>
-  getCandidateMB(const VarType, std::set<VarType>) const = 0;
+  SetType
+  getCandidateMB(const VarType, SetType) const = 0;
 
 private:
-  std::set<VarType>
-  getCandidatePC_cache(const VarType, std::set<VarType>) const;
+  SetType
+  getCandidatePC_cache(const VarType, SetType) const;
 
   void
-  symmetryCorrectPC(const VarType, std::set<VarType>&) const;
+  symmetryCorrectPC(const VarType, SetType&) const;
 
-  std::set<VarType>
-  getCandidateMB_cache(const VarType, std::set<VarType>) const;
+  SetType
+  getCandidateMB_cache(const VarType, SetType) const;
 
   void
-  symmetryCorrectMB(const VarType, std::set<VarType>&) const;
+  symmetryCorrectMB(const VarType, SetType&) const;
 
 protected:
   const DataType m_data;
-  std::set<VarType> m_vars;
+  SetType m_vars;
 
 private:
-  mutable std::unordered_map<VarType, std::set<VarType>> m_cachedPC;
-  mutable std::unordered_map<VarType, std::set<VarType>> m_cachedMB;
+  mutable std::unordered_map<VarType, SetType> m_cachedPC;
+  mutable std::unordered_map<VarType, SetType> m_cachedMB;
 }; // class MBDiscovery
 
 #include "detail/MBDiscovery.hpp"

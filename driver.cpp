@@ -8,12 +8,12 @@
 #include "DirectDiscovery.hpp"
 #include "ProgramOptions.hpp"
 #include "TopologicalDiscovery.hpp"
+#include "UintSet.hpp"
 
 #include "utils/Logging.hpp"
 #include "BVCounter.hpp"
 #include "RadCounter.hpp"
 
-#include <bitset>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -23,6 +23,7 @@
  * @brief Gets a pointer to the object of the required MB discovery algorithm.
  *
  * @tparam VarType Type of the variables (expected to be an integral type).
+ * @tparam SetType Type of set container.
  * @tparam DataType Type of the object which is used for querying data.
  * @param algoName The name of the algorithm.
  * @param data The object which is used for querying data.
@@ -30,8 +31,8 @@
  * @return unique_ptr to the object of the given algorithm.
  *         The unique_ptr points to a nullptr if the algorithm is not found.
  */
-template <typename VarType, typename DataType>
-std::unique_ptr<MBDiscovery<DataType, VarType>>
+template <typename VarType, typename SetType, typename DataType>
+std::unique_ptr<MBDiscovery<DataType, VarType, SetType>>
 getAlgorithm(
   const std::string& algoName,
   const DataType& data
@@ -39,35 +40,35 @@ getAlgorithm(
 {
   std::stringstream ss;
   if (algoName.compare("gs") == 0) {
-    return std::make_unique<GSMB<DataType, VarType>>(data);
+    return std::make_unique<GSMB<DataType, VarType, SetType>>(data);
   }
   ss << "gs,";
   if (algoName.compare("iamb") == 0) {
-    return std::make_unique<IAMB<DataType, VarType>>(data);
+    return std::make_unique<IAMB<DataType, VarType, SetType>>(data);
   }
   ss << "iamb,";
   if (algoName.compare("inter.iamb") == 0) {
-    return std::make_unique<InterIAMB<DataType, VarType>>(data);
+    return std::make_unique<InterIAMB<DataType, VarType, SetType>>(data);
   }
   ss << "inter.iamb,";
   if (algoName.compare("mmpc") == 0) {
-    return std::make_unique<MMPC<DataType, VarType>>(data);
+    return std::make_unique<MMPC<DataType, VarType, SetType>>(data);
   }
   ss << "mmpc,";
   if (algoName.compare("hiton") == 0) {
-    return std::make_unique<HITON<DataType, VarType>>(data);
+    return std::make_unique<HITON<DataType, VarType, SetType>>(data);
   }
   ss << "hiton,";
   if (algoName.compare("si.hiton.pc") == 0) {
-    return std::make_unique<SemiInterleavedHITON<DataType, VarType>>(data);
+    return std::make_unique<SemiInterleavedHITON<DataType, VarType, SetType>>(data);
   }
   ss << "si.hiton.pc,";
   if (algoName.compare("getpc") == 0) {
-    return std::make_unique<GetPC<DataType, VarType>>(data);
+    return std::make_unique<GetPC<DataType, VarType, SetType>>(data);
   }
   ss << "getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
-  return std::unique_ptr<MBDiscovery<DataType, VarType>>();
+  return std::unique_ptr<MBDiscovery<DataType, VarType, SetType>>();
 }
 
 /**
@@ -82,7 +83,7 @@ getAlgorithm(
  *
  * @return The list of names in the MB of the given target variable.
  */
-template <typename VarType, typename CounterType>
+template <typename CounterType, typename VarType>
 std::vector<std::string>
 getMB(
   const CounterType& counter,
@@ -93,7 +94,7 @@ getMB(
 {
   std::set<uint32_t> discovered;
   Data<CounterType, VarType> data(counter, varNames);
-  auto algo = getAlgorithm<VarType>(algoName, data);
+  auto algo = getAlgorithm<VarType, UintSet<VarType>>(algoName, data);
   auto target = data.varIndex(targetVar);
   if (target == varNames.size()) {
     throw std::runtime_error("Target variable not found.");
@@ -126,18 +127,20 @@ getMBVars(
 )
 {
   std::vector<std::string> mbVars;
-  if (n <= static_cast<uint32_t>(std::bitset<8>().set().to_ulong())) {
-    auto bvc = create_BVCounter<1>(n, m, std::begin(data));
-    mbVars = getMB<uint8_t>(bvc, varNames, algoName, targetVar);
+  if (n <= UintSet<uint8_t>::capacity()) {
+    constexpr int N = UintTypeTrait<uint8_t>::N;
+    auto bvc = create_BVCounter<N>(n, m, std::begin(data));
+    mbVars = getMB<BVCounter<N>, uint8_t>(bvc, varNames, algoName, targetVar);
   }
-  else if (n <= static_cast<uint32_t>(std::bitset<16>().set().to_ulong())) {
-    auto bvc = create_BVCounter<2>(n, m, std::begin(data));
-    mbVars = getMB<uint16_t>(bvc, varNames, algoName, targetVar);
+  else if (n <= UintSet<uint16_t>::capacity()) {
+    constexpr int N = UintTypeTrait<uint16_t>::N;
+    auto bvc = create_BVCounter<N>(n, m, std::begin(data));
+    mbVars = getMB<BVCounter<N>, uint16_t>(bvc, varNames, algoName, targetVar);
   }
   // TODO: Investigate the compiler warning in the following case.
-  //else if (n <= static_cast<uint32_t>(std::bitset<32>().set().to_ulong())) {
+  //else if (n < UintSet<4>::capacity()) {
     //auto bvc = create_BVCounter<4>(n, m, std::begin(data));
-    //mbVars = getMB<uint32_t>(bvc, varNames, algoName, targetVar);
+    //mbVars = getMB<BVCounter<4>, 4>(bvc, varNames, algoName, targetVar);
   //}
   else {
     throw std::runtime_error("The given number of variables is not supported.");
