@@ -85,7 +85,7 @@ TopologicalDiscovery<DataType, VarType>::getCandidateMB(
     for (const VarType x: pcY) {
       if ((x != target) && (pc.find(x) == pc.end())) {
         candidates.erase(x);
-        LOG_MESSAGE(debug, "Checking %s for addition to MB", this->m_data.varName(x));
+        LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
         auto ret = this->m_data.minAssocScoreSubset(target, x, candidates);
         if (this->m_data.isIndependent(ret.first)) {
           LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
@@ -128,7 +128,7 @@ MMPC<DataType, VarType>::getCandidatePC(
     VarType x;
     double scoreX = std::numeric_limits<double>::lowest();
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "MMPC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "MMPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (std::isless(scoreX, scoreY)) {
         x = y;
@@ -173,7 +173,7 @@ HITON<DataType, VarType>::getCandidatePC(
     VarType x;
     double scoreX = std::numeric_limits<double>::lowest();
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
       if (std::isless(scoreX, scoreY)) {
         x = y;
@@ -215,7 +215,7 @@ SemiInterleavedHITON<DataType, VarType>::getCandidatePC(
     double scoreX = std::numeric_limits<double>::lowest();
     std::set<VarType> remove;
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
       if (this->m_data.isIndependent(scoreY)) {
         LOG_MESSAGE(debug, "SI-HITON-PC: Marking %s for removal from the candidates", this->m_data.varName(y));
@@ -273,7 +273,7 @@ GetPC<DataType, VarType>::getCandidatePC(
     double scoreX = std::numeric_limits<double>::lowest();
     std::set<VarType> remove;
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "GetPC: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (this->m_data.isIndependent(scoreY)) {
         LOG_MESSAGE(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));

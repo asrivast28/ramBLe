@@ -79,7 +79,7 @@ DirectDiscovery<DataType, VarType>::getCandidatePC(
   std::set<VarType> cpc;
   auto mb = this->getMB(target);
   for (const VarType y: mb) {
-    LOG_MESSAGE(debug, "Checking %s for addition to MB", this->m_data.varName(y));
+    LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC", this->m_data.varName(y));
     auto mbTest = mb;
     auto mbY = this->getMB(y);
     // Pick the smaller of the two MBs
@@ -125,7 +125,7 @@ GSMB<DataType, VarType>::getCandidateMB(
       VarType x;
       double scoreX = 0.0;
       for (const VarType y: thisCandidates) {
-        LOG_MESSAGE(debug, "GSMB: Evaluating %s for the next candidate", this->m_data.varName(y));
+        LOG_MESSAGE(debug, "GSMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
         double scoreY = this->m_data.assocScore(target, y);
         if (std::isless(scoreX, scoreY)) {
           x = y;
@@ -174,7 +174,7 @@ IAMB<DataType, VarType>::getCandidateMB(
     VarType x;
     double scoreX = 0.0;
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "IAMB: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "IAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y, cmb);
       if (std::isless(scoreX, scoreY)) {
         x = y;
@@ -221,7 +221,7 @@ InterIAMB<DataType, VarType>::getCandidateMB(
     VarType x;
     double scoreX = 0.0;
     for (const VarType y: candidates) {
-      LOG_MESSAGE(debug, "InterIAMB: Evaluating %s for the next candidate", this->m_data.varName(y));
+      LOG_MESSAGE(debug, "InterIAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y, cmb);
       if (std::isless(scoreX, scoreY)) {
         x = y;
