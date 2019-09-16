@@ -83,6 +83,12 @@ public:
   Iterator
   find(const ValueType) const;
 
+public:
+  template <typename SetType>
+  friend
+  SetType
+  set_union(const SetType&, const SetType&);
+
 private:
   SetType m_set;
 }; // class UintSet

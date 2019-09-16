@@ -4,6 +4,7 @@
  */
 
 #include "Common.hpp"
+#include "SetUtilsTests.hpp"
 #include "DataTests.hpp"
 #include "DirectDiscoveryTests.hpp"
 #include "TopologicalDiscoveryTests.hpp"

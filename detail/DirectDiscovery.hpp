@@ -6,6 +6,8 @@
 #ifndef DETAIL_DIRECTDISCOVERY_HPP_
 #define DETAIL_DIRECTDISCOVERY_HPP_
 
+#include "../SetUtils.hpp"
+
 #include "utils/Logging.hpp"
 
 #include <numeric>
@@ -242,9 +244,7 @@ InterIAMB<DataType, VarType, SetType>::getCandidateMB(
       // If the last added variable was removed then the candidate MB
       // did not really change
       if (removed != SetType{x}) {
-        SetType temp;
-        std::set_union(candidates.begin(), candidates.end(), removed.begin(), removed.end(), std::inserter(temp, temp.begin()));
-        candidates = temp;
+        candidates = set_union(candidates, removed);
       }
       else {
         changed = false;

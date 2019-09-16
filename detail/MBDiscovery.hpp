@@ -5,6 +5,8 @@
 #ifndef DETAIL_MBDISCOVERY_HPP_
 #define DETAIL_MBDISCOVERY_HPP_
 
+#include "../SetUtils.hpp"
+
 #include "utils/Logging.hpp"
 
 
@@ -88,7 +90,7 @@ MBDiscovery<DataType, VarType, SetType>::symmetryCorrectPC(
   for (const VarType x: initial) {
     auto candidatesX = this->getCandidates(x);
     auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX));
-    if (cpcX.find(target) == cpcX.end()) {
+    if (!set_contains(cpcX, target)) {
       LOG_MESSAGE(info, "- Removing %s from the PC of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cpc.erase(x);
     }
@@ -162,7 +164,7 @@ MBDiscovery<DataType, VarType, SetType>::symmetryCorrectMB(
   for (const VarType x: initial) {
     auto candidatesX = this->getCandidates(x);
     auto cmbX = this->getCandidateMB_cache(x, std::move(candidatesX));
-    if (cmbX.find(target) == cmbX.end()) {
+    if (!set_contains(cmbX, target)) {
       LOG_MESSAGE(info, "- Removing %s from the MB of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cmb.erase(x);
     }

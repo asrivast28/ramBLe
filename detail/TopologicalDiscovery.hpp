@@ -6,6 +6,8 @@
 #ifndef DETAIL_TOPOLOGICALDISCOVERY_HPP_
 #define DETAIL_TOPOLOGICALDISCOVERY_HPP_
 
+#include "../SetUtils.hpp"
+
 #include "utils/Logging.hpp"
 
 #include <algorithm>
@@ -83,7 +85,7 @@ TopologicalDiscovery<DataType, VarType, SetType>::getCandidateMB(
     cmb.insert(y);
     auto pcY = this->getPC(y);
     for (const VarType x: pcY) {
-      if ((x != target) && (pc.find(x) == pc.end())) {
+      if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
         auto ret = this->m_data.minAssocScoreSubset(target, x, candidates);
@@ -125,7 +127,7 @@ MMPC<DataType, VarType, SetType>::getCandidatePC(
     changed = false;
     // Find the variable which maximizes the minimum association score with the target,
     // given any subset of the current candidate PC
-    VarType x;
+    VarType x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "MMPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
@@ -170,7 +172,7 @@ HITON<DataType, VarType, SetType>::getCandidatePC(
   SetType cpc;
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
-    VarType x;
+    VarType x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
@@ -211,7 +213,7 @@ SemiInterleavedHITON<DataType, VarType, SetType>::getCandidatePC(
   SetType cpc;
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
-    VarType x;
+    VarType x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
     SetType remove;
     for (const VarType y: candidates) {
@@ -269,7 +271,7 @@ GetPC<DataType, VarType, SetType>::getCandidatePC(
     changed = false;
     // Find the variable which maximizes the minimum association score with the target,
     // given any subset of the current candidate PC
-    VarType x;
+    VarType x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
     SetType remove;
     for (const VarType y: candidates) {
