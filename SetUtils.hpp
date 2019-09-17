@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <ostream>
 
 /**
  * @brief Class that provides a lightweight subset wrapper over an STL container.
@@ -107,7 +108,7 @@ public:
   }
 
   SubsetWrapper<typename std::vector<ValueType>::iterator>
-  subset() const
+  get() const
   {
     return SubsetWrapper<typename std::vector<ValueType>::iterator>(m_first, m_current, m_k);
   }
@@ -142,6 +143,27 @@ set_contains(const SetType&, const ValueType);
 template <typename SetType>
 SetType
 set_union(const SetType&, const SetType&);
+
+/**
+ * @brief Function for getting the difference of the second set from the first.
+ */
+template <typename SetType>
+SetType
+set_difference(const SetType&, const SetType&);
+
+/**
+ * @brief Function for checking if the first set is a subset of the second.
+ */
+template <typename SetType>
+bool
+is_subset(
+  const SetType& first,
+  const SetType& second
+)
+{
+  auto diff = set_difference(first, second);
+  return diff.empty();
+}
 
 #include "detail/StdSetUtils.hpp"
 #include "detail/UintSetUtils.hpp"

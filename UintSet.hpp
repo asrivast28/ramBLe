@@ -53,6 +53,9 @@ public:
   const SetType&
   operator*() const;
 
+  SetType&
+  operator*();
+
   bool
   operator==(const UintSet&) const;
 
@@ -67,6 +70,9 @@ public:
 
   void
   erase(const ValueType);
+
+  ValueType
+  max() const;
 
   uint32_t
   size() const;
@@ -91,11 +97,6 @@ public:
   friend
   SetType
   set_init(SetType&&, const VarType);
-
-  template <typename SetType>
-  friend
-  SetType
-  set_union(const SetType&, const SetType&);
 
 private:
   SetType m_set;

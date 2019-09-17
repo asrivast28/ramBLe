@@ -73,4 +73,49 @@ set_union<std::set<uint16_t>>(
   return result;
 }
 
+template <>
+std::set<uint8_t>
+set_difference<std::set<uint8_t>>(
+  const std::set<uint8_t>& first,
+  const std::set<uint8_t>& second
+)
+{
+  std::set<uint8_t> result;
+  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
+  return result;
+}
+
+template <>
+std::set<uint16_t>
+set_difference<std::set<uint16_t>>(
+  const std::set<uint16_t>& first,
+  const std::set<uint16_t>& second
+)
+{
+  std::set<uint16_t> result;
+  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
+  return result;
+}
+
+/**
+ * @brief Function for getting the output represention of a set.
+ */
+template <typename ValueType>
+std::ostream&
+operator<<(
+  std::ostream& stream,
+  const std::set<ValueType>& set
+)
+{
+  stream << "{";
+  for (auto elem: set) {
+    stream << static_cast<uint32_t>(elem) << ",";
+  }
+  if (set.size() > 0) {
+    stream << '\b';
+  }
+  stream << "}";
+  return stream;
+}
+
 #endif // DETAIL_STDSETUTILS_HPP_

@@ -162,6 +162,14 @@ UintSet<ValueType>::operator*(
 }
 
 template <typename ValueType>
+typename UintSet<ValueType>::SetType&
+UintSet<ValueType>::operator*(
+)
+{
+  return m_set;
+}
+
+template <typename ValueType>
 bool
 UintSet<ValueType>::operator==(
   const UintSet<ValueType>& other
@@ -210,6 +218,14 @@ UintSet<ValueType>::erase(
 {
   LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%u) which does not exist in the set", x);
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
+}
+
+template <typename ValueType>
+ValueType
+UintSet<ValueType>::max(
+) const
+{
+  return m_max;
 }
 
 template <typename ValueType>

@@ -478,7 +478,7 @@ Data<CounterType, VarType>::minAssocScore(
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<SetType, VarType> sit(given, i);
     do {
-      double thisScore = this->assocScore(x, y, sit.subset());
+      double thisScore = this->assocScore(x, y, sit.get());
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;
       }
@@ -517,10 +517,10 @@ Data<CounterType, VarType>::minAssocScoreSubset(
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<SetType, VarType> sit(given, i);
     do {
-      double thisScore = this->assocScore(x, y, sit.subset());
+      double thisScore = this->assocScore(x, y, sit.get());
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;
-        auto subset = sit.subset();
+        auto subset = sit.get();
         z = set_init(SetType(subset.begin(), subset.end()), numVars());
       }
       sit.next();
