@@ -43,7 +43,7 @@ TopologicalDiscovery<DataType, VarType, SetType>::removeFalsePC(
   SetType& cpc
 ) const
 {
-  SetType removed;
+  auto removed = set_init(SetType(), this->m_data.numVars());
   auto initial = cpc;
   for (const VarType x: initial) {
     cpc.erase(x);
@@ -78,7 +78,7 @@ TopologicalDiscovery<DataType, VarType, SetType>::getCandidateMB(
 ) const
 {
   LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
-  SetType cmb;
+  auto cmb = set_init(SetType(), this->m_data.numVars());
   auto pc = this->getPC(target);
   for (const VarType y: pc) {
     LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)", this->m_data.varName(y), this->m_data.varName(target));
@@ -121,7 +121,7 @@ MMPC<DataType, VarType, SetType>::getCandidatePC(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
-  SetType cpc;
+  auto cpc = set_init(SetType(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -169,7 +169,7 @@ HITON<DataType, VarType, SetType>::getCandidatePC(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  SetType cpc;
+  auto cpc = set_init(SetType(), this->m_data.numVars());
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
     VarType x = this->m_data.numVars();
@@ -210,12 +210,12 @@ SemiInterleavedHITON<DataType, VarType, SetType>::getCandidatePC(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  SetType cpc;
+  auto cpc = set_init(SetType(), this->m_data.numVars());
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
     VarType x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
-    SetType remove;
+    auto remove = set_init(SetType(), this->m_data.numVars());
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
@@ -265,7 +265,7 @@ GetPC<DataType, VarType, SetType>::getCandidatePC(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
-  SetType cpc;
+  auto cpc = set_init(SetType(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -273,7 +273,7 @@ GetPC<DataType, VarType, SetType>::getCandidatePC(
     // given any subset of the current candidate PC
     VarType x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
-    SetType remove;
+    auto remove = set_init(SetType(), this->m_data.numVars());
     for (const VarType y: candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);

@@ -6,6 +6,12 @@
 #define SETUTILS_HPP_
 
 
+/**
+ * @brief Function for initializing a given set.
+ */
+template <typename SetType, typename ValueType>
+SetType
+set_init(SetType&&, const ValueType);
 
 /**
  * @brief Function for checking if a given set contains a value.

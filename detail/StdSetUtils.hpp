@@ -10,6 +10,26 @@
 
 
 template <>
+std::set<uint8_t>
+set_init<std::set<uint8_t>, uint8_t>(
+  std::set<uint8_t>&& set,
+  const uint8_t
+)
+{
+  return set;
+}
+
+template <>
+std::set<uint16_t>
+set_init<std::set<uint16_t>, uint16_t>(
+  std::set<uint16_t>&& set,
+  const uint16_t
+)
+{
+  return set;
+}
+
+template <>
 bool
 set_contains<std::set<uint8_t>, uint8_t>(
   const std::set<uint8_t>& set,

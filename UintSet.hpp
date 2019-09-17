@@ -44,11 +44,11 @@ public:
   capacity();
 
 public:
-  UintSet();
+  UintSet(const ValueType = capacity());
 
-  UintSet(const std::initializer_list<ValueType>&);
+  UintSet(const std::initializer_list<ValueType>&, const ValueType = capacity());
 
-  UintSet(const typename std::vector<ValueType>::iterator&, const typename std::vector<ValueType>::iterator&);
+  UintSet(const typename std::vector<ValueType>::iterator&, const typename std::vector<ValueType>::iterator&, const ValueType = capacity());
 
   bool
   operator==(const UintSet&) const;
@@ -84,6 +84,11 @@ public:
   find(const ValueType) const;
 
 public:
+  template <typename SetType, typename VarType>
+  friend
+  SetType
+  set_init(SetType&&, const VarType);
+
   template <typename SetType>
   friend
   SetType
@@ -91,6 +96,7 @@ public:
 
 private:
   SetType m_set;
+  ValueType m_max;
 }; // class UintSet
 
 #include "detail/UintSet.hpp"

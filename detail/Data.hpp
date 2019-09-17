@@ -5,6 +5,8 @@
 #ifndef DETAIL_DATA_HPP_
 #define DETAIL_DATA_HPP_
 
+#include "../SetUtils.hpp"
+
 #include "utils/Logging.hpp"
 #include "bit_util.hpp"
 
@@ -409,7 +411,7 @@ Data<CounterType, VarType>::varIndices(
   const std::vector<std::string>& names
 ) const
 {
-  SetType indices;
+  auto indices = set_init(SetType(), numVars());
   for (const auto& name: names) {
     indices.insert(indices.end(), this->varIndex(name));
   }
@@ -632,7 +634,7 @@ Data<CounterType, VarType>::minAssocScoreSubset(
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
   double minScore = std::numeric_limits<double>::max();
-  SetType z;
+  auto z = set_init(SetType(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<VarType, SetType> sit(given, i);
     do {
@@ -640,7 +642,7 @@ Data<CounterType, VarType>::minAssocScoreSubset(
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;
         auto subset = sit.subset();
-        z = SetType(subset.begin(), subset.end());
+        z = set_init(SetType(subset.begin(), subset.end()), numVars());
       }
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));

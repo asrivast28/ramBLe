@@ -9,6 +9,28 @@
 
 
 template <>
+UintSet<uint8_t>
+set_init<UintSet<uint8_t>, uint8_t>(
+  UintSet<uint8_t>&& set,
+  const uint8_t max
+)
+{
+  set.m_max = max;
+  return set;
+}
+
+template <>
+UintSet<uint16_t>
+set_init<UintSet<uint16_t>, uint16_t>(
+  UintSet<uint16_t>&& set,
+  const uint16_t max
+)
+{
+  set.m_max = max;
+  return set;
+}
+
+template <>
 bool
 set_contains<UintSet<uint8_t>, uint8_t>(
   const UintSet<uint8_t>& set,

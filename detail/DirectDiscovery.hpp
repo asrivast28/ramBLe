@@ -41,7 +41,7 @@ DirectDiscovery<DataType, VarType, SetType>::shrinkMB(
   SetType& cmb
 ) const
 {
-  SetType removed;
+  auto removed = set_init(SetType(), this->m_data.numVars());
   if (cmb.empty()) {
     return removed;
   }
@@ -78,7 +78,7 @@ DirectDiscovery<DataType, VarType, SetType>::getCandidatePC(
 ) const
 {
   LOG_MESSAGE(info, "Direct Discovery: Getting PC from MB for %s", this->m_data.varName(target));
-  SetType cpc;
+  auto cpc = set_init(SetType(), this->m_data.numVars());
   auto mb = this->getMB(target);
   for (const VarType y: mb) {
     LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC", this->m_data.varName(y));
@@ -116,7 +116,7 @@ GSMB<DataType, VarType, SetType>::getCandidateMB(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
-  SetType cmb;
+  auto cmb = set_init(SetType(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -167,7 +167,7 @@ IAMB<DataType, VarType, SetType>::getCandidateMB(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
-  SetType cmb;
+  auto cmb = set_init(SetType(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -214,7 +214,7 @@ InterIAMB<DataType, VarType, SetType>::getCandidateMB(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
-  SetType cmb;
+  auto cmb = set_init(SetType(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;

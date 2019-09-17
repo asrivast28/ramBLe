@@ -19,7 +19,7 @@ template <typename DataType, typename VarType, typename SetType>
 MBDiscovery<DataType, VarType, SetType>::MBDiscovery(
   const DataType& data
 ) : m_data(data),
-    m_vars()
+    m_vars(set_init(SetType(), data.numVars()))
 {
   for (auto i = 0u; i < data.numVars(); ++i) {
     m_vars.insert(m_vars.end(), i);

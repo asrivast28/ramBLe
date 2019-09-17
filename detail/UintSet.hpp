@@ -7,6 +7,8 @@
 
 #include "bit_util.hpp"
 
+#include "utils/Logging.hpp"
+
 #include <iterator>
 
 
@@ -62,9 +64,10 @@ public:
   using SetType = typename UintTypeTrait<ValueType>::SetType;
 
 public:
-  Iterator(const SetType* set, const ValueType curr = UintTypeTrait<ValueType>::max())
+  Iterator(const SetType* set, const ValueType max, const ValueType curr = UintTypeTrait<ValueType>::max())
     : m_set(set),
-      m_curr(curr)
+      m_max(max),
+      m_curr((curr > max)? max: curr)
   {
     next();
   }
@@ -99,15 +102,14 @@ private:
   void
   next()
   {
-     while ((m_curr < UintTypeTrait<ValueType>::max()) &&
-            !in_set(*m_set, static_cast<int>(m_curr)))
-    {
+     while ((m_curr < m_max) && !in_set(*m_set, static_cast<int>(m_curr))) {
       ++m_curr;
     }
   }
 
 private:
   const SetType* m_set;
+  ValueType m_max;
   ValueType m_curr;
 };
 
@@ -126,22 +128,28 @@ UintSet<ValueType>::capacity(
 
 template <typename ValueType>
 UintSet<ValueType>::UintSet(
-) : m_set(set_empty<SetType>())
+  const ValueType max
+) : m_set(set_empty<SetType>()),
+    m_max(max)
 {
 }
 
 template <typename ValueType>
 UintSet<ValueType>::UintSet(
-  const std::initializer_list<ValueType>& s
-) : m_set(as_set<SetType>(s.begin(), s.end()))
+  const std::initializer_list<ValueType>& s,
+  const ValueType max
+) : m_set(as_set<SetType>(s.begin(), s.end())),
+    m_max(max)
 {
 }
 
 template <typename ValueType>
 UintSet<ValueType>::UintSet(
   const typename std::vector<ValueType>::iterator& first,
-  const typename std::vector<ValueType>::iterator& second
-) : m_set(as_set<SetType>(first, second))
+  const typename std::vector<ValueType>::iterator& second,
+  const ValueType max
+) : m_set(as_set<SetType>(first, second)),
+    m_max(max)
 {
 }
 
@@ -169,6 +177,7 @@ UintSet<ValueType>::insert(
   const ValueType x
 )
 {
+  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%u) which is greater than the max (%u)", x, m_max);
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -180,6 +189,7 @@ UintSet<ValueType>::insert(
   const ValueType x
 )
 {
+  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%u) which is greater than the max (%u)", x, m_max);
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -190,6 +200,7 @@ UintSet<ValueType>::erase(
   const ValueType x
 )
 {
+  LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%u) which does not exist in the set", x);
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
 }
 
@@ -223,7 +234,7 @@ typename UintSet<ValueType>::Iterator
 UintSet<ValueType>::begin(
 ) const
 {
-  return Iterator(&m_set, 0);
+  return Iterator(&m_set, m_max, 0);
 }
 
 template <typename ValueType>
@@ -231,7 +242,7 @@ typename UintSet<ValueType>::Iterator
 UintSet<ValueType>::end(
 ) const
 {
-  return Iterator(&m_set);
+  return Iterator(&m_set, m_max);
 }
 
 template <typename ValueType>
@@ -240,7 +251,7 @@ UintSet<ValueType>::find(
   const ValueType x
 ) const
 {
-  return contains(x) ? Iterator(&m_set, x): end();
+  return contains(x) ? Iterator(&m_set, m_max, x): end();
 }
 
 #endif // DETAIL_UINTSET_HPP_
