@@ -47,35 +47,35 @@ public:
 
   template <typename SetType = std::set<VarType>>
   double
-  pValue(const VarType&, const VarType&, const SetType& = SetType()) const;
+  pValue(const VarType, const VarType, const SetType& = SetType()) const;
 
   template <typename SetType = std::set<VarType>>
   double
-  assocScore(const VarType&, const VarType&, const SetType& = SetType()) const;
+  assocScore(const VarType, const VarType, const SetType& = SetType()) const;
 
   template <typename SetType = std::set<VarType>>
   bool
-  isIndependent(const VarType&, const VarType&, const SetType& = SetType()) const;
+  isIndependent(const VarType, const VarType, const SetType& = SetType()) const;
 
   bool
   isIndependent(const double) const;
 
   template <typename SetType>
   double
-  minAssocScore(const VarType&, const VarType&, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  minAssocScore(const VarType, const VarType, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 
   template <typename SetType>
   std::pair<double, SetType>
-  minAssocScoreSubset(const VarType&, const VarType&, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  minAssocScoreSubset(const VarType, const VarType, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 
   template <typename SetType>
   bool
-  isIndependentAnySubset(const VarType&, const VarType&, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  isIndependentAnySubset(const VarType, const VarType, const SetType&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 
 private:
   template <typename SetType>
   std::pair<uint32_t, double>
-  gSquare(const VarType&, const VarType&, const SetType&) const;
+  gSquare(const VarType, const VarType, const SetType&) const;
 
 private:
   CounterType m_counter;

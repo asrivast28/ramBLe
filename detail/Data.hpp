@@ -312,8 +312,8 @@ template <typename CounterType, typename VarType>
 template <typename SetType>
 std::pair<uint32_t, double>
 Data<CounterType, VarType>::gSquare(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given
 ) const
 {
@@ -325,7 +325,7 @@ Data<CounterType, VarType>::gSquare(
 
   std::vector<data_type> r(given.size());
   auto pa = UintSet<VarType>(numVars());
-  auto k = 0;
+  auto k = 0u;
   for (auto xk = given.begin(); xk != given.end(); ++xk, ++k) {
     pa.insert(*xk);
     r[k] = m_counter.r(*xk);
@@ -382,8 +382,8 @@ template <typename CounterType, typename VarType>
 template <typename SetType>
 double
 Data<CounterType, VarType>::pValue(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given
 ) const
 {
@@ -409,8 +409,8 @@ template <typename SetType>
  */
 double
 Data<CounterType, VarType>::assocScore(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given
 ) const
 {
@@ -429,8 +429,8 @@ template <typename SetType>
  */
 bool
 Data<CounterType, VarType>::isIndependent(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given
 ) const
 {
@@ -467,8 +467,8 @@ template <typename CounterType, typename VarType>
 template <typename SetType>
 double
 Data<CounterType, VarType>::minAssocScore(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given,
   const uint32_t maxSize
 ) const
@@ -505,8 +505,8 @@ template <typename CounterType, typename VarType>
 template <typename SetType>
 std::pair<double, SetType>
 Data<CounterType, VarType>::minAssocScoreSubset(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given,
   const uint32_t maxSize
 ) const
@@ -544,8 +544,8 @@ template <typename CounterType, typename VarType>
 template <typename SetType>
 bool
 Data<CounterType, VarType>::isIndependentAnySubset(
-  const VarType& x,
-  const VarType& y,
+  const VarType x,
+  const VarType y,
   const SetType& given,
   const uint32_t maxSize
 ) const
