@@ -77,29 +77,27 @@ public:
       return;
     }
     m_valid = false;
-    auto it1 = m_current;
     auto it2 = (m_last-1);
-    while (m_first != it1) {
-      if (*--it1 < *it2) {
+    for (auto it1 = (m_current-1); (it1+1) != m_first; --it1) {
+      if (*it1 < *it2) {
         auto j = m_current;
-        while (!(*it1 < *j)) {
+        while (*j <= *it1) {
           ++j;
         }
         std::iter_swap(it1, j);
         ++it1;
         ++j;
-        it2 = m_current;
         std::rotate(it1, j, m_last);
-        while (m_last != j) {
+        it2 = m_current;
+        while (j != m_last) {
           ++j;
           ++it2;
         }
         std::rotate(m_current, it2, m_last);
         m_valid = true;
-        return;
+        break;
       }
     }
-    std::rotate(m_first, m_current, m_last);
   }
 
   bool
