@@ -50,6 +50,9 @@ public:
 
   UintSet(const typename std::vector<ValueType>::iterator&, const typename std::vector<ValueType>::iterator&, const ValueType = capacity());
 
+  const SetType&
+  operator*() const;
+
   bool
   operator==(const UintSet&) const;
 

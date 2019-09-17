@@ -6,6 +6,7 @@
 #define DETAIL_DATA_HPP_
 
 #include "../SetUtils.hpp"
+#include "../UintSet.hpp"
 
 #include "utils/Logging.hpp"
 
@@ -317,23 +318,23 @@ Data<CounterType, VarType>::gSquare(
 ) const
 {
   using data_type = typename CounterType::data_type;
-  using set_type = typename CounterType::set_type;
 
   uint32_t df = (m_counter.r(x) - 1) * (m_counter.r(y) - 1);
   LOG_MESSAGE(trace, "r_x=%d,r_y=%d", m_counter.r(x), m_counter.r(y));
   double gSquare = 0.0;
 
   std::vector<data_type> r(given.size());
-  auto pa = set_empty<set_type>();
+  auto pa = UintSet<VarType>(numVars());
   auto k = 0;
   for (auto xk = given.begin(); xk != given.end(); ++xk, ++k) {
-    pa = set_add(pa, *xk);
+    pa.insert(*xk);
     r[k] = m_counter.r(*xk);
     df *= r[k];
   }
-  auto xi = as_set<set_type>({x});
-  auto xj = as_set<set_type>({y});
-  auto pa_x = set_add(pa, x);
+  auto xi = set_init(UintSet<VarType>{x}, numVars());
+  auto xj = set_init(UintSet<VarType>{y}, numVars());
+  auto pa_x = pa;
+  pa_x.insert(x);
   auto lower = std::lower_bound(given.begin(), given.end(), x);
   auto idx = std::distance(given.begin(), lower);
 
@@ -341,7 +342,7 @@ Data<CounterType, VarType>::gSquare(
   for (auto c = StateIterator<data_type>(r, idx); c.valid(); c.next()) {
     for (data_type a = 0; a < m_counter.r(x); ++a) {
       std::vector<data_type> xi_state{a};
-      m_counter.apply(xi, pa, xi_state, c.state(), G);
+      m_counter.apply(*xi, *pa, xi_state, c.state(), G);
       auto sk = G[0].base();
       auto sik = G[0].total();
       if ((sk == 0) || (sik == 0)) {
@@ -349,12 +350,12 @@ Data<CounterType, VarType>::gSquare(
       }
       for (data_type b = 0; b < m_counter.r(y); ++b) {
         std::vector<data_type> xj_state{b};
-        m_counter.apply(xj, pa, xj_state, c.state(), G);
+        m_counter.apply(*xj, *pa, xj_state, c.state(), G);
         auto sjk = G[0].total();
         if (sjk == 0) {
           continue;
         }
-        m_counter.apply(xj, pa_x, xj_state, c.stateX(a), G);
+        m_counter.apply(*xj, *pa_x, xj_state, c.stateX(a), G);
         auto sijk = G[0].total();
         if (sijk == 0) {
           continue;

@@ -154,6 +154,14 @@ UintSet<ValueType>::UintSet(
 }
 
 template <typename ValueType>
+const typename UintSet<ValueType>::SetType&
+UintSet<ValueType>::operator*(
+) const
+{
+  return m_set;
+}
+
+template <typename ValueType>
 bool
 UintSet<ValueType>::operator==(
   const UintSet<ValueType>& other
