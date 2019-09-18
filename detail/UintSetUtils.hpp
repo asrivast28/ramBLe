@@ -7,6 +7,71 @@
 
 #include "../UintSet.hpp"
 
+#include <algorithm>
+
+
+/**
+ * @brief Class that iterates over all the subsets of the given size of a given UintSet.
+ *
+ * @tparam SetType Type of the set container.
+ * @tparam ValueType Type of the variable (expected to be an integral type).
+ */
+template <typename ValueType>
+class SubsetIterator<UintSet<ValueType>, ValueType> {
+public:
+  static constexpr int N = UintTypeTrait<ValueType>::N;
+
+public:
+  SubsetIterator(const UintSet<ValueType>& given, const uint32_t k)
+    : m_given(given),
+      m_subset(),
+      m_candidates(given.max(), false),
+      m_valid(!((given.size() == 0) || (given.size() == k)))
+  {
+    auto i = 0u;
+    for (auto it = m_candidates.begin(); i < k; ++it, ++i) {
+      *it = true;
+    }
+    m_subset = UintSet<ValueType>(m_candidates, m_subset.max());
+    if (!is_subset(m_subset, m_given)) {
+      next();
+    }
+  }
+
+  void
+  next()
+  {
+    if (!m_valid) {
+      return;
+    }
+    m_valid = false;
+    while (std::prev_permutation(m_candidates.begin(), m_candidates.end())) {
+      m_subset = UintSet<ValueType>(m_candidates, m_subset.max());
+      if (is_subset(m_subset, m_given)) {
+        m_valid = true;
+        break;
+      }
+    }
+  }
+
+  bool
+  valid()
+  {
+    return m_valid;
+  }
+
+  const UintSet<ValueType>&
+  get() const
+  {
+    return (!m_valid) ? m_given: m_subset;
+  }
+
+private:
+  const UintSet<ValueType>& m_given;
+  UintSet<ValueType> m_subset;
+  std::vector<bool> m_candidates;
+  bool m_valid;
+}; // class SubsetIterator
 
 template <>
 UintSet<uint8_t>

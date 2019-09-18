@@ -48,7 +48,11 @@ public:
 
   UintSet(const std::initializer_list<ValueType>&, const ValueType = capacity());
 
+  UintSet(const Iterator&, const Iterator&, const ValueType = capacity());
+
   UintSet(const typename std::vector<ValueType>::iterator&, const typename std::vector<ValueType>::iterator&, const ValueType = capacity());
+
+  UintSet(const std::vector<bool>&, const ValueType = capacity());
 
   const SetType&
   operator*() const;

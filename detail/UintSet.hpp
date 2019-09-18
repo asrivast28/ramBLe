@@ -145,12 +145,38 @@ UintSet<ValueType>::UintSet(
 
 template <typename ValueType>
 UintSet<ValueType>::UintSet(
-  const typename std::vector<ValueType>::iterator& first,
-  const typename std::vector<ValueType>::iterator& second,
+  const typename UintSet<ValueType>::Iterator& first,
+  const typename UintSet<ValueType>::Iterator& last,
   const ValueType max
-) : m_set(as_set<SetType>(first, second)),
+) : m_set(as_set<SetType>(first, last)),
     m_max(max)
 {
+}
+
+template <typename ValueType>
+UintSet<ValueType>::UintSet(
+  const typename std::vector<ValueType>::iterator& first,
+  const typename std::vector<ValueType>::iterator& last,
+  const ValueType max
+) : m_set(as_set<SetType>(first, last)),
+    m_max(max)
+{
+}
+
+template <typename ValueType>
+UintSet<ValueType>::UintSet(
+  const std::vector<bool>& bitset,
+  const ValueType max
+) : m_set(set_empty<SetType>()),
+    m_max(max)
+{
+  auto i = 0u;
+  for (auto elem: bitset) {
+    if (elem) {
+      insert(i);
+    }
+    ++i;
+  }
 }
 
 template <typename ValueType>
