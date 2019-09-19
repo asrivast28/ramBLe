@@ -6,21 +6,21 @@
 #ifndef TOPOLOGICALDISCOVERY_HPP_
 #define TOPOLOGICALDISCOVERY_HPP_
 
-#include "MBDiscovery.hpp"
+#include "ConstraintBasedDiscovery.hpp"
 
 #include <set>
 #include <unordered_map>
 
 
 /**
- * @brief Abstract base class for topological discovery of MBs.
+ * @brief Abstract base class for causal discovery by first learning PC sets.
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
  * @tparam SetType Type of set container.
  */
 template <typename DataType, typename VarType, typename SetType>
-class TopologicalDiscovery : public MBDiscovery<DataType, VarType, SetType> {
+class TopologicalDiscovery : public ConstraintBasedDiscovery<DataType, VarType, SetType> {
 public:
   TopologicalDiscovery(const DataType&);
 

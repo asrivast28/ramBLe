@@ -32,7 +32,7 @@
  *         The unique_ptr points to a nullptr if the algorithm is not found.
  */
 template <typename VarType, typename SetType, typename DataType>
-std::unique_ptr<MBDiscovery<DataType, VarType, SetType>>
+std::unique_ptr<ConstraintBasedDiscovery<DataType, VarType, SetType>>
 getAlgorithm(
   const std::string& algoName,
   const DataType& data
@@ -68,7 +68,7 @@ getAlgorithm(
   }
   ss << "getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
-  return std::unique_ptr<MBDiscovery<DataType, VarType, SetType>>();
+  return std::unique_ptr<ConstraintBasedDiscovery<DataType, VarType, SetType>>();
 }
 
 /**

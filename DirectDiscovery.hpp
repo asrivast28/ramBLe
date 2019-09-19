@@ -6,20 +6,20 @@
 #ifndef DIRECTDISCOVERY_HPP_
 #define DIRECTDISCOVERY_HPP_
 
-#include "MBDiscovery.hpp"
+#include "ConstraintBasedDiscovery.hpp"
 
 #include <set>
 
 
 /**
- * @brief Abstract base class for direct discovery of MBs.
+ * @brief Abstract base class for causal discovery by first learning MB sets.
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
  * @tparam SetType Type of set container.
  */
 template <typename DataType, typename VarType, typename SetType>
-class DirectDiscovery : public MBDiscovery<DataType, VarType, SetType> {
+class DirectDiscovery : public ConstraintBasedDiscovery<DataType, VarType, SetType> {
 public:
   DirectDiscovery(const DataType&);
 
@@ -35,7 +35,7 @@ public:
 
 /**
  * @brief Class that implements Grow-Shrink strategy for MB discovery,
- *         as described by Margaritis & Thrun.
+ *        as described by Margaritis & Thrun.
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
@@ -52,7 +52,7 @@ public:
 
 /**
  * @brief Class that implements Incremental Association strategy for MB discovery,
- *         as described by Tsamardinos et al.
+ *        as described by Tsamardinos et al.
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
@@ -69,7 +69,7 @@ public:
 
 /**
  * @brief Class that implements Interleaved Incremental Association strategy
- *         for MB discovery, as described by Tsamardinos et al.
+ *        for MB discovery, as described by Tsamardinos et al.
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).

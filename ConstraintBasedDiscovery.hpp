@@ -1,25 +1,25 @@
 /**
- * @file MBDiscovery.hpp
- * @brief Declaration of the MBDiscovery class.
+ * @file ConstraintBasedDiscovery.hpp
+ * @brief Declaration of the ConstraintBasedDiscovery class.
  */
-#ifndef MBDISCOVERY_HPP_
-#define MBDISCOVERY_HPP_
+#ifndef CONSTRAINTBASEDDISCOVERY_HPP_
+#define CONSTRAINTBASEDDISCOVERY_HPP_
 
 #include <set>
 #include <unordered_map>
 
 
 /**
- * @brief Abstract base class for discovering Markov Blankets (MB).
+ * @brief Abstract base class for causal discovery using constraint-based learning.
  *
  * @tparam DataType Type of the object which is used for querying the data.
  * @tparam VarType Type of variable indices (expected to be an integer type).
  * @tparam SetType Type of set container.
  */
 template <typename DataType, typename VarType, typename SetType>
-class MBDiscovery {
+class ConstraintBasedDiscovery {
 public:
-  MBDiscovery(const DataType&);
+  ConstraintBasedDiscovery(const DataType&);
 
   SetType
   getPC(const VarType) const;
@@ -28,7 +28,7 @@ public:
   getMB(const VarType) const;
 
   virtual
-  ~MBDiscovery() { };
+  ~ConstraintBasedDiscovery() { };
 
 protected:
   SetType
@@ -62,8 +62,8 @@ protected:
 private:
   mutable std::unordered_map<VarType, SetType> m_cachedPC;
   mutable std::unordered_map<VarType, SetType> m_cachedMB;
-}; // class MBDiscovery
+}; // class ConstraintBasedDiscovery
 
-#include "detail/MBDiscovery.hpp"
+#include "detail/ConstraintBasedDiscovery.hpp"
 
-#endif // MBDISCOVERY_HPP_
+#endif // CONSTRAINTBASEDDISCOVERY_HPP_

@@ -1,9 +1,9 @@
 /**
- * @file MBDiscovery.hpp
- * @brief Implementation of the MBDiscovery functions.
+ * @file ConstraintBasedDiscovery.hpp
+ * @brief Implementation of the ConstraintBasedDiscovery functions.
  */
-#ifndef DETAIL_MBDISCOVERY_HPP_
-#define DETAIL_MBDISCOVERY_HPP_
+#ifndef DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_
+#define DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_
 
 #include "../SetUtils.hpp"
 
@@ -16,7 +16,7 @@ template <typename DataType, typename VarType, typename SetType>
  *
  * @param data Reference to an object of the DataType.
  */
-MBDiscovery<DataType, VarType, SetType>::MBDiscovery(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::ConstraintBasedDiscovery(
   const DataType& data
 ) : m_data(data),
     m_vars(set_init(SetType(), data.numVars()))
@@ -35,7 +35,7 @@ template <typename DataType, typename VarType, typename SetType>
  * @return The indices of all the variables except the target.
  */
 SetType
-MBDiscovery<DataType, VarType, SetType>::getCandidates(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidates(
   const VarType target
 ) const
 {
@@ -55,7 +55,7 @@ template <typename DataType, typename VarType, typename SetType>
  *         in the candidate PC of the given target variable.
  */
 SetType
-MBDiscovery<DataType, VarType, SetType>::getCandidatePC_cache(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidatePC_cache(
   const VarType target,
   SetType candidates
 ) const
@@ -81,7 +81,7 @@ template <typename DataType, typename VarType, typename SetType>
  *            the candidate PC set.
  */
 void
-MBDiscovery<DataType, VarType, SetType>::symmetryCorrectPC(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::symmetryCorrectPC(
   const VarType target,
   SetType& cpc
 ) const
@@ -108,7 +108,7 @@ template <typename DataType, typename VarType, typename SetType>
  *         in the correct PC set of the target variable.
  */
 SetType
-MBDiscovery<DataType, VarType, SetType>::getPC(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::getPC(
   const VarType target
 ) const
 {
@@ -129,7 +129,7 @@ template <typename DataType, typename VarType, typename SetType>
  *         in the candidate MB of the given target variable.
  */
 SetType
-MBDiscovery<DataType, VarType, SetType>::getCandidateMB_cache(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidateMB_cache(
   const VarType target,
   SetType candidates
 ) const
@@ -155,7 +155,7 @@ template <typename DataType, typename VarType, typename SetType>
  *                The function removes the indices from the candidate set.
  */
 void
-MBDiscovery<DataType, VarType, SetType>::symmetryCorrectMB(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::symmetryCorrectMB(
   const VarType target,
   SetType& cmb
 ) const
@@ -178,7 +178,7 @@ template <typename DataType, typename VarType, typename SetType>
  * @param target The index of the target variable.
  */
 SetType
-MBDiscovery<DataType, VarType, SetType>::getMB(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::getMB(
   const VarType target
 ) const
 {
@@ -188,4 +188,4 @@ MBDiscovery<DataType, VarType, SetType>::getMB(
   return cmb;
 }
 
-#endif // DETAIL_MBDISCOVERY_HPP_
+#endif // DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_

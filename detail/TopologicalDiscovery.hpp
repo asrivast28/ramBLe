@@ -21,7 +21,7 @@ template <typename DataType, typename VarType, typename SetType>
  */
 TopologicalDiscovery<DataType, VarType, SetType>::TopologicalDiscovery(
   const DataType& data
-) : MBDiscovery<DataType, VarType, SetType>(data)
+) : ConstraintBasedDiscovery<DataType, VarType, SetType>(data)
 {
 }
 

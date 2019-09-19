@@ -21,7 +21,7 @@ template <typename DataType, typename VarType, typename SetType>
  */
 DirectDiscovery<DataType, VarType, SetType>::DirectDiscovery(
   const DataType& data
-) : MBDiscovery<DataType, VarType, SetType>(data)
+) : ConstraintBasedDiscovery<DataType, VarType, SetType>(data)
 {
 }
 
@@ -31,7 +31,7 @@ template <typename DataType, typename VarType, typename SetType>
  *
  * @param target The index of the target variable.
  * @param cmb The indices of the variables in the candidate MB of the target variable.
- *                The function removes the indices from the candidate set.
+ *            The function removes the indices from the candidate set.
  *
  * @return The indices of the variables that were removed from the candidate MB.
  */
