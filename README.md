@@ -1,6 +1,6 @@
-# Bayesian Networks - Discovering Markov Blankets
+# Bayesian Networks - Constraint-based Causal Discovery
 
-This repository implements multiple constraint-based algorithms for discovering Markov Blankets (MB) of a single variable.
+This repository implements multiple constraint-based algorithms for causal discovery from data.
 
 ## Requirements
 * **gcc** (with C++14 support)  
@@ -22,7 +22,7 @@ This dependency can be avoided by not building the unit tests. See the relevant 
 After all the dependencies have been installed, the project can be built as:  
 <pre><code>scons
 </code></pre>  
-This will create an executable named `mb`, which can be used for MB discovery.  
+This will create an executable named `ccd`, which can be used for constraint-based causal discovery.  
 Path to the Boost libraries can be specified as:  
 <pre><code>scons BOOSTLIBPATH=&lt;Boost library path, default is /usr/lib/x86_64-lib-gnu&gt;
 </code></pre>
@@ -36,7 +36,7 @@ The unit tests are built by default. The following can be executed for building 
 For building the debug version of the executable, the following can be executed:
 <pre><code>scons DEBUG=1
 </code></pre>  
-Debug version of the executable is named `mb_debug`.
+Debug version of the executable is named `ccd_debug`.
 
 #### Logging
 By default, logging is disabled in the release build and enabled in the debug build.
@@ -47,16 +47,16 @@ Please be aware that enabling logging will affect the performance.
 
 ## Execution
 Once the project has been built, the executable can be used for MB discovery as follows:
-<pre><code>./mb -f test/coronary.csv -n 6 -m 1841 -t Smoking ## Expected Output: M. Work,P. Work,Pressure,Proteins,
+<pre><code>./ccd -f test/coronary.csv -n 6 -m 1841 -t Smoking -b ## Expected Output: M. Work,P. Work,Pressure,Proteins,
 </code></pre>  
 Please execute the following for more information on all the options that the executable accepts:
-<pre><code>./mb --help 
+<pre><code>./ccd --help
 </code></pre>
 
 ## Algorithms
 
 ### Direct Discovery
-This class of algorithms directly finds the MB of the variable.
+This class of algorithms first finds the MB of the variable.
 We have added a symmetry correction step to all these algorithms.
 * `gs`  
 [Grow-Shrink (GS)](https://papers.nips.cc/paper/1685-bayesian-network-induction-via-local-neighborhoods) algorithm by Margaritis & Thrun.
@@ -66,8 +66,7 @@ We have added a symmetry correction step to all these algorithms.
 [Interleaved Incremental Association MB (InterIAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) by Tsamardinos et al.
 
 ### Topological Discovery
-This class of algorithms find the parent-child (PC) sets of nodes, as an intermediate step.
-Then, they use the PC sets for generating the MB of the variable.
+This class of algorithms first finds the parent-child (PC) sets of nodes.
 * `mmpc`  
 [Max-Min PC (MMPC)](https://link.springer.com/article/10.1007/s10994-006-6889-7) algorithm by Tsamardinos et al. and corrected by Pena et al.
 * `hiton`  

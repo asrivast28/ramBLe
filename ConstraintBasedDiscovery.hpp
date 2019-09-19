@@ -5,6 +5,8 @@
 #ifndef CONSTRAINTBASEDDISCOVERY_HPP_
 #define CONSTRAINTBASEDDISCOVERY_HPP_
 
+#include "graph/Graph.hpp"
+
 #include <set>
 #include <unordered_map>
 
@@ -26,6 +28,9 @@ public:
 
   SetType
   getMB(const VarType) const;
+
+  Graph<DirectedAdjacencyList, VertexLabel, VarType>
+  getNetwork(const bool = true) const;
 
   virtual
   ~ConstraintBasedDiscovery() { };
@@ -57,7 +62,7 @@ private:
 
 protected:
   const DataType m_data;
-  SetType m_vars;
+  SetType m_allVars;
 
 private:
   mutable std::unordered_map<VarType, SetType> m_cachedPC;

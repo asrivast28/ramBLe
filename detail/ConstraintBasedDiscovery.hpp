@@ -19,10 +19,10 @@ template <typename DataType, typename VarType, typename SetType>
 ConstraintBasedDiscovery<DataType, VarType, SetType>::ConstraintBasedDiscovery(
   const DataType& data
 ) : m_data(data),
-    m_vars(set_init(SetType(), data.numVars()))
+    m_allVars(set_init(SetType(), data.numVars()))
 {
   for (auto i = 0u; i < data.numVars(); ++i) {
-    m_vars.insert(m_vars.end(), i);
+    m_allVars.insert(m_allVars.end(), i);
   }
 }
 
@@ -39,7 +39,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidates(
   const VarType target
 ) const
 {
-  auto candidates = m_vars;
+  auto candidates = m_allVars;
   candidates.erase(target);
   return candidates;
 }
@@ -186,6 +186,31 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getMB(
   auto cmb = this->getCandidateMB_cache(target, std::move(candidates));
   this->symmetryCorrectMB(target, cmb);
   return cmb;
+}
+
+template <typename DataType, typename VarType, typename SetType>
+/**
+ * @brief Top level function for getting the complete causal network.
+ *
+ * @param target The index of the target variable.
+ */
+Graph<DirectedAdjacencyList, VertexLabel, VarType>
+ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
+  const bool undirected
+) const
+{
+  auto varNames = this->m_data.varNames(m_allVars);
+  Graph<DirectedAdjacencyList, VertexLabel, VarType> g(varNames);
+  for (const auto x: m_allVars) {
+    auto pcX = this->getPC(x);
+    for (const auto y: pcX) {
+      g.addEdge(x, y);
+    }
+  }
+  if (!undirected) {
+    // TODO: Implement other things.
+  }
+  return g;
 }
 
 #endif // DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_

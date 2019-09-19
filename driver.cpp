@@ -72,80 +72,82 @@ getAlgorithm(
 }
 
 /**
- * @brief Gets the Markov Blanket for the given target variable.
+ * @brief Gets the neighborhood for the given target variable.
  *
  * @tparam VarType Type of the variables (expected to be an integral type).
  * @tparam CounterType Type of the object that provides counting queries.
  * @param counter Object that executes counting queries.
  * @param varNames Names of all the variables.
- * @param algoName The name of the algorithm to be used for MB discovery.
- * @param targetVar The name of the variable for which the MB is to be discovered.
+ * @param options Program options provider.
  *
- * @return The list of names in the MB of the given target variable.
+ * @return The list of labels of the variables in the neighborhood.
  */
 template <typename CounterType, typename VarType>
 std::vector<std::string>
-getMB(
+getNeighborhood(
   const CounterType& counter,
   const std::vector<std::string>& varNames,
-  const std::string& algoName,
-  const std::string& targetVar
+  const ProgramOptions& options
 )
 {
-  std::set<uint32_t> discovered;
   Data<CounterType, VarType> data(counter, varNames);
-  auto algo = getAlgorithm<VarType, UintSet<VarType>>(algoName, data);
-  auto target = data.varIndex(targetVar);
+  auto algo = getAlgorithm<VarType, UintSet<VarType>>(options.algoName(), data);
+  auto target = data.varIndex(options.targetVar());
   if (target == varNames.size()) {
     throw std::runtime_error("Target variable not found.");
   }
-  return data.varNames(algo->getMB(target));
+  if (!options.outputFile().empty()) {
+    auto g = algo->getNetwork();
+    g.writeGraphviz(options.outputFile());
+  }
+  if (options.discoverMB()) {
+    return data.varNames(algo->getMB(target));
+  }
+  else {
+    return data.varNames(algo->getPC(target));
+  }
 }
 
 /**
- * @brief Gets the Markov Blanket for the given target variable.
+ * @brief Gets the neighborhood for the given target variable.
  *
  * @tparam DataType Type of the data observed.
  * @param n The total number of variables.
  * @param m The total number of observations.
- * @param data The observed data.
- * @param varNames The names of all the variables.
- * @param algoName The name of the algorithm to be used for MB discovery.
- * @param targetVar The name of the variable for which the MB is to be discovered.
+ * @param dataFile File data provider.
+ * @param options Program options provider.
  *
- * @return The list of names in the MB of the given target variable.
+ * @return The list of labels of the variables in the neighborhood.
  */
-template <typename DataType>
+template <typename FileType>
 std::vector<std::string>
-getMBVars(
+getNeighborhood(
   const uint32_t& n,
   const uint64_t& m,
-  const std::vector<DataType>& data,
-  const std::vector<std::string>& varNames,
-  const std::string& algoName,
-  const std::string& targetVar
+  const FileType& dataFile,
+  const ProgramOptions& options
 )
 {
-  std::vector<std::string> mbVars;
+  std::vector<std::string> nbrVars;
   if (n <= UintSet<uint8_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint8_t>::N;
-    auto bvc = create_BVCounter<N>(n, m, std::begin(data));
-    mbVars = getMB<BVCounter<N>, uint8_t>(bvc, varNames, algoName, targetVar);
+    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
+    nbrVars = getNeighborhood<BVCounter<N>, uint8_t>(bvc, dataFile.header(), options);
   }
   else if (n <= UintSet<uint16_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint16_t>::N;
-    auto bvc = create_BVCounter<N>(n, m, std::begin(data));
-    mbVars = getMB<BVCounter<N>, uint16_t>(bvc, varNames, algoName, targetVar);
+    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
+    nbrVars = getNeighborhood<BVCounter<N>, uint16_t>(bvc, dataFile.header(), options);
   }
   // TODO: Investigate the compiler warning in the following case.
   //else if (n < UintSet<4>::capacity()) {
-    //auto bvc = create_BVCounter<4>(n, m, std::begin(data));
-    //mbVars = getMB<BVCounter<4>, 4>(bvc, varNames, algoName, targetVar);
+    //auto bvc = create_BVCounter<4>(n, m, std::begin(dataFile.data()));
+    //nbrVars = getNeighborhood<BVCounter<4>, 4>(bvc, dataFile.header(), options);
   //}
   else {
     throw std::runtime_error("The given number of variables is not supported.");
   }
-  return mbVars;
+  return nbrVars;
 }
 
 int
@@ -168,8 +170,8 @@ main(
     uint32_t n = options.numVars();
     uint32_t m = options.numRows();
     SeparatedFile<uint8_t> dataFile(options.fileName(), n, m, ',', true, true);
-    auto mbVars = getMBVars(n, m, dataFile.data(), dataFile.header(), options.algoName(), options.targetVar());
-    for (const auto var: mbVars) {
+    auto nbrVars = getNeighborhood(n, m, dataFile, options);
+    for (const auto var: nbrVars) {
       std::cout << var << ",";
     }
     std::cout << std::endl;

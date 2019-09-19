@@ -10,12 +10,14 @@
 namespace fs = boost::filesystem;
 
 ProgramOptions::ProgramOptions(
-) : m_desc("Discover Markov Blankets"),
+) : m_desc("Constraint-based Causal Discovery"),
     m_fileName(),
     m_algoName(),
     m_targetVar(),
+    m_outputFile(),
     m_numVars(),
-    m_numRows()
+    m_numRows(),
+    m_discoverMB()
 {
   m_desc.add_options()
     ("help,h", "Print this message.")
@@ -25,6 +27,8 @@ ProgramOptions::ProgramOptions(
     ("nrows,m", po::value<uint32_t>(&m_numRows), "Number of rows (observations) in the dataset.")
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("gs"), "Name of the algorithm to be used.")
     ("target,t", po::value<std::string>(&m_targetVar), "Name of the target variable.")
+    ("blanket,b", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
+    ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
     ;
 }
 
@@ -88,6 +92,20 @@ ProgramOptions::targetVar(
 ) const
 {
   return m_targetVar;
+}
+
+bool
+ProgramOptions::discoverMB(
+) const
+{
+  return m_discoverMB;
+}
+
+const std::string&
+ProgramOptions::outputFile(
+) const
+{
+  return m_outputFile;
 }
 
 ProgramOptions::~ProgramOptions(

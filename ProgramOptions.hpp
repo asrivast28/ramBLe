@@ -39,6 +39,12 @@ public:
   const std::string&
   targetVar() const;
 
+  bool
+  discoverMB() const;
+
+  const std::string&
+  outputFile() const;
+
   ~ProgramOptions();
 
 private:
@@ -47,8 +53,10 @@ private:
   std::string m_fileName;
   std::string m_algoName;
   std::string m_targetVar;
+  std::string m_outputFile;
   uint32_t m_numVars;
   uint32_t m_numRows;
+  bool m_discoverMB;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_

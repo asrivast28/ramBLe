@@ -7,8 +7,8 @@ import platform
 topDir = os.path.abspath(os.getcwd())
 cpp = None
 buildDir = None
-targetName = 'mb'
-testName = 'testmb'
+targetName = 'ccd'
+testName = 'testccd'
 
 
 cppPaths = [
