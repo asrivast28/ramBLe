@@ -1,6 +1,6 @@
 /builds/
 /datasets/
-/ccd*
-/test/testccd*
+/csl*
+/test/testcsl*
 /.sconsign.dblite
 *.un~

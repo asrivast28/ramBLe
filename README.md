@@ -1,6 +1,6 @@
-# Bayesian Networks - Constraint-based Causal Discovery
+# Bayesian Networks - Constraint-based Structure Learning
 
-This repository implements multiple constraint-based algorithms for causal discovery from data.
+This repository implements multiple constraint-based algorithms for structure learning from data.
 
 ## Requirements
 * **gcc** (with C++14 support)  
@@ -22,7 +22,7 @@ This dependency can be avoided by not building the unit tests. See the relevant 
 After all the dependencies have been installed, the project can be built as:  
 <pre><code>scons
 </code></pre>  
-This will create an executable named `ccd`, which can be used for constraint-based causal discovery.  
+This will create an executable named `csl`, which can be used for constraint-based structure learning.  
 Path to the Boost libraries can be specified as:  
 <pre><code>scons BOOSTLIBPATH=&lt;Boost library path, default is /usr/lib/x86_64-lib-gnu&gt;
 </code></pre>
@@ -36,7 +36,7 @@ The unit tests are built by default. The following can be executed for building 
 For building the debug version of the executable, the following can be executed:
 <pre><code>scons DEBUG=1
 </code></pre>  
-Debug version of the executable is named `ccd_debug`.
+Debug version of the executable is named `csl_debug`.
 
 #### Logging
 By default, logging is disabled in the release build and enabled in the debug build.
@@ -47,10 +47,10 @@ Please be aware that enabling logging will affect the performance.
 
 ## Execution
 Once the project has been built, the executable can be used for MB discovery as follows:
-<pre><code>./ccd -f test/coronary.csv -n 6 -m 1841 -t Smoking -b ## Expected Output: M. Work,P. Work,Pressure,Proteins,
+<pre><code>./csl -f test/coronary.csv -n 6 -m 1841 -t Smoking -b ## Expected Output: M. Work,P. Work,Pressure,Proteins,
 </code></pre>  
 Please execute the following for more information on all the options that the executable accepts:
-<pre><code>./ccd --help
+<pre><code>./csl --help
 </code></pre>
 
 ## Algorithms
