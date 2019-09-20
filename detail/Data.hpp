@@ -512,12 +512,12 @@ Data<CounterType, VarType>::minAssocScoreSubset(
 ) const
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
-  double minScore = std::numeric_limits<double>::max();
+  auto minScore = std::numeric_limits<double>::max();
   auto z = set_init(SetType(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<SetType, VarType> sit(given, i);
     do {
-      double thisScore = this->assocScore(x, y, sit.get());
+      auto thisScore = this->assocScore(x, y, sit.get());
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;
         auto subset = sit.get();

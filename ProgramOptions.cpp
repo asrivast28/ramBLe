@@ -47,6 +47,9 @@ ProgramOptions::parse(
     ss << m_desc;
     throw po::error(ss.str());
   }
+  if ((vm.count("target") == 0) && (vm.count("output") == 0)) {
+    throw po::error("At least one of --target or --output should be specified.");
+  }
   if (!fs::exists(fs::path(m_fileName))) {
     throw po::error("Couldn't find the data file.");
   }

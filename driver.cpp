@@ -92,20 +92,24 @@ getNeighborhood(
 {
   Data<CounterType, VarType> data(counter, varNames);
   auto algo = getAlgorithm<VarType, UintSet<VarType>>(options.algoName(), data);
-  auto target = data.varIndex(options.targetVar());
-  if (target == varNames.size()) {
-    throw std::runtime_error("Target variable not found.");
+  std::vector<std::string> neighborhoodVars;
+  if (!options.targetVar().empty()) {
+    auto target = data.varIndex(options.targetVar());
+    if (target == varNames.size()) {
+      throw std::runtime_error("Target variable not found.");
+    }
+    if (options.discoverMB()) {
+      neighborhoodVars = data.varNames(algo->getMB(target));
+    }
+    else {
+      neighborhoodVars = data.varNames(algo->getPC(target));
+    }
   }
   if (!options.outputFile().empty()) {
     auto g = algo->getNetwork();
     g.writeGraphviz(options.outputFile());
   }
-  if (options.discoverMB()) {
-    return data.varNames(algo->getMB(target));
-  }
-  else {
-    return data.varNames(algo->getPC(target));
-  }
+  return neighborhoodVars;
 }
 
 /**
