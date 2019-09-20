@@ -17,7 +17,8 @@ ProgramOptions::ProgramOptions(
     m_outputFile(),
     m_numVars(),
     m_numRows(),
-    m_discoverMB()
+    m_discoverMB(),
+    m_directEdges()
 {
   m_desc.add_options()
     ("help,h", "Print this message.")
@@ -29,6 +30,7 @@ ProgramOptions::ProgramOptions(
     ("target,t", po::value<std::string>(&m_targetVar), "Name of the target variable.")
     ("blanket,b", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
     ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
+    ("directed,d", po::bool_switch(&m_directEdges)->default_value(false), "Orient the edges in the learned network.")
     ;
 }
 
@@ -109,6 +111,13 @@ ProgramOptions::outputFile(
 ) const
 {
   return m_outputFile;
+}
+
+bool
+ProgramOptions::directEdges(
+) const
+{
+  return m_directEdges;
 }
 
 ProgramOptions::~ProgramOptions(

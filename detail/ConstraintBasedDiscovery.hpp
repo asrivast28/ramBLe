@@ -67,7 +67,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidatePC_cache(
     return cpc;
   }
   else {
-    LOG_MESSAGE(debug, "* Found candidate PC for %s in the cache", this->m_data.varName(target))
+    LOG_MESSAGE(trace, "* Found candidate PC for %s in the cache", this->m_data.varName(target))
     return cacheIt->second;
   }
 }
@@ -141,7 +141,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidateMB_cache(
     return cpc;
   }
   else {
-    LOG_MESSAGE(debug, "* Found candidate MB for %s in the cache", this->m_data.varName(target));
+    LOG_MESSAGE(trace, "* Found candidate MB for %s in the cache", this->m_data.varName(target));
     return cacheIt->second;
   }
 }
@@ -196,19 +196,56 @@ template <typename DataType, typename VarType, typename SetType>
  */
 Graph<DirectedAdjacencyList, VertexLabel, VarType>
 ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
-  const bool undirected
+  const bool directEdges
 ) const
 {
+  auto smallerSet = [] (const SetType& first, const SetType& second)
+                       { return (first.size() <= second.size()) ? first: second; };
   auto varNames = this->m_data.varNames(m_allVars);
   Graph<DirectedAdjacencyList, VertexLabel, VarType> g(varNames);
   for (const auto x: m_allVars) {
+    auto setX = set_init(SetType(), this->m_data.numVars());
+    setX.insert(x);
     auto pcX = this->getPC(x);
     for (const auto y: pcX) {
-      g.addEdge(x, y);
+      if (!directEdges) {
+        LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
+        g.addEdge(x, y);
+      }
+      else {
+        // Orient the edge
+        auto mbY = this->getMB(y);
+        auto pcY = this->getPC(y);
+        // Candidate parents of x, other than y
+        auto cpaX = set_difference(pcX, pcY);
+        cpaX.erase(y);
+        bool zExists = false;
+        bool addZ = false;
+        for (const auto z: cpaX) {
+          if (mbY.contains(z)) {
+            addZ = true;
+            mbY.erase(z);
+          }
+          auto mbZ = this->getMB(z);
+          if (mbZ.contains(y)) {
+            mbZ.erase(y);
+          }
+          const auto& u = smallerSet(mbY, mbZ);
+          if (!this->m_data.isIndependentAnySubset(y, z, u, setX)) {
+            zExists = true;
+            LOG_MESSAGE(info, "* Found %s and %s to be parents of %s", this->m_data.varName(z), this->m_data.varName(y), this->m_data.varName(x));
+            break;
+          }
+          if (addZ) {
+            mbY.insert(z);
+          }
+        }
+        if (!zExists) {
+          LOG_MESSAGE(info, "+ Adding the edge %s -> %s", this->m_data.varName(x), this->m_data.varName(y));
+          g.addEdge(x, y);
+        }
+      }
     }
-  }
-  if (!undirected) {
-    // TODO: Implement other things.
   }
   return g;
 }

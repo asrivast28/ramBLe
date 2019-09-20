@@ -106,7 +106,7 @@ getNeighborhood(
     }
   }
   if (!options.outputFile().empty()) {
-    auto g = algo->getNetwork();
+    auto g = algo->getNetwork(options.directEdges());
     g.writeGraphviz(options.outputFile());
   }
   return neighborhoodVars;

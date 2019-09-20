@@ -479,9 +479,49 @@ Data<CounterType, VarType>::minAssocScore(
     SubsetIterator<SetType, VarType> sit(given, i);
     do {
       double thisScore = this->assocScore(x, y, sit.get());
-      if (std::isless(thisScore, minScore)) {
-        minScore = thisScore;
-      }
+      minScore = std::min(thisScore, minScore);
+      sit.next();
+    } while (sit.valid() && std::isgreater(minScore, m_threshold));
+  }
+  LOG_MESSAGE(debug, "minAssocScore=%g", minScore);
+  return minScore;
+}
+
+template <typename CounterType, typename VarType>
+/**
+ * @brief Finds the minimum strength of association between the given variables,
+ *        conditioned on any subset of the given conditioning set.
+ *
+ * @tparam SetType The type of the container used for indices of the given variables.
+ * @param x The index of the first variable.
+ * @param y The index of the second variable.
+ * @param given The indices of the variables to be conditioned on.
+ * @param seed The indices of the variables to be included in every subset.
+ * @param maxSize The maximum size of the subset to be tested.
+ *
+ * @return The computed minimum association score.
+ */
+template <typename SetType>
+double
+Data<CounterType, VarType>::minAssocScore(
+  const VarType x,
+  const VarType y,
+  const SetType& given,
+  const SetType& seed,
+  const uint32_t maxSize
+) const
+{
+  auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
+  auto minScore = std::numeric_limits<double>::max();
+  for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
+    SubsetIterator<SetType, VarType> sit(given, i);
+    do {
+      auto subset = sit.get();
+      auto condition = SetType(subset.begin(), subset.end());
+      // Always include the seed set in the conditioning set
+      condition = set_union(condition, seed);
+      auto thisScore = this->assocScore(x, y, condition);
+      minScore = std::min(thisScore, minScore);
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
   }
@@ -551,6 +591,32 @@ Data<CounterType, VarType>::isIndependentAnySubset(
 ) const
 {
   auto minScore = this->minAssocScore(x, y, given, maxSize);
+  return this->isIndependent(minScore);
+}
+
+template <typename CounterType, typename VarType>
+/**
+ * @brief Checks if the given variables are independent, given any
+ *        subset of the given conditioning subset.
+ *
+ * @tparam SetType The type of the container used for indices of the given variables.
+ * @param x The index of the first variable.
+ * @param y The index of the second variable.
+ * @param given The indices of the variables to be conditioned on.
+ * @param seed The indices of the variables to be included in every subset.
+ * @param maxSize The maximum size of the subset to be tested.
+ */
+template <typename SetType>
+bool
+Data<CounterType, VarType>::isIndependentAnySubset(
+  const VarType x,
+  const VarType y,
+  const SetType& given,
+  const SetType& seed,
+  const uint32_t maxSize
+) const
+{
+  auto minScore = this->minAssocScore(x, y, given, seed, maxSize);
   return this->isIndependent(minScore);
 }
 

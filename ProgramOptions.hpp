@@ -45,6 +45,9 @@ public:
   const std::string&
   outputFile() const;
 
+  bool
+  directEdges() const;
+
   ~ProgramOptions();
 
 private:
@@ -57,6 +60,7 @@ private:
   uint32_t m_numVars;
   uint32_t m_numRows;
   bool m_discoverMB;
+  bool m_directEdges;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_

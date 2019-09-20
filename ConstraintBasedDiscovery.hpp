@@ -30,7 +30,7 @@ public:
   getMB(const VarType) const;
 
   Graph<DirectedAdjacencyList, VertexLabel, VarType>
-  getNetwork(const bool = true) const;
+  getNetwork(const bool = false) const;
 
   virtual
   ~ConstraintBasedDiscovery() { };
