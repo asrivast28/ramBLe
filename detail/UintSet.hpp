@@ -219,7 +219,7 @@ UintSet<ValueType>::insert(
   const ValueType x
 )
 {
-  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%u) which is greater than the max (%u)", x, m_max);
+  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -231,7 +231,7 @@ UintSet<ValueType>::insert(
   const ValueType x
 )
 {
-  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%u) which is greater than the max (%u)", x, m_max);
+  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -242,7 +242,7 @@ UintSet<ValueType>::erase(
   const ValueType x
 )
 {
-  LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%u) which does not exist in the set", x);
+  LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%d) which does not exist in the set", static_cast<int>(x));
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
 }
 
