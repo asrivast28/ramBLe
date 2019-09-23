@@ -220,8 +220,8 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
         auto cpaX = set_difference(pcX, pcY);
         cpaX.erase(y);
         bool zExists = false;
-        bool addZ = false;
         for (const auto z: cpaX) {
+          bool addZ = false;
           if (mbY.contains(z)) {
             addZ = true;
             mbY.erase(z);
