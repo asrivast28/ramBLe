@@ -16,6 +16,8 @@
 #include "CTCounter.hpp"
 #include "RadCounter.hpp"
 
+#include <mpi.h>
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -175,18 +177,51 @@ getNeighborhood(
   return nbrVars;
 }
 
+void
+my_mpi_errorhandler(
+  MPI_Comm* comm,
+  int* errorcode,
+  ...
+)
+{
+    // throw exception, enables gdb stack trace analysis
+    throw std::runtime_error("MPI Error");
+}
+
 int
 main(
   int argc,
   char** argv
 )
 {
+  // Set up MPI
+  MPI_Init(&argc, &argv);
+
+  // Get communicator size and my rank
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int p = 0, rank = -1;
+  MPI_Comm_size(comm, &p);
+  MPI_Comm_rank(comm, &rank);
+  if (p > 1) {
+    if (rank == 0) {
+      std::cerr << "ERROR: Multi-processor execution is not supported yet." << std::endl;
+    }
+    return 1;
+  }
+
+  // Set custom error handler (for debugging with working stack-trace on gdb)
+  MPI_Errhandler errhandler;
+  MPI_Errhandler_create(&my_mpi_errorhandler, &errhandler);
+  MPI_Errhandler_set(comm, errhandler);
+
   ProgramOptions options;
   try {
     options.parse(argc, argv);
   }
   catch (const po::error& pe) {
-    std::cerr << pe.what() << std::endl;
+    if (rank == 0) {
+      std::cerr << pe.what() << std::endl;
+    }
     return 1;
   }
 
@@ -238,5 +273,8 @@ main(
     std::cerr << e.what() << std::endl;
     std::cerr << "Aborting." << std::endl;
   }
+
+  // Finalize MPI
+  MPI_Finalize();
   return 0;
 }

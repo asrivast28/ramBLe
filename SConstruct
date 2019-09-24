@@ -44,10 +44,14 @@ if localIncludePaths is not None:
 sabnatkDir = ARGUMENTS.get('SABNATK', os.path.join(topDir, 'SABNAtk'))
 if os.path.exists(sabnatkDir):
   cppPaths.append(os.path.join(sabnatkDir, 'include'))
+# Location of the mxx directory
+mxxDir = ARGUMENTS.get('MXX', os.path.join(topDir, 'mxx'))
+if os.path.exists(mxxDir):
+  cppPaths.append(os.path.join(mxxDir, 'include'))
 
 
 if platform.system() in ['Darwin', 'Linux']:
-  cpp = 'g++'
+  cpp = 'mpic++'
   cppFlags.extend([
               '-Wall',
               '-std=c++14',

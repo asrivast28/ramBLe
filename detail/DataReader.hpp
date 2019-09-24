@@ -5,6 +5,8 @@
 #ifndef DETAIL_DATAREADER_HPP_
 #define DETAIL_DATAREADER_HPP_
 
+#include "mxx/collective.hpp"
+
 #include <algorithm>
 #include <fstream>
 
@@ -91,56 +93,67 @@ RowObservationReader<DataType>::RowObservationReader(
   const bool columnMajor
 ) : DataReader<DataType>(numCols, numRows)
 {
-  std::ifstream dataFile(fileName);
-  std::string line;
-  if (varNames) {
-    // Consume the variable names before reading the data
-    std::getline(dataFile, line);
-    std::stringstream ss(line);
-    std::string name;
-    auto i = 0u;
-    while (std::getline(ss, name, sep)) {
-      // Remove any quotes from the variable names
-      name.erase(std::remove(name.begin(), name.end(), '"'), name.end());
-      this->m_varNames[i++] = name;
-    }
-  }
-  else {
-    // Create default variable names [0, ..., numCols-1]
-    for (auto i = 0u; i < numCols; ++i) {
-      this->m_varNames[i] = std::to_string(i);
-    }
-  }
-  auto t = 0u;
-  auto j = 0u;
-  while (std::getline(dataFile, line)) {
-    std::stringstream ss(line);
-    std::string item;
-    if (obsIndices) {
-      // First get the observation index
-      std::getline(ss, item, sep);
-    }
-    auto i = 0u;
-    while (std::getline(ss, item, sep)) {
-      std::istringstream is(item);
-      if (columnMajor) {
-        // Store the data in column major format
-        this->data(i*numRows + j, is);
-        ++t;
+  mxx::comm mc;
+  // Read data in processor 0
+  if (mc.rank() == 0) {
+    std::ifstream dataFile(fileName);
+    std::string line;
+    if (varNames) {
+      // Consume the variable names before reading the data
+      std::getline(dataFile, line);
+      std::stringstream ss(line);
+      std::string name;
+      auto i = 0u;
+      while (std::getline(ss, name, sep)) {
+        // Remove any quotes from the variable names
+        name.erase(std::remove(name.begin(), name.end(), '"'), name.end());
+        this->m_varNames[i++] = name;
       }
-      else {
-        // Store the data in row major format
-        this->data(j*numCols + i, is);
-        ++t;
-      }
-      ++i;
-      //std::cout << *data << sep;
     }
-    ++j;
-    //std::cout << std::endl;
+    else {
+      // Create default variable names [0, ..., numCols-1]
+      for (auto i = 0u; i < numCols; ++i) {
+        this->m_varNames[i] = std::to_string(i);
+      }
+    }
+    auto t = 0u;
+    auto j = 0u;
+    while (std::getline(dataFile, line)) {
+      std::stringstream ss(line);
+      std::string item;
+      if (obsIndices) {
+        // First get the observation index
+        std::getline(ss, item, sep);
+      }
+      auto i = 0u;
+      while (std::getline(ss, item, sep)) {
+        std::istringstream is(item);
+        if (columnMajor) {
+          // Store the data in column major format
+          this->data(i*numRows + j, is);
+          ++t;
+        }
+        else {
+          // Store the data in row major format
+          this->data(j*numCols + i, is);
+          ++t;
+        }
+        ++i;
+        //std::cout << *data << sep;
+      }
+      ++j;
+      //std::cout << std::endl;
+    }
+    if (t != (numRows  * numCols)) {
+      throw std::runtime_error("Read file did not match the expected dimensions.");
+    }
   }
-  if (t != (numRows  * numCols)) {
-    throw std::runtime_error("Read file did not match the expected dimensions.");
+  // Broadcast the read data
+  mxx::bcast(this->m_data, 0, mc);
+  // Can not broadcast a vector of strings
+  // Broadcast each string separately
+  for (auto& name: this->m_varNames) {
+    mxx::bcast(name, 0, mc);
   }
 }
 
@@ -166,50 +179,61 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
   const bool columnMajor
 ) : DataReader<DataType>(numRows, numCols)
 {
-  std::ifstream dataFile(fileName);
-  std::string line;
-  auto t = 0u;
-  auto i = 0u;
-  if (obsIndices) {
-    std::getline(dataFile, line);
-  }
-  while (std::getline(dataFile, line)) {
-    std::stringstream ss(line);
-    if (varNames) {
-      std::string name;
-      std::getline(ss, name, sep);
-      // Remove any quotes from the variable names
-      name.erase(std::remove(name.begin(), name.end(), '"'), name.end());
-      this->m_varNames[i] = name;
+  mxx::comm mc;
+  // Read data from file in processor 0
+  if (mc.rank() == 0) {
+    std::ifstream dataFile(fileName);
+    std::string line;
+    auto t = 0u;
+    auto i = 0u;
+    if (obsIndices) {
+      std::getline(dataFile, line);
     }
-    auto j = 0u;
-    std::string item;
-    while (std::getline(ss, item, sep)) {
-      std::istringstream is(item);
-      if (columnMajor) {
-        // Store the data in column major format
-        this->data(i*numCols + j, is);
-        ++t;
+    while (std::getline(dataFile, line)) {
+      std::stringstream ss(line);
+      if (varNames) {
+        std::string name;
+        std::getline(ss, name, sep);
+        // Remove any quotes from the variable names
+        name.erase(std::remove(name.begin(), name.end(), '"'), name.end());
+        this->m_varNames[i] = name;
       }
-      else {
-        // Store the data in row major format
-        this->data(j*numRows + i, is);
-        ++t;
+      auto j = 0u;
+      std::string item;
+      while (std::getline(ss, item, sep)) {
+        std::istringstream is(item);
+        if (columnMajor) {
+          // Store the data in column major format
+          this->data(i*numCols + j, is);
+          ++t;
+        }
+        else {
+          // Store the data in row major format
+          this->data(j*numRows + i, is);
+          ++t;
+        }
+        ++j;
+        //std::cout << *data << sep;
       }
-      ++j;
-      //std::cout << *data << sep;
+      ++i;
+      //std::cout << std::endl;
     }
-    ++i;
-    //std::cout << std::endl;
-  }
-  if (t != (numRows  * numCols)) {
-    throw std::runtime_error("Read file did not match the expected dimensions.");
-  }
-  if (!varNames) {
-    // Create default variable names [0, ..., numCols-1]
-    for (auto i = 0u; i < numRows; ++i) {
-      this->m_varNames[i] = std::to_string(i);
+    if (t != (numRows  * numCols)) {
+      throw std::runtime_error("Read file did not match the expected dimensions.");
     }
+    if (!varNames) {
+      // Create default variable names [0, ..., numCols-1]
+      for (auto i = 0u; i < numRows; ++i) {
+        this->m_varNames[i] = std::to_string(i);
+      }
+    }
+  }
+  // Broadcast the read data
+  mxx::bcast(this->m_data, 0, mc);
+  // Can not broadcast a vector of strings
+  // Broadcast each string separately
+  for (auto& name: this->m_varNames) {
+    mxx::bcast(name, 0, mc);
   }
 }
 
