@@ -194,7 +194,7 @@ template <typename DataType, typename VarType, typename SetType>
  *
  * @param target The index of the target variable.
  */
-Graph<DirectedAdjacencyList, VertexLabel, VarType>
+Graph<BidirectionalAdjacencyList, VertexLabel, VarType>
 ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
   const bool directEdges
 ) const
@@ -202,7 +202,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
   auto smallerSet = [] (const SetType& first, const SetType& second)
                        { return (first.size() <= second.size()) ? first: second; };
   auto varNames = this->m_data.varNames(m_allVars);
-  Graph<DirectedAdjacencyList, VertexLabel, VarType> g(varNames);
+  Graph<BidirectionalAdjacencyList, VertexLabel, VarType> g(varNames);
   for (const auto x: m_allVars) {
     auto setX = set_init(SetType(), this->m_data.numVars());
     setX.insert(x);

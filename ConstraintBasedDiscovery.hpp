@@ -29,7 +29,7 @@ public:
   SetType
   getMB(const VarType) const;
 
-  Graph<DirectedAdjacencyList, VertexLabel, VarType>
+  Graph<BidirectionalAdjacencyList, VertexLabel, VarType>
   getNetwork(const bool = false) const;
 
   virtual
