@@ -190,22 +190,45 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getMB(
 
 template <typename DataType, typename VarType, typename SetType>
 /**
+ * @brief Checks if y-x-z forms a v-structure.
+ */
+bool
+ConstraintBasedDiscovery<DataType, VarType, SetType>::isVStructure(
+  const VarType y,
+  const VarType x,
+  const VarType z
+) const
+{
+  static auto smallerSet = [] (const SetType& first, const SetType& second)
+                              { return (first.size() <= second.size()) ? first: second; };
+  auto setX = set_init(SetType(), this->m_data.numVars());
+  setX.insert(x);
+  auto mbY = this->getMB(y);
+  if (mbY.contains(z)) {
+    mbY.erase(z);
+  }
+  auto mbZ = this->getMB(z);
+  if (mbZ.contains(y)) {
+    mbZ.erase(y);
+  }
+  const auto& u = smallerSet(mbY, mbZ);
+  return !this->m_data.isIndependentAnySubset(y, z, u, setX);
+}
+
+template <typename DataType, typename VarType, typename SetType>
+/**
  * @brief Top level function for getting the complete causal network.
  *
- * @param target The index of the target variable.
+ * @param directEdges Specifies if the edges of the network should be directed.
  */
 Graph<BidirectionalAdjacencyList, VertexLabel, VarType>
 ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
   const bool directEdges
 ) const
 {
-  auto smallerSet = [] (const SetType& first, const SetType& second)
-                       { return (first.size() <= second.size()) ? first: second; };
   auto varNames = this->m_data.varNames(m_allVars);
   Graph<BidirectionalAdjacencyList, VertexLabel, VarType> g(varNames);
   for (const auto x: m_allVars) {
-    auto setX = set_init(SetType(), this->m_data.numVars());
-    setX.insert(x);
     auto pcX = this->getPC(x);
     SetType paX;
     for (const auto y: pcX) {
@@ -219,24 +242,13 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
           continue;
         }
         // Orient the edge
-        auto mbY = this->getMB(y);
         auto pcY = this->getPC(y);
         // Candidate parents of x, other than y
         auto cpaX = set_difference(pcX, pcY);
         cpaX.erase(y);
         bool isChild = false;
         for (const auto z: cpaX) {
-          bool addZ = false;
-          if (mbY.contains(z)) {
-            addZ = true;
-            mbY.erase(z);
-          }
-          auto mbZ = this->getMB(z);
-          if (mbZ.contains(y)) {
-            mbZ.erase(y);
-          }
-          const auto& u = smallerSet(mbY, mbZ);
-          if (!this->m_data.isIndependentAnySubset(y, z, u, setX)) {
+          if (this->isVStructure(y, x, z)) {
             isChild = true;
             LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
             g.addEdge(y, x);
@@ -244,9 +256,6 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
             paX.insert(z);
             paX.insert(y);
             break;
-          }
-          if (addZ) {
-            mbY.insert(z);
           }
         }
         if (!isChild) {

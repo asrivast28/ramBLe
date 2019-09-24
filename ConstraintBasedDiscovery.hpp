@@ -60,6 +60,9 @@ private:
   void
   symmetryCorrectMB(const VarType, SetType&) const;
 
+  bool
+  isVStructure(const VarType, const VarType, const VarType) const;
+
 protected:
   const DataType m_data;
   SetType m_allVars;
