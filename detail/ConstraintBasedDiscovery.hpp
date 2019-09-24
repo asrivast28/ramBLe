@@ -207,19 +207,24 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
     auto setX = set_init(SetType(), this->m_data.numVars());
     setX.insert(x);
     auto pcX = this->getPC(x);
+    SetType paX;
     for (const auto y: pcX) {
       if (!directEdges) {
         LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
         g.addEdge(x, y);
       }
       else {
+        if (set_contains(paX, y) || g.edgeExists(x, y)) {
+          // y must have been determined to be a parent or child of x
+          continue;
+        }
         // Orient the edge
         auto mbY = this->getMB(y);
         auto pcY = this->getPC(y);
         // Candidate parents of x, other than y
         auto cpaX = set_difference(pcX, pcY);
         cpaX.erase(y);
-        bool zExists = false;
+        bool isChild = false;
         for (const auto z: cpaX) {
           bool addZ = false;
           if (mbY.contains(z)) {
@@ -232,15 +237,19 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
           }
           const auto& u = smallerSet(mbY, mbZ);
           if (!this->m_data.isIndependentAnySubset(y, z, u, setX)) {
-            zExists = true;
-            LOG_MESSAGE(info, "* Found %s and %s to be parents of %s", this->m_data.varName(z), this->m_data.varName(y), this->m_data.varName(x));
+            isChild = true;
+            LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
+            g.addEdge(y, x);
+            g.addEdge(z, x);
+            paX.insert(z);
+            paX.insert(y);
             break;
           }
           if (addZ) {
             mbY.insert(z);
           }
         }
-        if (!zExists) {
+        if (!isChild) {
           LOG_MESSAGE(info, "+ Adding the edge %s -> %s", this->m_data.varName(x), this->m_data.varName(y));
           g.addEdge(x, y);
         }
