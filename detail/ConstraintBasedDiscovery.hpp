@@ -217,6 +217,58 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::isVStructure(
 
 template <typename DataType, typename VarType, typename SetType>
 /**
+ * @brief Adds the neighbors for the given var to the given network.
+ *
+ * @param x The variable for which edges are added for the graph.
+ * @param g The causal network.
+ * @param directEdges Specifies if the edges should be directed.
+ */
+void
+ConstraintBasedDiscovery<DataType, VarType, SetType>::addVarNeighbors(
+  const VarType x,
+  Graph<BidirectionalAdjacencyList, VertexLabel, VarType>& g,
+  const bool directEdges
+) const
+{
+  auto pcX = this->getPC(x);
+  SetType paX;
+  for (const auto y: pcX) {
+    if (!directEdges) {
+      LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
+      g.addEdge(x, y);
+    }
+    else {
+      if (set_contains(paX, y) || g.edgeExists(x, y)) {
+        // y must have been determined to be a parent or child of x
+        continue;
+      }
+      // Orient the edge
+      auto pcY = this->getPC(y);
+      // Candidate parents of x, other than y
+      auto cpaX = set_difference(pcX, pcY);
+      cpaX.erase(y);
+      bool isChild = false;
+      for (const auto z: cpaX) {
+        if (this->isVStructure(y, x, z)) {
+          isChild = true;
+          LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
+          g.addEdge(y, x);
+          g.addEdge(z, x);
+          paX.insert(z);
+          paX.insert(y);
+          break;
+        }
+      }
+      if (!isChild) {
+        LOG_MESSAGE(info, "+ Adding the edge %s -> %s", this->m_data.varName(x), this->m_data.varName(y));
+        g.addEdge(x, y);
+      }
+    }
+  }
+}
+
+template <typename DataType, typename VarType, typename SetType>
+/**
  * @brief Top level function for getting the complete causal network.
  *
  * @param directEdges Specifies if the edges of the network should be directed.
@@ -229,41 +281,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
   auto varNames = this->m_data.varNames(m_allVars);
   Graph<BidirectionalAdjacencyList, VertexLabel, VarType> g(varNames);
   for (const auto x: m_allVars) {
-    auto pcX = this->getPC(x);
-    SetType paX;
-    for (const auto y: pcX) {
-      if (!directEdges) {
-        LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
-        g.addEdge(x, y);
-      }
-      else {
-        if (set_contains(paX, y) || g.edgeExists(x, y)) {
-          // y must have been determined to be a parent or child of x
-          continue;
-        }
-        // Orient the edge
-        auto pcY = this->getPC(y);
-        // Candidate parents of x, other than y
-        auto cpaX = set_difference(pcX, pcY);
-        cpaX.erase(y);
-        bool isChild = false;
-        for (const auto z: cpaX) {
-          if (this->isVStructure(y, x, z)) {
-            isChild = true;
-            LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
-            g.addEdge(y, x);
-            g.addEdge(z, x);
-            paX.insert(z);
-            paX.insert(y);
-            break;
-          }
-        }
-        if (!isChild) {
-          LOG_MESSAGE(info, "+ Adding the edge %s -> %s", this->m_data.varName(x), this->m_data.varName(y));
-          g.addEdge(x, y);
-        }
-      }
-    }
+    this->addVarNeighbors(x, g, directEdges);
   }
   if (directEdges) {
     auto directedG = g;
