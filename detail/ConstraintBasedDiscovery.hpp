@@ -284,10 +284,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
     this->addVarNeighbors(x, g, directEdges);
   }
   if (directEdges) {
-    auto directedG = g;
-    for (auto e: directedG.getBidirectedEdges()) {
-      directedG.removeEdge(std::move(e));
-    }
+    auto directedG = g.filterBidirectedEdges();
     if (directedG.hasCycles()) {
       std::cerr << "WARNING: The network contains directed cycles which were not removed" << std::endl;
       LOG_MESSAGE(warning, "The network contains directed cycles which were not removed");
