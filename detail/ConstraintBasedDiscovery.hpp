@@ -219,14 +219,16 @@ template <typename DataType, typename VarType, typename SetType>
 /**
  * @brief Adds the neighbors for the given var to the given network.
  *
+ * @tparam GraphType The type of graph used for representing the network.
  * @param x The variable for which edges are added for the graph.
  * @param g The causal network.
  * @param directEdges Specifies if the edges should be directed.
  */
+template <typename GraphType>
 void
 ConstraintBasedDiscovery<DataType, VarType, SetType>::addVarNeighbors(
   const VarType x,
-  Graph<BidirectionalAdjacencyList, VertexLabel, VarType>& g,
+  GraphType& g,
   const bool directEdges
 ) const
 {
@@ -287,10 +289,11 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
     auto directedG = g.filterBidirectedEdges();
     if (directedG.hasCycles()) {
       std::cerr << "WARNING: The network contains directed cycles which were not removed" << std::endl;
-      LOG_MESSAGE(warning, "The network contains directed cycles which were not removed");
+      LOG_MESSAGE(warning, "* The initial network contains directed cycles which were not removed");
+      // TODO: Implement removal of cycles in the initial network
     }
     else {
-      LOG_MESSAGE(info, "* No cycles were found in the network");
+      LOG_MESSAGE(info, "* No cycles were found in the initial network");
     }
   }
   return g;

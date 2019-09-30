@@ -63,8 +63,9 @@ private:
   bool
   isVStructure(const VarType, const VarType, const VarType) const;
 
+  template <typename GraphType>
   void
-  addVarNeighbors(const VarType, Graph<BidirectionalAdjacencyList, VertexLabel, VarType>&, const bool) const;
+  addVarNeighbors(const VarType, GraphType&, const bool) const;
 
 protected:
   const DataType m_data;
