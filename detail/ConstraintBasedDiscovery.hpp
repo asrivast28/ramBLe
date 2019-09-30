@@ -193,7 +193,7 @@ template <typename DataType, typename VarType, typename SetType>
  * @brief Checks if y-x-z forms a v-structure.
  */
 bool
-ConstraintBasedDiscovery<DataType, VarType, SetType>::isVStructure(
+ConstraintBasedDiscovery<DataType, VarType, SetType>::isCollider(
   const VarType y,
   const VarType x,
   const VarType z
@@ -251,7 +251,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::addVarNeighbors(
       cpaX.erase(y);
       bool isChild = false;
       for (const auto z: cpaX) {
-        if (this->isVStructure(y, x, z)) {
+        if (this->isCollider(y, x, z)) {
           isChild = true;
           LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
           g.addEdge(y, x);
@@ -275,28 +275,32 @@ template <typename DataType, typename VarType, typename SetType>
  *
  * @param directEdges Specifies if the edges of the network should be directed.
  */
-Graph<BidirectionalAdjacencyList, VertexLabel, VarType>
+BayesianNetwork<VarType>
 ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
   const bool directEdges
 ) const
 {
   auto varNames = this->m_data.varNames(m_allVars);
-  Graph<BidirectionalAdjacencyList, VertexLabel, VarType> g(varNames);
+  BayesianNetwork<VarType> bn(varNames);
   for (const auto x: m_allVars) {
-    this->addVarNeighbors(x, g, directEdges);
+    this->addVarNeighbors(x, bn, directEdges);
   }
   if (directEdges) {
-    auto directedG = g.filterBidirectedEdges();
-    if (directedG.hasCycles()) {
+    if (bn.hasDirectedCycles()) {
       std::cerr << "WARNING: The network contains directed cycles which were not removed" << std::endl;
+      std::cerr << "Not directing any more edges." << std::endl;
       LOG_MESSAGE(warning, "* The initial network contains directed cycles which were not removed");
       // TODO: Implement removal of cycles in the initial network
     }
     else {
       LOG_MESSAGE(info, "* No cycles were found in the initial network");
+      bool changed = true;
+      while (changed) {
+        changed = bn.applyMeekRules();
+      }
     }
   }
-  return g;
+  return bn;
 }
 
 #endif // DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_

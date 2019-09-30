@@ -5,9 +5,8 @@
 #ifndef CONSTRAINTBASEDDISCOVERY_HPP_
 #define CONSTRAINTBASEDDISCOVERY_HPP_
 
-#include "graph/Graph.hpp"
+#include "BayesianNetwork.hpp"
 
-#include <set>
 #include <unordered_map>
 
 
@@ -29,11 +28,11 @@ public:
   SetType
   getMB(const VarType) const;
 
-  Graph<BidirectionalAdjacencyList, VertexLabel, VarType>
+  BayesianNetwork<VarType>
   getNetwork(const bool = false) const;
 
   virtual
-  ~ConstraintBasedDiscovery() { };
+  ~ConstraintBasedDiscovery() { }
 
 protected:
   SetType
@@ -61,7 +60,7 @@ private:
   symmetryCorrectMB(const VarType, SetType&) const;
 
   bool
-  isVStructure(const VarType, const VarType, const VarType) const;
+  isCollider(const VarType, const VarType, const VarType) const;
 
   template <typename GraphType>
   void
