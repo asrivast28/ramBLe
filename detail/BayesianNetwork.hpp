@@ -32,6 +32,31 @@ BayesianNetwork<VarType>::hasDirectedCycles(
 
 template <typename VarType>
 /**
+ * @brief Function which breaks directed cycles in the network by reversing
+ *        the direction of the edge which is part of most cycles.
+ */
+void
+BayesianNetwork<VarType>::breakDirectedCycles(
+)
+{
+  Edge e;
+  auto maxCount = 0u;
+  for (const auto& cc: this->countEdgeCycles()) {
+    if (cc.second > maxCount) {
+      e = cc.first;
+      maxCount = cc.second;
+    }
+  }
+  auto source = *e.source();
+  auto target = *e.target();
+  // Reverse the edge
+  LOG_MESSAGE(info, "* Reversing the direction of edge %s -> %s", e.source().property().label, e.target().property().label);
+  this->removeEdge(source, target);
+  this->addEdge(target, source);
+}
+
+template <typename VarType>
+/**
  * @brief Function which orients an edge, if it doesn't create directed cycles.
  *
  * @param e The edge to be removed.

@@ -25,6 +25,9 @@ public:
   bool
   hasDirectedCycles() const;
 
+  void
+  breakDirectedCycles();
+
   bool
   applyMeekRules();
 

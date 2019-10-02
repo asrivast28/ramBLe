@@ -286,18 +286,15 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
     this->addVarNeighbors(x, bn, directEdges);
   }
   if (directEdges) {
-    if (bn.hasDirectedCycles()) {
-      std::cerr << "WARNING: The network contains directed cycles which were not removed" << std::endl;
-      std::cerr << "Not directing any more edges." << std::endl;
-      LOG_MESSAGE(warning, "* The initial network contains directed cycles which were not removed");
-      // TODO: Implement removal of cycles in the initial network
+    // First, break any directed cycles in the network
+    LOG_MESSAGE_IF(bn.hasDirectedCycles(), info, "* The initial network contains directed cycles");
+    while (bn.hasDirectedCycles()) {
+      bn.breakDirectedCycles();
     }
-    else {
-      LOG_MESSAGE(info, "* No cycles were found in the initial network");
-      bool changed = true;
-      while (changed) {
-        changed = bn.applyMeekRules();
-      }
+    // Then, orient edges by applying Meek's rules
+    bool changed = true;
+    while (changed) {
+      changed = bn.applyMeekRules();
     }
   }
   return bn;
