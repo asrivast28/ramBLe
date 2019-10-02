@@ -7,6 +7,8 @@
 
 #include "graph/Graph.hpp"
 
+#include <boost/graph/filtered_graph.hpp>
+
 
 /**
  * @brief Class which provides functionality for a Bayesian network.
@@ -15,9 +17,17 @@
  */
 template <typename VarType>
 class BayesianNetwork : public Graph<BidirectionalAdjacencyList, VertexLabel, VarType> {
+private:
+  class AntiParallelEdgeFilter;
+  class EdgeCycleCounter;
+
 public:
   using Vertex = typename Graph<BidirectionalAdjacencyList, VertexLabel, VarType>::Vertex;
   using Edge = typename Graph<BidirectionalAdjacencyList, VertexLabel, VarType>::Edge;
+
+private:
+  using GraphImpl = typename Graph<BidirectionalAdjacencyList, VertexLabel, VarType>::GraphImpl;
+  using FilteredGraph = Graph<GenericBoostGraph, boost::filtered_graph<GraphImpl, AntiParallelEdgeFilter>, VarType>;
 
 public:
   BayesianNetwork(const std::vector<std::string>&);
@@ -34,6 +44,12 @@ public:
   ~BayesianNetwork() { }
 
 private:
+  Graph<GenericBoostGraph, boost::filtered_graph<GraphImpl, AntiParallelEdgeFilter>, VarType>
+  filterAntiParallelEdges() const;
+
+  std::unordered_map<Edge, size_t, typename Edge::Hash>
+  countEdgeCycles() const;
+
   bool
   removeEdgeAcyclic(Edge&&);
 
@@ -45,10 +61,6 @@ private:
 
   bool
   hybridRule(const Vertex&, const Vertex&) const;
-
-private:
-  using AntiParallelEdgeFilter = typename Graph<BidirectionalAdjacencyList, VertexLabel, VarType>::AntiParallelEdgeFilter;
-  using GraphImpl = typename Graph<BidirectionalAdjacencyList, VertexLabel, VarType>::GraphImpl;
 
 private:
   // View of the network with only directed edges

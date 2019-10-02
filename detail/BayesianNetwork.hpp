@@ -7,6 +7,89 @@
 
 #include "utils/Logging.hpp"
 
+#include <boost/graph/copy.hpp>
+#include <boost/graph/tiernan_all_cycles.hpp>
+
+
+template <typename VarType>
+/**
+  * @brief Helper class that implements the anti-parallel edge filter functionality.
+ */
+class BayesianNetwork<VarType>::AntiParallelEdgeFilter {
+public:
+  AntiParallelEdgeFilter(
+  ) : m_graph(nullptr)
+  {
+  }
+
+  AntiParallelEdgeFilter(
+    const GraphImpl& g
+  ) : m_graph(&g)
+  {
+  }
+
+  template <typename EdgeDescriptor>
+  bool
+  operator()(
+    const EdgeDescriptor& e
+  ) const
+  {
+    auto source = boost::source(e, *m_graph);
+    auto target = boost::target(e, *m_graph);
+    return !boost::edge(target, source, *m_graph).second;
+  }
+
+private:
+  const GraphImpl* m_graph;
+}; // class AntiParallelEdgeFilter
+
+template <typename VarType>
+/**
+ * @brief Helper class for counting all the simple cycles that
+ *        an edge is part of.
+ */
+class BayesianNetwork<VarType>::EdgeCycleCounter {
+public:
+  EdgeCycleCounter(
+    const Graph<BidirectionalAdjacencyList, VertexLabel, VarType>& graph,
+    std::unordered_map<Edge, size_t, typename Edge::Hash>& counts
+  ) : m_graph(graph),
+      m_counts(counts)
+  {
+  }
+
+  template <typename Path, typename DirectedGraph>
+  void
+  cycle(
+    const Path& p,
+    const DirectedGraph& dg
+  )
+  {
+    using IndexMap = typename boost::property_map<DirectedGraph, boost::vertex_index_t>::const_type;
+    IndexMap indices = boost::get(boost::vertex_index, dg);
+    auto u = p.begin();
+    auto v = u+1;
+    while (v != p.end()) {
+      auto e = m_graph.getEdge(boost::get(indices, *u), boost::get(indices, *v));
+      if (m_counts.find(e) == m_counts.end()) {
+        m_counts[e] = 0;
+      }
+      m_counts[e] += 1;
+      ++u;
+      ++v;
+    }
+    v = p.begin();
+    auto e = m_graph.getEdge(boost::get(indices, *u), boost::get(indices, *v));
+    if (m_counts.find(e) == m_counts.end()) {
+      m_counts[e] = 0;
+    }
+    m_counts[e] += 1;
+  }
+
+private:
+  const Graph<BidirectionalAdjacencyList, VertexLabel, VarType>& m_graph;
+  std::unordered_map<Edge, size_t, typename Edge::Hash>& m_counts;
+}; // class EdgeCycleCounter
 
 template <typename VarType>
 /**
@@ -21,6 +104,19 @@ BayesianNetwork<VarType>::BayesianNetwork(
 
 template <typename VarType>
 /**
+ * @brief Returns a filtered view of the current graph with the anti-parallel edges removed.
+ */
+typename BayesianNetwork<VarType>::FilteredGraph
+BayesianNetwork<VarType>::filterAntiParallelEdges(
+) const
+{
+  AntiParallelEdgeFilter bef(this->m_graph);
+  boost::filtered_graph<decltype(this->m_graph), AntiParallelEdgeFilter> fg(this->m_graph, bef);
+  return FilteredGraph(std::move(fg), this->m_idVertexMap);
+}
+
+template <typename VarType>
+/**
  * @brief Function which checks if the network has directed cycles.
  */
 bool
@@ -28,6 +124,24 @@ BayesianNetwork<VarType>::hasDirectedCycles(
 ) const
 {
   return m_directed.hasCycles();
+}
+
+template <typename VarType>
+/**
+ * @brief Counts the number of simple cycles that each edge is part of.
+ */
+std::unordered_map<typename BayesianNetwork<VarType>::Edge, size_t, typename BayesianNetwork<VarType>::Edge::Hash>
+BayesianNetwork<VarType>::countEdgeCycles(
+) const
+{
+  // Copy the directed view of the graph to a directed graph
+  typename DirectedGraph<VertexLabel, VarType>::Impl dg;
+  boost::copy_graph(*m_directed, dg);
+  // Record all the counts
+  std::unordered_map<Edge, size_t, typename Edge::Hash> counts;
+  EdgeCycleCounter ecc(*this, counts);
+  boost::tiernan_all_cycles(dg, ecc);
+  return counts;
 }
 
 template <typename VarType>
