@@ -44,10 +44,10 @@ if platform.system() in ['Darwin', 'Linux']:
               '-std=c++14',
               ])
   if releaseBuild:
-      cppFlags.append('-O3')
-      cppDefs.append('NDEBUG')
+    cppFlags.append('-O3')
+    cppDefs.append('NDEBUG')
   else:
-      cppFlags.append('-g')
+    cppFlags.append('-g')
 
 # For OS X
 if platform.system() == 'Darwin':
@@ -57,11 +57,11 @@ elif platform.system() == 'Linux':
   cppPaths.append('/usr/include')
 
 if releaseBuild:
-    buildDir = 'release'
+  buildDir = 'release'
 else:
-    buildDir = 'debug'
-    targetName += '_debug'
-    testName += '_debug'
+  buildDir = 'debug'
+  targetName += '_debug'
+  testName += '_debug'
 
 enableLogging = ARGUMENTS.get('LOGGING', None)
 if enableLogging is not None:
