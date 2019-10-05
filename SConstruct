@@ -27,6 +27,9 @@ libPaths = [
 allLibs = [
             ]
 
+linkFlags = [
+             ]
+
 # Flag for building in debug mode. Defaults to release build.
 releaseBuild = ARGUMENTS.get('DEBUG', 0) in [0, '0']
 # Location of boost static libraries.
@@ -76,7 +79,18 @@ if enableLogging:
   cppDefs.append('LOGGING')
   allLibs.extend(['boost_log', 'boost_system', 'pthread'])
 
-env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LIBS=allLibs)
+# Flag for enabling profiling
+enableProfile = ARGUMENTS.get('PROFILE', 0) not in [0, '0']
+if enableProfile:
+  if platform.system() == 'Linux':
+    cppFlags.append('-pg')
+    linkFlags.append('-pg')
+    targetName += '_profile'
+    testName += '_profile'
+  else:
+    print("WARNING: Profiling is not supported on", platform.system())
+
+env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LIBS=allLibs, LINKFLAGS=linkFlags)
 
 env.targetName = targetName
 env.testName = testName
