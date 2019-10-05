@@ -14,74 +14,6 @@
 
 
 /**
- * @brief Class for accumulating the counts for a combination of states.
- *
- * This class provides a stateful way of providing callable functions
- * which are called by the SABNAtk library's counters. It accumulates
- * counts for a particular query of the type (xi=a, xj=b), where
- * base = number of observations matching (xi=a, xj=*), and
- * total = number of observations matching (xi=a, xj=b)
- */
-class Count {
-public:
-    // called by query engine before processing the stream
-    // engine passes ri, i.e. the number of states of Xi,
-    // and qi, the number of states parents of Xi MAY assume
-    void
-    init(
-      int,
-      int
-    )
-    {
-      m_base = 0;
-      m_total = 0;
-    } // init
-
-    // called by query engine after processing of the stream is done
-    // engine passes qi, the ACTUAL number of states
-    // that parents of Xi assumed
-    void
-    finalize(
-      int
-    ) const
-    {
-    }
-
-    void
-    operator()(
-      int
-    ) const
-    {
-    }
-
-    void
-    operator()(
-      int Nijk,
-      int Nij
-    )
-    {
-      m_base = Nij;
-      m_total = Nijk;
-    }
-
-    int
-    base() const
-    {
-      return m_base;
-    }
-
-    int
-    total() const
-    {
-      return m_total;
-    }
-
-private:
-    int m_base;
-    int m_total;
-}; // class Count
-
-/**
  * @brief Class that provides an iterator over all combinations of
  *        the states that different variables can take.
  *
@@ -97,11 +29,9 @@ private:
 template <typename DataType>
 class StateIterator {
 public:
-  StateIterator(const std::vector<DataType>& bounds, const size_t idxX)
+  StateIterator(const std::vector<DataType>& bounds)
     : m_bounds(bounds),
       m_state(bounds.size(), 0),
-      m_stateX(bounds.size()+1, 0),
-      m_idxX(idxX),
       m_valid(true)
   {
   }
@@ -109,20 +39,13 @@ public:
   void
   next()
   {
-    auto it1 = 0u;
-    auto it2 = (m_idxX == 0)? 1u: 0u;
+    auto it = 0u;
     m_valid = false;
-    while (it1 < m_bounds.size()) {
-      ++m_state[it1];
-      ++m_stateX[it2];
-      if (m_state[it1] == m_bounds[it1]) {
-        m_state[it1] = 0;
-        m_stateX[it2] = 0;
-        ++it1;
-        ++it2;
-        if (it2 == m_idxX) {
-          ++it2;
-        }
+    while (it < m_bounds.size()) {
+      ++m_state[it];
+      if (m_state[it] == m_bounds[it]) {
+        m_state[it] = 0;
+        ++it;
       }
       else {
         m_valid = true;
@@ -143,18 +66,9 @@ public:
     return m_state;
   }
 
-  const std::vector<DataType>&
-  stateX(const DataType& a)
-  {
-    m_stateX[m_idxX] = a;
-    return m_stateX;
-  }
-
 private:
   const std::vector<DataType> m_bounds;
   std::vector<DataType> m_state;
-  std::vector<DataType> m_stateX;
-  const size_t m_idxX;
   bool m_valid;
 }; // class StateIterator
 
@@ -319,44 +233,40 @@ Data<CounterType, VarType>::gSquare(
 {
   using data_type = typename CounterType::data_type;
 
-  uint32_t df = (m_counter.r(x) - 1) * (m_counter.r(y) - 1);
-  LOG_MESSAGE(trace, "r_x = %d, r_y = %d", m_counter.r(x), m_counter.r(y));
+  auto r_x = m_counter.r(x);
+  auto r_y = m_counter.r(y);
+
+  uint32_t df = (r_x - 1) * (r_y - 1);
+  LOG_MESSAGE(trace, "r_x = %d, r_y = %d", r_x, r_y);
   double gSquare = 0.0;
 
   std::vector<data_type> r(given.size());
-  auto pa = UintSet<VarType>(numVars());
+  std::vector<int> pa(given.size());
   auto k = 0u;
   for (auto xk = given.begin(); xk != given.end(); ++xk, ++k) {
-    pa.insert(*xk);
+    pa[k] = *xk;
     r[k] = m_counter.r(*xk);
     df *= r[k];
   }
-  auto xi = set_init(UintSet<VarType>{x}, numVars());
-  auto xj = set_init(UintSet<VarType>{y}, numVars());
-  auto pa_x = pa;
-  pa_x.insert(x);
-  auto lower = std::lower_bound(given.begin(), given.end(), x);
-  auto idx = std::distance(given.begin(), lower);
 
-  std::vector<Count> G(1);
-  for (auto c = StateIterator<data_type>(r, idx); c.valid(); c.next()) {
-    for (data_type a = 0; a < m_counter.r(x); ++a) {
-      std::vector<data_type> xi_state{a};
-      m_counter.apply(*xi, *pa, xi_state, c.state(), G);
-      auto sk = G[0].base();
-      auto sik = G[0].total();
-      if ((sk == 0) || (sik == 0)) {
+  for (auto c = StateIterator<data_type>(r); c.valid(); c.next()) {
+    auto base = m_counter.common(pa, c.state());
+    auto sk = base.weight();
+    if (sk == 0) {
+      continue;
+    }
+    for (data_type a = 0; a < r_x; ++a) {
+      auto count_x = m_counter.common(base, static_cast<int>(x), a);
+      auto sik = count_x.weight();
+      if (sik == 0) {
         continue;
       }
-      for (data_type b = 0; b < m_counter.r(y); ++b) {
-        std::vector<data_type> xj_state{b};
-        m_counter.apply(*xj, *pa, xj_state, c.state(), G);
-        auto sjk = G[0].total();
+      for (data_type b = 0; b < r_y; ++b) {
+        auto sjk = m_counter.common(base, static_cast<int>(y), b).weight();
         if (sjk == 0) {
           continue;
         }
-        m_counter.apply(*xj, *pa_x, xj_state, c.stateX(a), G);
-        auto sijk = G[0].total();
+        auto sijk = m_counter.common(count_x, static_cast<int>(y), b).weight();
         if (sijk == 0) {
           continue;
         }
