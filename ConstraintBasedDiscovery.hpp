@@ -47,13 +47,13 @@ protected:
   getCandidateMB(const VarType, SetType) const = 0;
 
 private:
-  SetType
+  std::pair<SetType, bool>
   getCandidatePC_cache(const VarType, SetType) const;
 
   void
   symmetryCorrectPC(const VarType, SetType&) const;
 
-  SetType
+  std::pair<SetType, bool>
   getCandidateMB_cache(const VarType, SetType) const;
 
   void
@@ -71,8 +71,8 @@ protected:
   SetType m_allVars;
 
 private:
-  mutable std::unordered_map<VarType, SetType> m_cachedPC;
-  mutable std::unordered_map<VarType, SetType> m_cachedMB;
+  mutable std::unordered_map<VarType, std::pair<SetType, bool>> m_cachedPC;
+  mutable std::unordered_map<VarType, std::pair<SetType, bool>> m_cachedMB;
 }; // class ConstraintBasedDiscovery
 
 #include "detail/ConstraintBasedDiscovery.hpp"
