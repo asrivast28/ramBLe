@@ -11,6 +11,8 @@
 #include "utils/Logging.hpp"
 
 #include <numeric>
+#include <queue>
+#include <unordered_map>
 
 
 template <typename DataType, typename VarType, typename SetType>
@@ -118,32 +120,34 @@ GSMB<DataType, VarType, SetType>::getCandidateMB(
   LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
   auto cmb = set_init(SetType(), this->m_data.numVars());
   bool changed = true;
+  // Compute all the marginal scores beforehand
+  std::unordered_map<VarType, double> candidateScore;
+  for (const VarType y: candidates) {
+    candidateScore[y] = this->m_data.assocScore(target, y);
+  }
+  // Comparator for a priority queue with all the scores
+  // Orders candidates with the same score in the increasing order of their indices
+  auto maxFirst = [&candidateScore] (const VarType a, const VarType b)
+                  { return std::isless(candidateScore.at(a), candidateScore.at(b)) ||
+                           (!std::isgreater(candidateScore.at(a), candidateScore.at(b)) && (a > b)); };
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    auto thisCandidates = candidates;
-    while (thisCandidates.size() > 0) {
+    // Create a priority queue with the current candidates
+    std::priority_queue<VarType, std::vector<VarType>, decltype(maxFirst)> thisCandidates(candidates.begin(), candidates.end(), maxFirst);
+    while (!thisCandidates.empty()) {
       // Find the variable with the maximum marginal
       // association score with target
-      VarType x = this->m_data.numVars();
-      double scoreX = 0.0;
-      for (const VarType y: thisCandidates) {
-        LOG_MESSAGE(debug, "GSMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
-        double scoreY = this->m_data.assocScore(target, y);
-        if (std::isless(scoreX, scoreY)) {
-          x = y;
-          scoreX = scoreY;
-        }
-      }
-      LOG_MESSAGE(debug, "GSMB: %s chosen as the best candidate (score = %g)", this->m_data.varName(x), scoreX);
+      auto x = thisCandidates.top();
+      LOG_MESSAGE(debug, "GSMB: %s chosen as the best candidate (score = %g)", this->m_data.varName(x), candidateScore.at(x));
       // Add the variable to the candidate MB if it is not
       // independedent of the target, given the current MB
       if (!this->m_data.isIndependent(target, x, cmb)) {
-        LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), scoreX);
+        LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), candidateScore.at(x));
         cmb.insert(x);
         candidates.erase(x);
         changed = true;
       }
-      thisCandidates.erase(x);
+      thisCandidates.pop();
     }
   }
   this->shrinkMB(target, cmb);
