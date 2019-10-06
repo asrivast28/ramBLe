@@ -134,11 +134,11 @@ GSMB<DataType, VarType, SetType>::getCandidateMB(
           scoreX = scoreY;
         }
       }
-      LOG_MESSAGE(debug, "GSMB: %s chosen as the best candidate", this->m_data.varName(x));
+      LOG_MESSAGE(debug, "GSMB: %s chosen as the best candidate (score = %g)", this->m_data.varName(x), scoreX);
       // Add the variable to the candidate MB if it is not
       // independedent of the target, given the current MB
       if (!this->m_data.isIndependent(target, x, cmb)) {
-        LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
+        LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), scoreX);
         cmb.insert(x);
         candidates.erase(x);
         changed = true;

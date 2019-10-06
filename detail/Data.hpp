@@ -320,7 +320,7 @@ Data<CounterType, VarType>::gSquare(
   using data_type = typename CounterType::data_type;
 
   uint32_t df = (m_counter.r(x) - 1) * (m_counter.r(y) - 1);
-  LOG_MESSAGE(trace, "r_x=%d,r_y=%d", m_counter.r(x), m_counter.r(y));
+  LOG_MESSAGE(trace, "r_x = %d, r_y = %d", m_counter.r(x), m_counter.r(y));
   double gSquare = 0.0;
 
   std::vector<data_type> r(given.size());
@@ -361,12 +361,12 @@ Data<CounterType, VarType>::gSquare(
           continue;
         }
         gSquare += sijk * log(static_cast<double>(sijk * sk)/(sik * sjk));
-        LOG_MESSAGE(trace, "sk=%d,sik=%d,sjk=%d,sijk=%d", sk, sik, sjk, sijk);
+        LOG_MESSAGE(trace, "sk = %d,sik = %d, sjk = %d, sijk = %d", sk, sik, sjk, sijk);
       }
     }
   }
   gSquare *= 2.0;
-  LOG_MESSAGE(debug, "df=%d,gSquare=%g", df, gSquare);
+  LOG_MESSAGE(debug, "df = %d, G-square = %g", df, gSquare);
   return std::make_pair(df, gSquare);
 }
 
@@ -390,7 +390,7 @@ Data<CounterType, VarType>::pValue(
   auto ret = this->gSquare(x, y, given);
   boost::math::chi_squared dist(ret.first);
   double pValue = 1.0 - boost::math::cdf(dist, ret.second);
-  LOG_MESSAGE(debug, "pValue=%g", pValue);
+  LOG_MESSAGE(debug, "p-value = %g", pValue);
   return pValue;
 }
 
@@ -483,7 +483,7 @@ Data<CounterType, VarType>::minAssocScore(
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
   }
-  LOG_MESSAGE(debug, "minAssocScore=%g", minScore);
+  LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
   return minScore;
 }
 
@@ -525,7 +525,7 @@ Data<CounterType, VarType>::minAssocScore(
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
   }
-  LOG_MESSAGE(debug, "minAssocScore=%g", minScore);
+  LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
   return minScore;
 }
 
@@ -566,7 +566,7 @@ Data<CounterType, VarType>::minAssocScoreSubset(
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
   }
-  LOG_MESSAGE(debug, "minAssocScore=%g", minScore);
+  LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
   return std::make_pair(minScore, z);
 }
 
