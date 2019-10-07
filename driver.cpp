@@ -11,6 +11,7 @@
 #include "UintSet.hpp"
 
 #include "utils/Logging.hpp"
+#include "utils/Timer.hpp"
 #include "BVCounter.hpp"
 #include "RadCounter.hpp"
 
@@ -94,6 +95,7 @@ getNeighborhood(
   auto algo = getAlgorithm<VarType, UintSet<VarType>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
+    Timer tNeighborhood;
     auto target = data.varIndex(options.targetVar());
     if (target == varNames.size()) {
       throw std::runtime_error("Target variable not found.");
@@ -104,10 +106,21 @@ getNeighborhood(
     else {
       neighborhoodVars = data.varNames(algo->getPC(target));
     }
+    if (options.wallTime()) {
+      std::cout << "Time taken in getting the neighborhood: " << tNeighborhood.elapsed() << " sec" << std::endl;
+    }
   }
   if (!options.outputFile().empty()) {
+    Timer tNetwork;
     auto g = algo->getNetwork(options.directEdges());
+    if (options.wallTime()) {
+      std::cout << "Time taken in getting the network: " << tNetwork.elapsed() << " sec" << std::endl;
+    }
+    Timer tWrite;
     g.writeGraphviz(options.outputFile());
+    if (options.wallTime()) {
+      std::cout << "Time taken in writing the network: " << tWrite.elapsed() << " sec" << std::endl;
+    }
   }
   return neighborhoodVars;
 }
@@ -173,7 +186,11 @@ main(
     INIT_LOGGING(options.logLevel());
     uint32_t n = options.numVars();
     uint32_t m = options.numRows();
+    Timer tRead;
     SeparatedFile<uint8_t> dataFile(options.fileName(), n, m, ',', true, true);
+    if (options.wallTime()) {
+      std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;
+    }
     auto nbrVars = getNeighborhood(n, m, dataFile, options);
     for (const auto var: nbrVars) {
       std::cout << var << ",";

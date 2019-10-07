@@ -48,6 +48,9 @@ public:
   bool
   directEdges() const;
 
+  bool
+  wallTime() const;
+
   ~ProgramOptions();
 
 private:
@@ -61,6 +64,7 @@ private:
   uint32_t m_numRows;
   bool m_discoverMB;
   bool m_directEdges;
+  bool m_wallTime;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_
