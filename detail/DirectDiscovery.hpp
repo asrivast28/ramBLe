@@ -124,8 +124,9 @@ GSMB<DataType, VarType, SetType>::getCandidateMB(
     while (!changed && (curr != candidates.end())) {
       auto x = *curr;
       LOG_MESSAGE(debug, "GSMB: Evaluating %s for addition to the MB", this->m_data.varName(x));
-      if (!this->m_data.isIndependent(target, x, cmb)) {
-        LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), candidateScore.at(x));
+      auto score = this->m_data.assocScore(target, x, cmb);
+      if (!this->m_data.isIndependent(score)) {
+        LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), score);
         cmb.insert(x);
         candidates.erase(x);
         changed = true;
