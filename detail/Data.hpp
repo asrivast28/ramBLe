@@ -388,6 +388,9 @@ Data<CounterType, VarType>::pValue(
 ) const
 {
   auto ret = this->gSquare(x, y, given);
+  if (std::fpclassify(ret.second) == FP_ZERO) {
+    return 1.0;
+  }
   boost::math::chi_squared dist(ret.first);
   double pValue = 1.0 - boost::math::cdf(dist, ret.second);
   LOG_MESSAGE(debug, "p-value = %g", pValue);
