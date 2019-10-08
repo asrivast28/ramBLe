@@ -50,6 +50,7 @@ if platform.system() in ['Darwin', 'Linux']:
               ])
   if releaseBuild:
     cppFlags.append('-O3')
+    cppFlags.append('-msse4')
     cppDefs.append('NDEBUG')
   else:
     cppFlags.append('-g')
