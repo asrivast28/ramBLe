@@ -33,7 +33,9 @@ linkFlags = [
 # Flag for building in debug mode. Defaults to release build.
 releaseBuild = ARGUMENTS.get('DEBUG', 0) in [0, '0']
 # Location of boost static libraries.
-boostLibPath = ARGUMENTS.get('BOOSTLIBPATH', '/usr/lib/x86_64-linux-gnu')
+boostLibPath = ARGUMENTS.get('BOOSTLIBPATH')
+# Location of the include dir
+includePath = ARGUMENTS.get('INCLUDEPATH')
 # Location of the SABNAtk directory.
 sabnatkDir = ARGUMENTS.get('SABNATK', os.path.join(topDir, 'SABNAtk'))
 if os.path.exists(sabnatkDir):
@@ -54,10 +56,16 @@ if platform.system() in ['Darwin', 'Linux']:
 
 # For OS X
 if platform.system() == 'Darwin':
-  cppPaths.append('/opt/local/include')
   libPaths.append('/opt/local/lib')
-elif platform.system() == 'Linux':
-  cppPaths.append('/usr/include')
+
+if boostLibPath is not None:
+  libPaths.append(boostLibPath)
+
+if includePath is None:
+  if platform.system() == 'Darwin':
+    cppPaths.append('/opt/local/include')
+else:
+  cppPaths.append(includePath)
 
 if releaseBuild:
   buildDir = 'release'
@@ -96,7 +104,6 @@ env.targetName = targetName
 env.testName = testName
 env.topDir = topDir
 env.testDir = os.path.join(topDir, 'test')
-env.boostLibPath = boostLibPath
 
 buildDir = os.path.join('builds', buildDir)
 
