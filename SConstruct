@@ -54,7 +54,6 @@ if platform.system() in ['Darwin', 'Linux']:
               ])
   if releaseBuild:
     cppFlags.append('-O3')
-    cppFlags.append('-msse4')
     cppDefs.append('NDEBUG')
   else:
     cppFlags.append('-g')
@@ -95,7 +94,29 @@ if enableProfile:
   else:
     print("WARNING: Profiling is not supported on", platform.system())
 
-env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LIBS=allLibs, LINKFLAGS=linkFlags)
+env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LINKFLAGS=linkFlags)
+conf = Configure(env)
+# Check if the initial build environment works
+conf.CheckCXX()
+# Check for SABNAtk specific functions and build options
+sabnatkBuiltins = ['clzll', 'ffsll', 'popcountll']
+for builtin in sabnatkBuiltins:
+  if not conf.CheckDeclaration('__builtin_%s' % builtin):
+    print('ERROR: __builtin_%s is required by SABNAtk')
+    Exit(1)
+conf.env.Append(CXXFLAGS='-msse4')
+if not conf.CheckCXX():
+  conf.env.Replace(CXXFLAGS=cppFlags)
+  print('WARNING: -msse4 not supported; SABNAtk performance will be affected')
+# Check for boost header location
+if not conf.CheckCXXHeader('boost/version.hpp'):
+  Exit(1)
+# Check for all the libraries
+for lib in allLibs:
+  if not conf.CheckLib(lib, language='C++'):
+    Exit(1)
+# Use the modified environment
+env = conf.Finish()
 
 env.targetName = targetName
 env.testName = testName
@@ -104,6 +125,9 @@ env.testDir = os.path.join(topDir, 'test')
 
 buildDir = os.path.join('builds', buildDir)
 
-SConscript('SConscript', exports='env', src_dir='.', variant_dir=buildDir, duplicate=0)
+if not SConscript('SConscript', exports='env', src_dir='.', variant_dir=buildDir, duplicate=0):
+  print('Executable was not built')
+  Exit(1)
 if ARGUMENTS.get('TEST', 1) not in ('0', 0):
-  SConscript(os.path.join('test', 'SConscript'), exports='env', src_dir='test', variant_dir=os.path.join(buildDir, 'test'), duplicate=0)
+  if not SConscript(os.path.join('test', 'SConscript'), exports='env', src_dir='test', variant_dir=os.path.join(buildDir, 'test'), duplicate=0):
+    print('Test suite was not built')

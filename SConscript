@@ -14,8 +14,16 @@ srcFiles = [
             'driver.cpp',
             ]
 
-allLibs = env.get('LIBS', [])
+built = False
+# Check if all the library files can be located
+conf = Configure(env)
+for lib in boostLibs:
+  if not conf.CheckLib(lib, language='C++'):
+    Return('built')
+env = conf.Finish()
 
-env.Program(target=env.targetName, source=srcFiles, LIBS=allLibs+boostLibs)
+env.Program(target=env.targetName, source=srcFiles)
 
 env.Install(env.topDir, env.targetName)
+built = True
+Return('built')

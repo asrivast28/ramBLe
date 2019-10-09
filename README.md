@@ -16,7 +16,7 @@ SCons, a cross-platform Python based build environment, is required for building
   Logging functionality from the repository is used.
 * **[Google Test](https://github.com/google/googletest)** (optional)   
 Google Test framework is used for unit testing in this project.  
-This dependency can be avoided by not building the unit tests. See the relevant section in [Building](#unit-tests) for more information.   
+If this dependency is not satisfied, then the unit tests are not built. See the relevant section in [Building](#unit-tests) for more information.   
 
 ## Building
 After all the dependencies have been installed, the project can be built as:  
