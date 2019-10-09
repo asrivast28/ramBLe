@@ -97,7 +97,8 @@ if enableProfile:
 env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LINKFLAGS=linkFlags)
 conf = Configure(env)
 # Check if the initial build environment works
-conf.CheckCXX()
+if not conf.CheckCXX():
+  Exit(1)
 # Check for SABNAtk specific functions and build options
 sabnatkBuiltins = ['clzll', 'ffsll', 'popcountll']
 for builtin in sabnatkBuiltins:
