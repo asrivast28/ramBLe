@@ -141,25 +141,29 @@ std::vector<std::string>
 getNeighborhood(
   const uint32_t& n,
   const uint64_t& m,
-  const FileType& dataFile,
+  std::unique_ptr<FileType>&& dataFile,
   const ProgramOptions& options
 )
 {
+  std::vector<std::string> varNames(dataFile->varNames());
   std::vector<std::string> nbrVars;
   if (n <= UintSet<uint8_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint8_t>::N;
-    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
-    nbrVars = getNeighborhood<BVCounter<N>, uint8_t>(bvc, dataFile.varNames(), options);
+    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    dataFile.reset();
+    nbrVars = getNeighborhood<BVCounter<N>, uint8_t>(bvc, varNames, options);
   }
   else if (n <= UintSet<uint16_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint16_t>::N;
-    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
-    nbrVars = getNeighborhood<BVCounter<N>, uint16_t>(bvc, dataFile.varNames(), options);
+    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    dataFile.reset();
+    nbrVars = getNeighborhood<BVCounter<N>, uint16_t>(bvc, varNames, options);
   }
   // TODO: Investigate the compiler warning in the following case.
   //else if (n < UintSet<4>::capacity()) {
     //auto bvc = create_BVCounter<4>(n, m, std::begin(dataFile.data()));
-    //nbrVars = getNeighborhood<BVCounter<4>, 4>(bvc, dataFile.varNames(), options);
+    //dataFile.reset();
+    //nbrVars = getNeighborhood<BVCounter<4>, 4>(bvc, varNames, options);
   //}
   else {
     throw std::runtime_error("The given number of variables is not supported.");
@@ -185,13 +189,19 @@ main(
   try {
     INIT_LOGGING(options.logLevel());
     uint32_t n = options.numVars();
-    uint32_t m = options.numRows();
+    uint32_t m = options.numObs();
     Timer tRead;
-    SeparatedFile<uint8_t> dataFile(options.fileName(), n, m, options.separator(), options.varNames(), true);
+    std::unique_ptr<DataFile<uint8_t>> dataFile;
+    if (options.colObs()) {
+      dataFile.reset(new ColumnObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), true));
+    }
+    else {
+      dataFile.reset(new RowObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), true));
+    }
     if (options.wallTime()) {
       std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;
     }
-    auto nbrVars = getNeighborhood(n, m, dataFile, options);
+    auto nbrVars = getNeighborhood(n, m, std::move(dataFile), options);
     for (const auto var: nbrVars) {
       std::cout << var << ",";
     }

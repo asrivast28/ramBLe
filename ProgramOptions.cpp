@@ -16,8 +16,9 @@ ProgramOptions::ProgramOptions(
     m_targetVar(),
     m_outputFile(),
     m_numVars(),
-    m_numRows(),
+    m_numObs(),
     m_separator(),
+    m_colObs(),
     m_varNames(),
     m_discoverMB(),
     m_directEdges(),
@@ -25,17 +26,18 @@ ProgramOptions::ProgramOptions(
 {
   m_desc.add_options()
     ("help,h", "Print this message.")
-    ("log,l", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging (when logging is enabled).")
+    ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
+    ("nobs,m", po::value<uint32_t>(&m_numObs), "Number of observations in the dataset.")
     ("file,f", po::value<std::string>(&m_fileName), "Name of the file from which dataset is to be read.")
+    ("colobs,c", po::bool_switch(&m_colObs)->default_value(false), "The file contains observations in columns.")
     ("separator,s", po::value<char>(&m_separator)->default_value(','), "Delimiting character in the file.")
     ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "Read variable names from the first row of the file.")
-    ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
-    ("nrows,m", po::value<uint32_t>(&m_numRows), "Number of rows (observations) in the dataset.")
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("gs"), "Name of the algorithm to be used.")
     ("target,t", po::value<std::string>(&m_targetVar), "Name of the target variable.")
     ("blanket,b", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
     ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
     ("directed,d", po::bool_switch(&m_directEdges)->default_value(false), "Orient the edges in the learned network.")
+    ("log,l", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging (when logging is enabled).")
     ("walltime,w", po::bool_switch(&m_wallTime)->default_value(false), "Time the top level operations.")
     ;
 }
@@ -63,11 +65,18 @@ ProgramOptions::parse(
   }
 }
 
-const std::string&
-ProgramOptions::logLevel(
+uint32_t
+ProgramOptions::numVars(
 ) const
 {
-  return m_logLevel;
+  return m_numVars;
+}
+
+uint32_t
+ProgramOptions::numObs(
+) const
+{
+  return m_numObs;
 }
 
 const std::string&
@@ -75,6 +84,13 @@ ProgramOptions::fileName(
 ) const
 {
   return m_fileName;
+}
+
+bool
+ProgramOptions::colObs(
+) const
+{
+  return m_colObs;
 }
 
 bool
@@ -89,20 +105,6 @@ ProgramOptions::separator(
 ) const
 {
   return m_separator;
-}
-
-uint32_t
-ProgramOptions::numVars(
-) const
-{
-  return m_numVars;
-}
-
-uint32_t
-ProgramOptions::numRows(
-) const
-{
-  return m_numRows;
 }
 
 const std::string&
@@ -138,6 +140,13 @@ ProgramOptions::directEdges(
 ) const
 {
   return m_directEdges;
+}
+
+const std::string&
+ProgramOptions::logLevel(
+) const
+{
+  return m_logLevel;
 }
 
 bool

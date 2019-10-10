@@ -21,23 +21,23 @@ public:
   void
   parse(int, char**);
 
-  const std::string&
-  logLevel() const;
+  uint32_t
+  numVars() const;
+
+  uint32_t
+  numObs() const;
 
   const std::string&
   fileName() const;
+
+  bool
+  colObs() const;
 
   bool
   varNames() const;
 
   char
   separator() const;
-
-  uint32_t
-  numVars() const;
-
-  uint32_t
-  numRows() const;
 
   const std::string&
   algoName() const;
@@ -54,6 +54,9 @@ public:
   bool
   directEdges() const;
 
+  const std::string&
+  logLevel() const;
+
   bool
   wallTime() const;
 
@@ -67,8 +70,9 @@ private:
   std::string m_targetVar;
   std::string m_outputFile;
   uint32_t m_numVars;
-  uint32_t m_numRows;
+  uint32_t m_numObs;
   char m_separator;
+  bool m_colObs;
   bool m_varNames;
   bool m_discoverMB;
   bool m_directEdges;
