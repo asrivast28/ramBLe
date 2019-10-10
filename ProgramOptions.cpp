@@ -17,6 +17,8 @@ ProgramOptions::ProgramOptions(
     m_outputFile(),
     m_numVars(),
     m_numRows(),
+    m_separator(),
+    m_varNames(),
     m_discoverMB(),
     m_directEdges(),
     m_wallTime()
@@ -25,6 +27,8 @@ ProgramOptions::ProgramOptions(
     ("help,h", "Print this message.")
     ("log,l", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging (when logging is enabled).")
     ("file,f", po::value<std::string>(&m_fileName), "Name of the file from which dataset is to be read.")
+    ("separator,s", po::value<char>(&m_separator)->default_value(','), "Delimiting character in the file.")
+    ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "Read variable names from the first row of the file.")
     ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
     ("nrows,m", po::value<uint32_t>(&m_numRows), "Number of rows (observations) in the dataset.")
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("gs"), "Name of the algorithm to be used.")
@@ -71,6 +75,20 @@ ProgramOptions::fileName(
 ) const
 {
   return m_fileName;
+}
+
+bool
+ProgramOptions::varNames(
+) const
+{
+  return m_varNames;
+}
+
+char
+ProgramOptions::separator(
+) const
+{
+  return m_separator;
 }
 
 uint32_t

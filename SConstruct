@@ -105,7 +105,8 @@ for builtin in sabnatkBuiltins:
   if not conf.CheckDeclaration('__builtin_%s' % builtin):
     print('ERROR: __builtin_%s is required by SABNAtk')
     Exit(1)
-conf.env.Append(CXXFLAGS='-msse4')
+#conf.env.Append(CXXFLAGS='-msse4')
+conf.env.Append(CXXFLAGS='-mavx2')
 if not conf.CheckCXX():
   conf.env.Replace(CXXFLAGS=cppFlags)
   print('WARNING: -msse4 not supported; SABNAtk performance will be affected')

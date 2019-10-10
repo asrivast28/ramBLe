@@ -27,6 +27,12 @@ public:
   const std::string&
   fileName() const;
 
+  bool
+  varNames() const;
+
+  char
+  separator() const;
+
   uint32_t
   numVars() const;
 
@@ -62,6 +68,8 @@ private:
   std::string m_outputFile;
   uint32_t m_numVars;
   uint32_t m_numRows;
+  char m_separator;
+  bool m_varNames;
   bool m_discoverMB;
   bool m_directEdges;
   bool m_wallTime;

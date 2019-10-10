@@ -22,11 +22,11 @@ public:
   data() const;
 
   const std::vector<std::string>&
-  header() const;
+  varNames() const;
 
 private:
   std::vector<DataType> m_data;
-  std::vector<std::string> m_header;
+  std::vector<std::string> m_varNames;
 };
 
 #include "detail/DataFile.hpp"

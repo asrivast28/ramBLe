@@ -149,17 +149,17 @@ getNeighborhood(
   if (n <= UintSet<uint8_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint8_t>::N;
     auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
-    nbrVars = getNeighborhood<BVCounter<N>, uint8_t>(bvc, dataFile.header(), options);
+    nbrVars = getNeighborhood<BVCounter<N>, uint8_t>(bvc, dataFile.varNames(), options);
   }
   else if (n <= UintSet<uint16_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint16_t>::N;
     auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
-    nbrVars = getNeighborhood<BVCounter<N>, uint16_t>(bvc, dataFile.header(), options);
+    nbrVars = getNeighborhood<BVCounter<N>, uint16_t>(bvc, dataFile.varNames(), options);
   }
   // TODO: Investigate the compiler warning in the following case.
   //else if (n < UintSet<4>::capacity()) {
     //auto bvc = create_BVCounter<4>(n, m, std::begin(dataFile.data()));
-    //nbrVars = getNeighborhood<BVCounter<4>, 4>(bvc, dataFile.header(), options);
+    //nbrVars = getNeighborhood<BVCounter<4>, 4>(bvc, dataFile.varNames(), options);
   //}
   else {
     throw std::runtime_error("The given number of variables is not supported.");
@@ -187,7 +187,7 @@ main(
     uint32_t n = options.numVars();
     uint32_t m = options.numRows();
     Timer tRead;
-    SeparatedFile<uint8_t> dataFile(options.fileName(), n, m, ',', true, true);
+    SeparatedFile<uint8_t> dataFile(options.fileName(), n, m, options.separator(), options.varNames(), true);
     if (options.wallTime()) {
       std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;
     }

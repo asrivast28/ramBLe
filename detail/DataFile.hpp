@@ -16,7 +16,7 @@ template <typename DataType>
  * @param numCols The number of columns (variables) in the file.
  * @param numRows The number of rows (observations) in the file.
  * @param sep The character used for delimiting data points.
- * @param header If the file contains a header row.
+ * @param varNames If the file contains variable names in the top row.
  * @param columnMajor If the data should be stored in column-major format.
  */
 SeparatedFile<DataType>::SeparatedFile(
@@ -24,29 +24,29 @@ SeparatedFile<DataType>::SeparatedFile(
   const uint32_t numCols,
   const uint32_t numRows,
   const char sep,
-  const bool header,
+  const bool varNames,
   const bool columnMajor
 ) : m_data(numCols*numRows),
-    m_header(numCols)
+    m_varNames(numCols)
 {
   std::ifstream dataFile(fileName);
   std::string line;
-  if (header) {
-    // Consume the header line before reading the data
+  if (varNames) {
+    // Consume the variable names before reading the data
     std::getline(dataFile, line);
     std::stringstream ss(line);
     std::string item;
     auto i = 0u;
     while (std::getline(ss, item, sep)) {
-      // Remove any quotes from the header variables
+      // Remove any quotes from the variable names
       item.erase(std::remove(item.begin(), item.end(), '"'), item.end());
-      m_header[i++] = item;
+      m_varNames[i++] = item;
     }
   }
   else {
-    // Create default headers [0, ..., numCols-1]
+    // Create default variable names [0, ..., numCols-1]
     for (auto i = 0u; i < numCols; ++i) {
-      m_header[i] = std::to_string(i);
+      m_varNames[i] = std::to_string(i);
     }
   }
   auto j = 0u;
@@ -85,13 +85,13 @@ SeparatedFile<DataType>::data(
 
 template <typename DataType>
 /**
- * @brief Returns the header data of the file.
+ * @brief Returns the variable names corresponding to the data.
  */
 const std::vector<std::string>&
-SeparatedFile<DataType>::header(
+SeparatedFile<DataType>::varNames(
 ) const
 {
-  return m_header;
+  return m_varNames;
 }
 
 #endif // DETAIL_DATAFILE_HPP_
