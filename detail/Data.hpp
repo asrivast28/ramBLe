@@ -270,8 +270,15 @@ Data<CounterType, VarType>::gSquare(
         if (sijk == 0) {
           continue;
         }
-        gSquare += sijk * log(static_cast<double>(sijk * sk)/(sik * sjk));
-        LOG_MESSAGE(trace, "sk = %d,sik = %d, sjk = %d, sijk = %d", sk, sik, sjk, sijk);
+        LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
+        LOG_MESSAGE(trace, "sk = %d, sik = %d, sjk = %d, sijk = %d", sk, sik, sjk, sijk);
+        if (sijk * sk == sik * sjk) {
+          LOG_MESSAGE(trace, "component = 0.0");
+          continue;
+        }
+        auto component = sijk * (log(sijk) + log(sk) - log(sik) - log(sjk));
+        gSquare += component;
+        LOG_MESSAGE(trace, "component = %g", component);
       }
     }
   }
