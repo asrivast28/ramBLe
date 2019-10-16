@@ -54,7 +54,7 @@ def run_experiments(base, executable, repeat):
             for r in range(repeat):
                 outfile = tempfile.NamedTemporaryFile(suffix='.dot', delete=False).name
                 command = '/usr/bin/time -v %s -n %d -m %d -f %s/data/%s/%s.csv -c -s \' \' -o %s -w' % (executable, n, m, base, d, s, outfile)
-                output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
+                output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True).decode('utf-8')
                 os.remove(outfile)
                 results.append(read_results(output))
             print('data/%s/%s.csv' % (d, s))
