@@ -18,6 +18,7 @@ parser <- add_option(parser, c('--target', '-t'), type='character', help='Name o
 parser <- add_option(parser, c('--blanket', '-b'), action='store_true', help='Find MB instead of PC for the target var.')
 parser <- add_option(parser, c('--output', '-o'), type='character', help='Name of the file to which the learned network should be written.')
 parser <- add_option(parser, c('--directed', '-d'), action='store_true', default=FALSE, help='Orient the edges in the learned network.')
+parser <- add_option(parser, c('--log', '-l'), type='character', help='Level of logging (when logging is enabled).')
 parser <- add_option(parser, c('--walltime', '-w'), action='store_true', default=FALSE, help='Time the top level operations.')
 args <- parse_args(parser, args=commandArgs(trailing=TRUE))
 
@@ -27,14 +28,16 @@ if (args$colobs) {
         data <- as.data.frame(t(data))
 }
 data <- as.data.frame(lapply(data, as.factor))
-#print(data)
 tRead <- proc.time() - tRead
+if (!((ncol(data) == args$nvars) && (nrow(data) == args$nobs))) {
+        stop('Read file did not match the expected dimensions')
+}
 if (args$walltime) {
         cat('Time taken in reading the file:', tRead['elapsed'], 'sec\n')
 }
 library('bnlearn')
 tNetwork <- proc.time()
-network <- eval(parse(text=args$algorithm))(data, undirected=!args$directed)
+network <- eval(parse(text=args$algorithm))(data, undirected=!args$directed, debug=!is.null(args$log))
 tNetwork <- proc.time() - tNetwork
 
 if (!is.null(args$target)) {
