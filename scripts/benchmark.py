@@ -28,14 +28,15 @@ def parse_args():
     Parse command line arguments.
     '''
     import argparse
-    import os.path
+    import os
+    from os.path import abspath, dirname
 
     parser = argparse.ArgumentParser(description='Benchmark structure learning')
-    parser.add_argument('-b', '--base', type=str, default=os.path.abspath(os.pardir), metavar='DIR', help='Base directory for running the experiments.')
+    parser.add_argument('-b', '--base', type=str, default=dirname(dirname(abspath(__file__))), metavar='DIR', help='Base directory for running the experiments.')
     parser.add_argument('-e', '--executable', type=str, metavar='NAME', required=True, help='Name of the executable to be used.')
     parser.add_argument('-r', '--repeat', type=int, default=3, metavar='N', help='Number of times the experiments should be repeated.')
     args = parser.parse_args()
-    args.executable = os.path.abspath(args.executable)
+    args.executable = abspath(args.executable)
     return args
 
 
@@ -56,18 +57,14 @@ def run_experiments(base, executable, repeat):
     '''
     Run experiments and print the benchmark metrics.
     '''
-    import os
     import subprocess
-    import tempfile
 
     for d, m in directories:
         for s, n in datasets:
             results = []
             for r in range(repeat):
-                outfile = tempfile.NamedTemporaryFile(suffix='.dot', delete=False).name
-                command = '/usr/bin/time -v %s -n %d -m %d -f %s/data/%s/%s.csv -c -s \' \' -o %s -w' % (executable, n, m, base, d, s, outfile)
+                command = '/usr/bin/time -v %s -n %d -m %d -f %s/data/%s/%s.csv -c -s \' \' -l -w' % (executable, n, m, base, d, s)
                 output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True).decode('utf-8')
-                os.remove(outfile)
                 results.append(parse_results(output))
             print('data/%s/%s.csv' % (d, s))
             print('Network =AVERAGE(%s)' % ','.join(str(r[0]) for r in results))

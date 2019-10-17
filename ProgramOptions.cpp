@@ -21,6 +21,7 @@ ProgramOptions::ProgramOptions(
     m_colObs(),
     m_varNames(),
     m_discoverMB(),
+    m_learnNetwork(),
     m_directEdges(),
     m_wallTime()
 {
@@ -35,9 +36,12 @@ ProgramOptions::ProgramOptions(
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("gs"), "Name of the algorithm to be used.")
     ("target,t", po::value<std::string>(&m_targetVar), "Name of the target variable.")
     ("blanket,b", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
+    ("learn,l", po::bool_switch(&m_learnNetwork)->default_value(false), "Force learn the network.")
     ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
     ("directed,d", po::bool_switch(&m_directEdges)->default_value(false), "Orient the edges in the learned network.")
-    ("log,l", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging (when logging is enabled).")
+#ifdef LOGGING
+    ("log,g", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
+#endif
     ("walltime,w", po::bool_switch(&m_wallTime)->default_value(false), "Time the top level operations.")
     ;
 }
@@ -57,8 +61,8 @@ ProgramOptions::parse(
     ss << m_desc;
     throw po::error(ss.str());
   }
-  if ((vm.count("target") == 0) && (vm.count("output") == 0)) {
-    throw po::error("At least one of --target or --output should be specified.");
+  if ((vm.count("target") == 0) && (!m_learnNetwork) && (vm.count("output") == 0)) {
+    throw po::error("At least one of --target, --learn, or --output should be specified.");
   }
   if (!fs::exists(fs::path(m_fileName))) {
     throw po::error("Couldn't find the data file.");
@@ -126,6 +130,13 @@ ProgramOptions::discoverMB(
 ) const
 {
   return m_discoverMB;
+}
+
+bool
+ProgramOptions::learnNetwork(
+) const
+{
+  return m_learnNetwork;
 }
 
 const std::string&

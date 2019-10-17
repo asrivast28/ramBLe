@@ -110,16 +110,18 @@ getNeighborhood(
       std::cout << "Time taken in getting the neighborhood: " << tNeighborhood.elapsed() << " sec" << std::endl;
     }
   }
-  if (!options.outputFile().empty()) {
+  if (options.learnNetwork() || !options.outputFile().empty()) {
     Timer tNetwork;
     auto g = algo->getNetwork(options.directEdges());
     if (options.wallTime()) {
       std::cout << "Time taken in getting the network: " << tNetwork.elapsed() << " sec" << std::endl;
     }
-    Timer tWrite;
-    g.writeGraphviz(options.outputFile());
-    if (options.wallTime()) {
-      std::cout << "Time taken in writing the network: " << tWrite.elapsed() << " sec" << std::endl;
+    if (!options.outputFile().empty()) {
+      Timer tWrite;
+      g.writeGraphviz(options.outputFile());
+      if (options.wallTime()) {
+        std::cout << "Time taken in writing the network: " << tWrite.elapsed() << " sec" << std::endl;
+      }
     }
   }
   return neighborhoodVars;

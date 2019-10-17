@@ -48,6 +48,9 @@ public:
   bool
   discoverMB() const;
 
+  bool
+  learnNetwork() const;
+
   const std::string&
   outputFile() const;
 
@@ -75,6 +78,7 @@ private:
   bool m_colObs;
   bool m_varNames;
   bool m_discoverMB;
+  bool m_learnNetwork;
   bool m_directEdges;
   bool m_wallTime;
 }; // class ProgramOptions

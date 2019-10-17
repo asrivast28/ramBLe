@@ -85,6 +85,7 @@ RowObservationFile<DataType>::RowObservationFile(
       this->m_varNames[i] = std::to_string(i);
     }
   }
+  auto t = 0u;
   auto j = 0u;
   while (std::getline(dataFile, line)) {
     std::stringstream ss(line);
@@ -95,16 +96,21 @@ RowObservationFile<DataType>::RowObservationFile(
       if (columnMajor) {
         // Store the data in column major format
         is >> this->m_data[i*numRows + j];
+        ++t;
       }
       else {
         // Store the data in row major format
         is >> this->m_data[j*numCols + i];
+        ++t;
       }
       ++i;
       //std::cout << *data << sep;
     }
     ++j;
     //std::cout << std::endl;
+  }
+  if (t != (numRows  * numCols)) {
+    throw std::runtime_error("Read file did not match the expected dimensions.");
   }
 }
 
@@ -130,6 +136,7 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
 {
   std::ifstream dataFile(fileName);
   std::string line;
+  auto t = 0u;
   auto i = 0u;
   while (std::getline(dataFile, line)) {
     std::stringstream ss(line);
@@ -147,16 +154,21 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
       if (columnMajor) {
         // Store the data in column major format
         is >> this->m_data[i*numCols + j];
+        ++t;
       }
       else {
         // Store the data in row major format
         is >> this->m_data[j*numRows + i];
+        ++t;
       }
       ++j;
       //std::cout << *data << sep;
     }
     ++i;
     //std::cout << std::endl;
+  }
+  if (t != (numRows  * numCols)) {
+    throw std::runtime_error("Read file did not match the expected dimensions.");
   }
   if (!varNames) {
     // Create default variable names [0, ..., numCols-1]
