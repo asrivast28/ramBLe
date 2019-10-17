@@ -36,6 +36,9 @@ public:
   bool
   varNames() const;
 
+  bool
+  obsIndices() const;
+
   char
   separator() const;
 
@@ -77,6 +80,7 @@ private:
   char m_separator;
   bool m_colObs;
   bool m_varNames;
+  bool m_obsIndices;
   bool m_discoverMB;
   bool m_learnNetwork;
   bool m_directEdges;

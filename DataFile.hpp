@@ -36,7 +36,7 @@ protected:
 template <typename DataType>
 class RowObservationFile : public DataFile<DataType> {
 public:
-  RowObservationFile(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false);
+  RowObservationFile(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false, const bool = false);
 }; // class RowObservationFile
 
 /**
@@ -47,7 +47,7 @@ public:
 template <typename DataType>
 class ColumnObservationFile : public DataFile<DataType> {
 public:
-  ColumnObservationFile(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false);
+  ColumnObservationFile(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false, const bool = false);
 }; // class ColumnObservationFile
 
 #include "detail/DataFile.hpp"

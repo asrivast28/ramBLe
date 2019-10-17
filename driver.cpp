@@ -195,10 +195,10 @@ main(
     Timer tRead;
     std::unique_ptr<DataFile<uint8_t>> dataFile;
     if (options.colObs()) {
-      dataFile.reset(new ColumnObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), true));
+      dataFile.reset(new ColumnObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
     else {
-      dataFile.reset(new RowObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), true));
+      dataFile.reset(new RowObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
     if (options.wallTime()) {
       std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;

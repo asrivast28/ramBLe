@@ -54,6 +54,7 @@ template <typename DataType>
  * @param numRows The number of rows (observations) in the file.
  * @param sep The character used for delimiting data points.
  * @param varNames If the file contains variable names in the top row.
+ * @param obsIndices If the file contains observation indices in the first column.
  * @param columnMajor If the data should be stored in column-major format.
  */
 RowObservationFile<DataType>::RowObservationFile(
@@ -62,6 +63,7 @@ RowObservationFile<DataType>::RowObservationFile(
   const uint32_t numRows,
   const char sep,
   const bool varNames,
+  const bool obsIndices,
   const bool columnMajor
 ) : DataFile<DataType>(numCols, numRows)
 {
@@ -93,6 +95,10 @@ RowObservationFile<DataType>::RowObservationFile(
     auto i = 0u;
     while (std::getline(ss, item, sep)) {
       std::istringstream is(item);
+      if (obsIndices) {
+        std::string index;
+        is >> index;
+      }
       if (columnMajor) {
         // Store the data in column major format
         is >> this->m_data[i*numRows + j];
@@ -123,6 +129,7 @@ template <typename DataType>
  * @param numCols The number of columns (observations) in the file.
  * @param sep The character used for delimiting data points.
  * @param varNames If the file contains variable names in the first column.
+ * @param obsIndices If the file contains observation indices in the first row.
  * @param columnMajor If the data should be stored in column-major format.
  */
 ColumnObservationFile<DataType>::ColumnObservationFile(
@@ -131,6 +138,7 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
   const uint32_t numCols,
   const char sep,
   const bool varNames,
+  const bool obsIndices,
   const bool columnMajor
 ) : DataFile<DataType>(numRows, numCols)
 {
@@ -138,19 +146,22 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
   std::string line;
   auto t = 0u;
   auto i = 0u;
+  if (obsIndices) {
+    std::getline(dataFile, line);
+  }
   while (std::getline(dataFile, line)) {
     std::stringstream ss(line);
-    std::string item;
+    if (varNames) {
+      std::string name;
+      std::getline(ss, name, sep);
+      // Remove any quotes from the variable names
+      name.erase(std::remove(name.begin(), name.end(), '"'), name.end());
+      this->m_varNames[i] = name;
+    }
     auto j = 0u;
+    std::string item;
     while (std::getline(ss, item, sep)) {
       std::istringstream is(item);
-      if (varNames) {
-        std::string name;
-        is >> name;
-        // Remove any quotes from the variable names
-        name.erase(std::remove(name.begin(), name.end(), '"'), name.end());
-        this->m_varNames[i] = name;
-      }
       if (columnMajor) {
         // Store the data in column major format
         is >> this->m_data[i*numCols + j];
