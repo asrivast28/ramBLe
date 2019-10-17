@@ -31,7 +31,7 @@ ProgramOptions::ProgramOptions(
     ("file,f", po::value<std::string>(&m_fileName), "Name of the file from which dataset is to be read.")
     ("colobs,c", po::bool_switch(&m_colObs)->default_value(false), "The file contains observations in columns.")
     ("separator,s", po::value<char>(&m_separator)->default_value(','), "Delimiting character in the file.")
-    ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "Read variable names from the first row of the file.")
+    ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "The file contains variable names.")
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("gs"), "Name of the algorithm to be used.")
     ("target,t", po::value<std::string>(&m_targetVar), "Name of the target variable.")
     ("blanket,b", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")

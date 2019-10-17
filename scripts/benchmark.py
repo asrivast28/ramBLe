@@ -2,7 +2,7 @@
 
 ##
 # @file benchmark.py
-# @brief Script for benchmarking datasets 
+# @brief Script for benchmarking structure learning.
 # @author Ankit Srivastava <asrivast@gatech.edu>
 
 datasets = [
@@ -22,7 +22,11 @@ directories = [
     # ('10M',  10 ** 7),
 ]
 
+
 def parse_args():
+    '''
+    Parse command line arguments.
+    '''
     import argparse
     import os.path
 
@@ -34,7 +38,11 @@ def parse_args():
     args.executable = os.path.abspath(args.executable)
     return args
 
-def read_results(output):
+
+def parse_results(output):
+    '''
+    Parse benchmark metrics from the given output.
+    '''
     import re
 
     net = float(re.search('Time taken in getting the network: (\d+.\d+) sec', output).group(1))
@@ -43,7 +51,11 @@ def read_results(output):
     mem = int(re.search('Maximum resident set size \(kbytes\): (\d+)', output).group(1))
     return net, sab, mem
 
+
 def run_experiments(base, executable, repeat):
+    '''
+    Run experiments and print the benchmark metrics.
+    '''
     import os
     import subprocess
     import tempfile
@@ -56,14 +68,18 @@ def run_experiments(base, executable, repeat):
                 command = '/usr/bin/time -v %s -n %d -m %d -f %s/data/%s/%s.csv -c -s \' \' -o %s -w' % (executable, n, m, base, d, s, outfile)
                 output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True).decode('utf-8')
                 os.remove(outfile)
-                results.append(read_results(output))
+                results.append(parse_results(output))
             print('data/%s/%s.csv' % (d, s))
             print('Network =AVERAGE(%s)' % ','.join(str(r[0]) for r in results))
             print('SABNAtk =AVERAGE(%s)' % ','.join(str(r[1]) for r in results))
             print('Memory =AVERAGE(%s) / 1024' % ','.join(str(r[2]) for r in results))
             print('\n')
 
+
 def main():
+    '''
+    Main function.
+    '''
     args = parse_args()
     run_experiments(args.base, args.executable, args.repeat)
 
