@@ -105,6 +105,14 @@ for builtin in sabnatkBuiltins:
   if not conf.CheckDeclaration('__builtin_%s' % builtin):
     print('ERROR: __builtin_%s is required by SABNAtk')
     Exit(1)
+# Check for aligned malloc declaration
+if conf.CheckCHeader('mm_malloc.h'):
+  if not conf.CheckDeclaration('_mm_malloc', '#include <mm_malloc.h>'):
+    print('ERROR: _mm_malloc is required by SABNAtk')
+    Exit(1)
+else:
+  print('ERROR: mm_malloc.h not found')
+  Exit(1)
 conf.env.Append(CXXFLAGS='-msse4')
 if not conf.CheckCXX():
   conf.env.Replace(CXXFLAGS=cppFlags)
