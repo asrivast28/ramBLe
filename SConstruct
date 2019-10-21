@@ -99,6 +99,7 @@ conf = Configure(env)
 # Check if the initial build environment works
 if not conf.CheckCXX():
   Exit(1)
+
 # Check for SABNAtk specific functions and build options
 sabnatkBuiltins = ['clzll', 'ffsll', 'popcountll']
 for builtin in sabnatkBuiltins:
@@ -113,10 +114,36 @@ if conf.CheckCHeader('mm_malloc.h'):
 else:
   print('ERROR: mm_malloc.h not found')
   Exit(1)
-conf.env.Append(CXXFLAGS='-msse4')
-if not conf.CheckCXX():
-  conf.env.Replace(CXXFLAGS=cppFlags)
-  print('WARNING: -msse4 not supported; SABNAtk performance will be affected')
+vectorizationFlag = None
+if conf.CheckCHeader('immintrin.h'):
+  vectorizationOptions = [
+    ('-mavx2', '__m256i', 'HAVE_AVX2_INSTRUCTIONS'),
+    ('-mavx512bw', '__m512i', 'HAVE_AVX512BW_INSTRUCTIONS'),
+  ]
+  vectorizationFlag = None
+  # First check if AVX512 or AVX2 can be used
+  for flag, typedef, define in vectorizationOptions:
+    conf.env.Append(CXXFLAGS=flag)
+    if conf.CheckType(typedef, '#include <immintrin.h>'):
+      # Add the definition to the list of CPPDEFINES
+      conf.env.Append(CPPDEFINES=define)
+      # Replace previous state of compilation flags
+      conf.env.Replace(CXXFLAGS=cppFlags)
+      # Store current compilation flag
+      vectorizationFlag = flag
+    else:
+      break
+if vectorizationFlag is not None:
+  conf.env.Append(CXXFLAGS=vectorizationFlag)
+else:
+  # Otherwise, check if SSE4 can be used
+  conf.env.Append(CXXFLAGS='-msse4')
+  if conf.CheckCXX():
+    cppFlags.append('-msse4')
+  else:
+    conf.env.Replace(CXXFLAGS=cppFlags)
+    print('WARNING: -msse4 not supported; SABNAtk performance will be affected')
+
 # Check for boost header location
 if not conf.CheckCXXHeader('boost/version.hpp'):
   Exit(1)
