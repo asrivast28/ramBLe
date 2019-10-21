@@ -114,35 +114,24 @@ if conf.CheckCHeader('mm_malloc.h'):
 else:
   print('ERROR: mm_malloc.h not found')
   Exit(1)
-vectorizationFlag = None
-if conf.CheckCHeader('immintrin.h'):
-  vectorizationOptions = [
-    ('-mavx2', '__m256i', 'HAVE_AVX2_INSTRUCTIONS'),
-    ('-mavx512bw', '__m512i', 'HAVE_AVX512BW_INSTRUCTIONS'),
-  ]
-  vectorizationFlag = None
-  # First check if AVX512 or AVX2 can be used
-  for flag, typedef, define in vectorizationOptions:
-    conf.env.Append(CXXFLAGS=flag)
-    if conf.CheckType(typedef, '#include <immintrin.h>'):
+conf.env.Append(CXXFLAGS='-march=native')
+vectorizationOptions = [
+  ('__AVX2__', 'HAVE_AVX2_INSTRUCTIONS'),
+  ('__AVX512BW__', 'HAVE_AVX512BW_INSTRUCTIONS'),
+  ('__SSE4_1__', None),
+  ('__SSE4_2__', None),
+]
+vectorize = False
+# Check if vectorization can be used
+for typedef, define in vectorizationOptions:
+  if conf.CheckDeclaration(typedef, language='C++'):
+    vectorize = True
+    if define is not None:
       # Add the definition to the list of CPPDEFINES
       conf.env.Append(CPPDEFINES=define)
-      # Replace previous state of compilation flags
-      conf.env.Replace(CXXFLAGS=cppFlags)
-      # Store current compilation flag
-      vectorizationFlag = flag
-    else:
-      break
-if vectorizationFlag is not None:
-  conf.env.Append(CXXFLAGS=vectorizationFlag)
-else:
-  # Otherwise, check if SSE4 can be used
-  conf.env.Append(CXXFLAGS='-msse4')
-  if conf.CheckCXX():
-    cppFlags.append('-msse4')
-  else:
-    conf.env.Replace(CXXFLAGS=cppFlags)
-    print('WARNING: -msse4 not supported; SABNAtk performance will be affected')
+if not vectorize:
+  print('WARNING: vectorization is not supported; SABNAtk performance will be impacted')
+  conf.env.Replace(CXXFLAGS=cppFlags)
 
 # Check for boost header location
 if not conf.CheckCXXHeader('boost/version.hpp'):
