@@ -25,7 +25,30 @@ DataFile<DataType>::DataFile(
 
 template <typename DataType>
 /**
- * @brief Returns the data stored in the file.
+ * @brief Extract the data from the given stream and store it at the given index.
+ *
+ * @param index The index at which the data is to be stored.
+ * @param is The stream from which data is to be extracted.
+ */
+void
+DataFile<DataType>::data(
+  const size_t index,
+  std::istringstream& is
+)
+{
+  if (std::is_same<DataType, uint8_t>::value) {
+    uint32_t temp;
+    is >> temp;
+    m_data[index] = static_cast<uint8_t>(temp);
+  }
+  else {
+    is >> m_data[index];
+  }
+}
+
+template <typename DataType>
+/**
+ * @brief Returns the data read from the file.
  */
 const std::vector<DataType>&
 DataFile<DataType>::data(
@@ -101,12 +124,12 @@ RowObservationFile<DataType>::RowObservationFile(
       std::istringstream is(item);
       if (columnMajor) {
         // Store the data in column major format
-        is >> this->m_data[i*numRows + j];
+        this->data(i*numRows + j, is);
         ++t;
       }
       else {
         // Store the data in row major format
-        is >> this->m_data[j*numCols + i];
+        this->data(j*numCols + i, is);
         ++t;
       }
       ++i;
@@ -164,12 +187,12 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
       std::istringstream is(item);
       if (columnMajor) {
         // Store the data in column major format
-        is >> this->m_data[i*numCols + j];
+        this->data(i*numCols + j, is);
         ++t;
       }
       else {
         // Store the data in row major format
-        is >> this->m_data[j*numRows + i];
+        this->data(j*numRows + i, is);
         ++t;
       }
       ++j;

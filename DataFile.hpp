@@ -5,6 +5,7 @@
 #ifndef DATAFILE_HPP_
 #define DATAFILE_HPP_
 
+#include <sstream>
 #include <vector>
 
 /**
@@ -22,6 +23,10 @@ public:
 
   const std::vector<std::string>&
   varNames() const;
+
+protected:
+  void
+  data(const size_t, std::istringstream&);
 
 protected:
   std::vector<DataType> m_data;
