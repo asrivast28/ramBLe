@@ -251,22 +251,22 @@ Data<CounterType, VarType>::gSquare(
 
   for (auto c = StateIterator<data_type>(r); c.valid(); c.next()) {
     auto base = m_counter.common(pa, c.state());
-    auto sk = base.weight();
+    auto sk = m_counter.count(base);
     if (sk == 0) {
       continue;
     }
     for (data_type a = 0; a < r_x; ++a) {
       auto count_x = m_counter.common(base, static_cast<int>(x), a);
-      auto sik = count_x.weight();
+      auto sik = m_counter.count(count_x);
       if (sik == 0) {
         continue;
       }
       for (data_type b = 0; b < r_y; ++b) {
-        auto sjk = m_counter.common(base, static_cast<int>(y), b).weight();
+        auto sjk = m_counter.count(m_counter.common(base, static_cast<int>(y), b));
         if (sjk == 0) {
           continue;
         }
-        auto sijk = m_counter.common(count_x, static_cast<int>(y), b).weight();
+        auto sijk = m_counter.count(m_counter.common(count_x, static_cast<int>(y), b));
         if (sijk == 0) {
           continue;
         }
