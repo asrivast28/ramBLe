@@ -13,7 +13,7 @@
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
 #include "BVCounter.hpp"
-#include "RadCounter.hpp"
+//#include "RadCounter.hpp"
 
 #include <iostream>
 #include <memory>
@@ -83,7 +83,7 @@ getAlgorithm(
  *
  * @return The list of labels of the variables in the neighborhood.
  */
-template <typename CounterType, typename VarType>
+template <typename VarType, typename CounterType>
 std::vector<std::string>
 getNeighborhood(
   const CounterType& counter,
@@ -151,21 +151,25 @@ getNeighborhood(
   std::vector<std::string> nbrVars;
   if (n <= UintSet<uint8_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint8_t>::N;
-    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    auto counter = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    //auto counter = create_RadCounter<N>(n, m, std::begin(dataFile->data()));
     dataFile.reset();
-    nbrVars = getNeighborhood<BVCounter<N>, uint8_t>(bvc, varNames, options);
+    nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
   }
   else if (n <= UintSet<uint16_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint16_t>::N;
-    auto bvc = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    auto counter = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    //auto counter = create_RadCounter<N>(n, m, std::begin(dataFile->data()));
     dataFile.reset();
-    nbrVars = getNeighborhood<BVCounter<N>, uint16_t>(bvc, varNames, options);
+    nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
   // TODO: Investigate the compiler warning in the following case.
-  //else if (n < UintSet<4>::capacity()) {
-    //auto bvc = create_BVCounter<4>(n, m, std::begin(dataFile.data()));
+  //else if (n < UintSet<uint32_t>::capacity()) {
+    //constexpr int N = UintTypeTrait<uint32_t>::N;
+    //auto counter = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
+    ////auto counter = create_RadCounter<N>(n, m, std::begin(dataFile.data()));
     //dataFile.reset();
-    //nbrVars = getNeighborhood<BVCounter<4>, 4>(bvc, varNames, options);
+    //nbrVars = getNeighborhood<uint32_t>(counter, varNames, options);
   //}
   else {
     throw std::runtime_error("The given number of variables is not supported.");

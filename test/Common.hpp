@@ -9,6 +9,7 @@
 #include "DataFile.hpp"
 
 #include "BVCounter.hpp"
+//#include "RadCounter.hpp"
 
 #include <gtest/gtest.h>
 
@@ -31,12 +32,14 @@ protected:
     for (uint8_t i = 0; i < 3; ++i) {
       auto fileName = "neapolitan_" + std::to_string(i+1) + ".txt";
       RowObservationFile<uint8_t> dataFile(fileName, n, m, ',', false, false, true);
-      auto bvc = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
-      data[i] = Data<BVCounter<1>, uint8_t>(bvc, dataFile.varNames());
+      auto counter = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
+      //auto counter = create_RadCounter<1>(n, m, std::begin(dataFile.data()));
+      data[i] = Data<decltype(counter), uint8_t>(counter, dataFile.varNames());
     }
   }
 
   std::vector<Data<BVCounter<1>, uint8_t>> data;
+  //std::vector<Data<RadCounter<1>, uint8_t>> data;
 }; // class NeapolitanTest
 
 /**
@@ -49,11 +52,13 @@ protected:
     uint32_t n = 3;
     uint32_t m = 409;
     RowObservationFile<uint8_t> dataFile("lizards.csv", n, m, ',', true, false, true);
-    auto bvc = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
-    data = Data<BVCounter<1>, uint8_t>(bvc, dataFile.varNames());
+    auto counter = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
+    //auto counter = create_RadCounter<1>(n, m, std::begin(dataFile.data()));
+    data = Data<decltype(counter), uint8_t>(counter, dataFile.varNames());
   }
 
   Data<BVCounter<1>, uint8_t> data;
+  //Data<RadCounter<1>, uint8_t> data;
 }; // class LizardsTest
 
 /**
@@ -66,11 +71,13 @@ protected:
     uint32_t n = 6;
     uint32_t m = 1841;
     RowObservationFile<uint8_t> dataFile("coronary.csv", n, m, ',', true, false, true);
-    auto bvc = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
-    data = Data<BVCounter<1>, uint8_t>(bvc, dataFile.varNames());
+    auto counter = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
+    //auto counter = create_RadCounter<1>(n, m, std::begin(dataFile.data()));
+    data = Data<decltype(counter), uint8_t>(counter, dataFile.varNames());
   }
 
   Data<BVCounter<1>, uint8_t> data;
+  //Data<RadCounter<1>, uint8_t> data;
 }; // class CoronaryTest
 
 /**
@@ -83,11 +90,13 @@ protected:
     uint32_t n = 8;
     uint32_t m = 5000;
     RowObservationFile<uint8_t> dataFile("asia.csv", n, m, ',', true, false, true);
-    auto bvc = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
-    data = Data<BVCounter<1>, uint8_t>(bvc, dataFile.varNames());
+    auto counter = create_BVCounter<1>(n, m, std::begin(dataFile.data()));
+    //auto counter = create_RadCounter<1>(n, m, std::begin(dataFile.data()));
+    data = Data<decltype(counter), uint8_t>(counter, dataFile.varNames());
   }
 
   Data<BVCounter<1>, uint8_t> data;
+  //Data<RadCounter<1>, uint8_t> data;
 }; // class AsiaTest
 
 #endif // TEST_COMMON_HPP_
