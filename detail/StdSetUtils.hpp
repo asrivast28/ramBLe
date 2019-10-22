@@ -30,6 +30,16 @@ set_init<std::set<uint16_t>, uint16_t>(
 }
 
 template <>
+std::set<uint32_t>
+set_init<std::set<uint32_t>, uint32_t>(
+  std::set<uint32_t>&& set,
+  const uint32_t
+)
+{
+  return set;
+}
+
+template <>
 bool
 set_contains<std::set<uint8_t>, uint8_t>(
   const std::set<uint8_t>& set,
@@ -44,6 +54,16 @@ bool
 set_contains<std::set<uint16_t>, uint16_t>(
   const std::set<uint16_t>& set,
   const uint16_t value
+)
+{
+  return (set.find(value) != set.end());
+}
+
+template <>
+bool
+set_contains<std::set<uint32_t>, uint32_t>(
+  const std::set<uint32_t>& set,
+  const uint32_t value
 )
 {
   return (set.find(value) != set.end());
@@ -74,6 +94,18 @@ set_union<std::set<uint16_t>>(
 }
 
 template <>
+std::set<uint32_t>
+set_union<std::set<uint32_t>>(
+  const std::set<uint32_t>& first,
+  const std::set<uint32_t>& second
+)
+{
+  std::set<uint32_t> result;
+  std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
+  return result;
+}
+
+template <>
 std::set<uint8_t>
 set_difference<std::set<uint8_t>>(
   const std::set<uint8_t>& first,
@@ -93,6 +125,18 @@ set_difference<std::set<uint16_t>>(
 )
 {
   std::set<uint16_t> result;
+  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
+  return result;
+}
+
+template <>
+std::set<uint32_t>
+set_difference<std::set<uint32_t>>(
+  const std::set<uint32_t>& first,
+  const std::set<uint32_t>& second
+)
+{
+  std::set<uint32_t> result;
   std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
   return result;
 }

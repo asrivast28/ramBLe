@@ -163,14 +163,13 @@ getNeighborhood(
     dataFile.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
-  // TODO: Investigate the compiler warning in the following case.
-  //else if (n < UintSet<uint32_t>::capacity()) {
-    //constexpr int N = UintTypeTrait<uint32_t>::N;
-    //auto counter = create_BVCounter<N>(n, m, std::begin(dataFile.data()));
-    ////auto counter = create_RadCounter<N>(n, m, std::begin(dataFile.data()));
-    //dataFile.reset();
-    //nbrVars = getNeighborhood<uint32_t>(counter, varNames, options);
-  //}
+  else if (n < UintSet<uint32_t>::capacity()) {
+    constexpr int N = UintTypeTrait<uint32_t>::N;
+    auto counter = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
+    //auto counter = create_RadCounter<N>(n, m, std::begin(dataFile.data()));
+    dataFile.reset();
+    nbrVars = getNeighborhood<uint32_t>(counter, varNames, options);
+  }
   else {
     throw std::runtime_error("The given number of variables is not supported.");
   }
