@@ -92,13 +92,13 @@ RowObservationFile<DataType>::RowObservationFile(
   while (std::getline(dataFile, line)) {
     std::stringstream ss(line);
     std::string item;
+    if (obsIndices) {
+      // First get the observation index
+      std::getline(ss, item, sep);
+    }
     auto i = 0u;
     while (std::getline(ss, item, sep)) {
       std::istringstream is(item);
-      if (obsIndices) {
-        std::string index;
-        is >> index;
-      }
       if (columnMajor) {
         // Store the data in column major format
         is >> this->m_data[i*numRows + j];
