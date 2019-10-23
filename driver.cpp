@@ -151,22 +151,22 @@ getNeighborhood(
   std::vector<std::string> nbrVars;
   if (n <= UintSet<uint8_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint8_t>::N;
-    auto counter = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
-    //auto counter = create_RadCounter<N>(n, m, std::begin(dataFile->data()));
+    auto counter = BVCounter<N>::create(n, m, std::begin(dataFile->data()));
+    //auto counter = RadCounter::create<N>(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
   }
   else if (n <= UintSet<uint16_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint16_t>::N;
-    auto counter = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
-    //auto counter = create_RadCounter<N>(n, m, std::begin(dataFile->data()));
+    auto counter = BVCounter<N>::create(n, m, std::begin(dataFile->data()));
+    //auto counter = RadCounter::create<N>(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
   else if (n < UintSet<uint32_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint32_t>::N;
-    auto counter = create_BVCounter<N>(n, m, std::begin(dataFile->data()));
-    //auto counter = create_RadCounter<N>(n, m, std::begin(dataFile.data()));
+    auto counter = BVCounter<N>::create(n, m, std::begin(dataFile->data()));
+    //auto counter = RadCounter::create<N>(n, m, std::begin(dataFile.data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint32_t>(counter, varNames, options);
   }

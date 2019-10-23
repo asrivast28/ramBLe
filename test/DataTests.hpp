@@ -9,39 +9,39 @@
 #include "UintSet.hpp"
 
 
-TEST_F(NeapolitanTest, MarginalPValue) {
-  double neapolitan1 = data[0].pValue(0, 1);
+TYPED_TEST(NeapolitanTest, MarginalPValue) {
+  double neapolitan1 = this->data[0].pValue(0, 1);
   EXPECT_NEAR(neapolitan1, 0.001, 0.0002);
 
-  double neapolitan2 = data[1].pValue(0, 1);
+  double neapolitan2 = this->data[1].pValue(0, 1);
   EXPECT_NEAR(neapolitan2, 1, 0.0001);
 
-  double neapolitan3 = data[2].pValue(0, 1);
+  double neapolitan3 = this->data[2].pValue(0, 1);
   EXPECT_NEAR(neapolitan3, 0.46, 0.002);
 }
 
-TEST_F(LizardsTest, MarginalPValue) {
-  double spec_diam  = data.pValue(0, 1);
+TYPED_TEST(LizardsTest, MarginalPValue) {
+  double spec_diam  = this->data.pValue(0, 1);
   EXPECT_NEAR(spec_diam, 0.0003845, 0.0001);
 
-  double spec_hght = data.pValue(0, 2);
+  double spec_hght = this->data.pValue(0, 2);
   EXPECT_NEAR(spec_hght, 0.001257, 0.0001);
 
-  double diam_hght = data.pValue(1, 2);
+  double diam_hght = this->data.pValue(1, 2);
   EXPECT_NEAR(diam_hght, 0.4357, 0.0001);
 }
 
-TEST_F(LizardsTest, ConditionalPValue) {
+TYPED_TEST(LizardsTest, ConditionalPValue) {
   UintSet<uint8_t> given{2};
-  double spec_diam  = data.pValue(0, 1, given);
+  double spec_diam  = this->data.pValue(0, 1, given);
   EXPECT_NEAR(spec_diam, 0.0009009, 0.0001);
 
   given = UintSet<uint8_t>{1};
-  double spec_hght = data.pValue(0, 2, given);
+  double spec_hght = this->data.pValue(0, 2, given);
   EXPECT_NEAR(spec_hght, 0.002708, 0.0001);
 
   given = UintSet<uint8_t>{0};
-  double diam_hght = data.pValue(1, 2, given);
+  double diam_hght = this->data.pValue(1, 2, given);
   EXPECT_NEAR(diam_hght, 0.3632, 0.0001);
 }
 
