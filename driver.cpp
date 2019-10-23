@@ -13,7 +13,7 @@
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
 #include "BVCounter.hpp"
-//#include "RadCounter.hpp"
+#include "RadCounter.hpp"
 
 #include <iostream>
 #include <memory>
@@ -76,22 +76,22 @@ getAlgorithm(
  * @brief Gets the neighborhood for the given target variable.
  *
  * @tparam VarType Type of the variables (expected to be an integral type).
- * @tparam CounterType Type of the object that provides counting queries.
+ * @tparam Counter Type of the object that provides counting queries.
  * @param counter Object that executes counting queries.
  * @param varNames Names of all the variables.
  * @param options Program options provider.
  *
  * @return The list of labels of the variables in the neighborhood.
  */
-template <typename VarType, typename CounterType>
+template <typename VarType, typename Counter>
 std::vector<std::string>
 getNeighborhood(
-  const CounterType& counter,
+  const Counter& counter,
   const std::vector<std::string>& varNames,
   const ProgramOptions& options
 )
 {
-  Data<CounterType, VarType> data(counter, varNames);
+  Data<Counter, VarType> data(counter, varNames);
   auto algo = getAlgorithm<VarType, UintSet<VarType>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
@@ -130,7 +130,8 @@ getNeighborhood(
 /**
  * @brief Gets the neighborhood for the given target variable.
  *
- * @tparam DataType Type of the data observed.
+ * @tparam CounterType Type of the counter to be used.
+ * @tparam FileType Type of the file to be read.
  * @param n The total number of variables.
  * @param m The total number of observations.
  * @param dataFile File data provider.
@@ -138,7 +139,7 @@ getNeighborhood(
  *
  * @return The list of labels of the variables in the neighborhood.
  */
-template <typename FileType>
+template <template <int, typename...> class CounterType, typename FileType>
 std::vector<std::string>
 getNeighborhood(
   const uint32_t& n,
@@ -151,22 +152,19 @@ getNeighborhood(
   std::vector<std::string> nbrVars;
   if (n <= UintSet<uint8_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint8_t>::N;
-    auto counter = BVCounter<N>::create(n, m, std::begin(dataFile->data()));
-    //auto counter = RadCounter::create<N>(n, m, std::begin(dataFile->data()));
+    auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
   }
   else if (n <= UintSet<uint16_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint16_t>::N;
-    auto counter = BVCounter<N>::create(n, m, std::begin(dataFile->data()));
-    //auto counter = RadCounter::create<N>(n, m, std::begin(dataFile->data()));
+    auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
   else if (n < UintSet<uint32_t>::capacity()) {
     constexpr int N = UintTypeTrait<uint32_t>::N;
-    auto counter = BVCounter<N>::create(n, m, std::begin(dataFile->data()));
-    //auto counter = RadCounter::create<N>(n, m, std::begin(dataFile.data()));
+    auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint32_t>(counter, varNames, options);
   }
@@ -206,7 +204,24 @@ main(
     if (options.wallTime()) {
       std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;
     }
-    auto nbrVars = getNeighborhood(n, m, std::move(dataFile), options);
+
+    bool counterFound = false;
+    std::stringstream ss;
+    std::vector<std::string> nbrVars;
+    if (options.counterType().compare("bv") == 0) {
+      nbrVars = getNeighborhood<BVCounter>(n, m, std::move(dataFile), options);
+      counterFound = true;
+    }
+    ss << "bv,";
+    if (options.counterType().compare("rad") == 0) {
+      nbrVars = getNeighborhood<RadCounter>(n, m, std::move(dataFile), options);
+      counterFound = true;
+    }
+    ss << "rad";
+    if (!counterFound) {
+      throw std::runtime_error("Requested counter not found. Supported counter types are: {" + ss.str() + "}");
+    }
+
     for (const auto var: nbrVars) {
       std::cout << var << ",";
     }

@@ -61,6 +61,9 @@ public:
   directEdges() const;
 
   const std::string&
+  counterType() const;
+
+  const std::string&
   logLevel() const;
 
   bool
@@ -75,6 +78,7 @@ private:
   std::string m_algoName;
   std::string m_targetVar;
   std::string m_outputFile;
+  std::string m_counterType;
   uint32_t m_numVars;
   uint32_t m_numObs;
   char m_separator;

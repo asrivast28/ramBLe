@@ -15,6 +15,7 @@ ProgramOptions::ProgramOptions(
     m_algoName(),
     m_targetVar(),
     m_outputFile(),
+    m_counterType(),
     m_numVars(),
     m_numObs(),
     m_separator(),
@@ -26,7 +27,8 @@ ProgramOptions::ProgramOptions(
     m_directEdges(),
     m_wallTime()
 {
-  m_desc.add_options()
+  po::options_description visible("Visible options");
+  visible.add_options()
     ("help,h", "Print this message.")
     ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
     ("nobs,m", po::value<uint32_t>(&m_numObs), "Number of observations in the dataset.")
@@ -41,11 +43,18 @@ ProgramOptions::ProgramOptions(
     ("learn,l", po::bool_switch(&m_learnNetwork)->default_value(false), "Force learn the network.")
     ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
     ("directed,d", po::bool_switch(&m_directEdges)->default_value(false), "Orient the edges in the learned network.")
+    ;
+
+  po::options_description developer("Developer options");
+  developer.add_options()
+    ("counter", po::value<std::string>(&m_counterType)->default_value("bv"), "Type of the counter to be used.")
 #ifdef LOGGING
     ("log,g", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
     ("walltime,w", po::bool_switch(&m_wallTime)->default_value(false), "Time the top level operations.")
     ;
+
+  m_desc.add(visible).add(developer);
 }
 
 void
@@ -160,6 +169,13 @@ ProgramOptions::directEdges(
 ) const
 {
   return m_directEdges;
+}
+
+const std::string&
+ProgramOptions::counterType(
+) const
+{
+  return m_counterType;
 }
 
 const std::string&
