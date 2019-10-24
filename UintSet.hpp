@@ -16,25 +16,25 @@
  * @brief Type trait class for uint_type sets.
  *        Specialized for all the supported values of N.
  *
- * @tparam ValueType Datatype of the value contained by the set.
+ * @tparam Element Datatype of the value contained by the set.
  */
-template <typename ValueType>
+template <typename Element>
 class UintTypeTrait;
 
 /**
  * @brief STL style interface for the uint_type sets from the SABNAtk library.
  *
- * @tparam ValueType Datatype of the value contained by the set.
+ * @tparam Element Datatype of the value contained by the set.
  */
-template <typename ValueType>
+template <typename Element>
 class UintSet {
 public:
   class Iterator;
 
 public:
-  using SetType = typename UintTypeTrait<ValueType>::SetType;
+  using Set = typename UintTypeTrait<Element>::Set;
   // Required typedefs
-  using value_type = ValueType;
+  using value_type = Element;
   using iterator = Iterator;
 
 public:
@@ -44,20 +44,20 @@ public:
   capacity();
 
 public:
-  UintSet(const ValueType = capacity());
+  UintSet(const Element = capacity());
 
-  UintSet(const std::initializer_list<ValueType>&, const ValueType = capacity());
+  UintSet(const std::initializer_list<Element>&, const Element = capacity());
 
-  UintSet(const Iterator&, const Iterator&, const ValueType = capacity());
+  UintSet(const Iterator&, const Iterator&, const Element = capacity());
 
-  UintSet(const typename std::vector<ValueType>::iterator&, const typename std::vector<ValueType>::iterator&, const ValueType = capacity());
+  UintSet(const typename std::vector<Element>::iterator&, const typename std::vector<Element>::iterator&, const Element = capacity());
 
-  UintSet(const std::vector<bool>&, const ValueType = capacity());
+  UintSet(const std::vector<bool>&, const Element = capacity());
 
-  const SetType&
+  const Set&
   operator*() const;
 
-  SetType&
+  Set&
   operator*();
 
   bool
@@ -67,15 +67,15 @@ public:
   operator!=(const UintSet&) const;
 
   Iterator
-  insert(const ValueType);
+  insert(const Element);
 
   Iterator
-  insert(const Iterator&, const ValueType);
+  insert(const Iterator&, const Element);
 
   void
-  erase(const ValueType);
+  erase(const Element);
 
-  ValueType
+  Element
   max() const;
 
   uint32_t
@@ -85,7 +85,7 @@ public:
   empty() const;
 
   bool
-  contains(const ValueType) const;
+  contains(const Element) const;
 
   Iterator
   begin() const;
@@ -94,17 +94,17 @@ public:
   end() const;
 
   Iterator
-  find(const ValueType) const;
+  find(const Element) const;
 
 public:
-  template <typename SetType, typename VarType>
+  template <typename Set, typename Var>
   friend
-  SetType
-  set_init(SetType&&, const VarType);
+  Set
+  set_init(Set&&, const Var);
 
 private:
-  SetType m_set;
-  ValueType m_max;
+  Set m_set;
+  Element m_max;
 }; // class UintSet
 
 #include "detail/UintSet.hpp"

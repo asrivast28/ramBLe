@@ -1,9 +1,9 @@
 /**
- * @file DataFile.hpp
+ * @file DataReader.hpp
  * @brief Declaration of the functions for reading files.
  */
-#ifndef DATAFILE_HPP_
-#define DATAFILE_HPP_
+#ifndef DATAREADER_HPP_
+#define DATAREADER_HPP_
 
 #include <sstream>
 #include <vector>
@@ -14,9 +14,9 @@
  * @tparam DataType The type of the data to be read.
  */
 template <typename DataType>
-class DataFile {
+class DataReader {
 public:
-  DataFile(const uint32_t, const uint32_t);
+  DataReader(const uint32_t, const uint32_t);
 
   const std::vector<DataType>&
   data() const;
@@ -31,7 +31,7 @@ protected:
 protected:
   std::vector<DataType> m_data;
   std::vector<std::string> m_varNames;
-}; // class DataFile
+}; // class DataReader
 
 /**
  * @brief Class that reads a file with observations arranged in rows.
@@ -39,10 +39,10 @@ protected:
  * @tparam DataType The type of the data to be read.
  */
 template <typename DataType>
-class RowObservationFile : public DataFile<DataType> {
+class RowObservationReader : public DataReader<DataType> {
 public:
-  RowObservationFile(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false, const bool = false);
-}; // class RowObservationFile
+  RowObservationReader(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false, const bool = false);
+}; // class RowObservationReader
 
 /**
  * @brief Class that reads a file with observations arranged in columns.
@@ -50,11 +50,11 @@ public:
  * @tparam DataType The type of the data to be read.
  */
 template <typename DataType>
-class ColumnObservationFile : public DataFile<DataType> {
+class ColumnObservationReader : public DataReader<DataType> {
 public:
-  ColumnObservationFile(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false, const bool = false);
-}; // class ColumnObservationFile
+  ColumnObservationReader(const std::string&, const uint32_t, const uint32_t, const char = '\t', const bool = false, const bool = false, const bool = false);
+}; // class ColumnObservationReader
 
-#include "detail/DataFile.hpp"
+#include "detail/DataReader.hpp"
 
-#endif // DATAFILE_HPP_
+#endif // DATAREADER_HPP_

@@ -3,8 +3,8 @@
  * @brief The implementation of the main function, and other
  *        functions that drive the program execution.
  */
-#include "Data.hpp"
-#include "DataFile.hpp"
+#include "DataQuery.hpp"
+#include "DataReader.hpp"
 #include "DirectDiscovery.hpp"
 #include "ProgramOptions.hpp"
 #include "TopologicalDiscovery.hpp"
@@ -23,59 +23,59 @@
 /**
  * @brief Gets a pointer to the object of the required MB discovery algorithm.
  *
- * @tparam VarType Type of the variables (expected to be an integral type).
- * @tparam SetType Type of set container.
- * @tparam DataType Type of the object which is used for querying data.
+ * @tparam Var Type of the variables (expected to be an integral type).
+ * @tparam Set Type of set container.
+ * @tparam Data Type of the object which is used for querying data.
  * @param algoName The name of the algorithm.
  * @param data The object which is used for querying data.
  *
  * @return unique_ptr to the object of the given algorithm.
  *         The unique_ptr points to a nullptr if the algorithm is not found.
  */
-template <typename VarType, typename SetType, typename DataType>
-std::unique_ptr<ConstraintBasedDiscovery<DataType, VarType, SetType>>
+template <typename Var, typename Set, typename Data>
+std::unique_ptr<ConstraintBasedDiscovery<Data, Var, Set>>
 getAlgorithm(
   const std::string& algoName,
-  const DataType& data
+  const Data& data
 )
 {
   std::stringstream ss;
   if (algoName.compare("gs") == 0) {
-    return std::make_unique<GSMB<DataType, VarType, SetType>>(data);
+    return std::make_unique<GSMB<Data, Var, Set>>(data);
   }
   ss << "gs,";
   if (algoName.compare("iamb") == 0) {
-    return std::make_unique<IAMB<DataType, VarType, SetType>>(data);
+    return std::make_unique<IAMB<Data, Var, Set>>(data);
   }
   ss << "iamb,";
   if (algoName.compare("inter.iamb") == 0) {
-    return std::make_unique<InterIAMB<DataType, VarType, SetType>>(data);
+    return std::make_unique<InterIAMB<Data, Var, Set>>(data);
   }
   ss << "inter.iamb,";
   if (algoName.compare("mmpc") == 0) {
-    return std::make_unique<MMPC<DataType, VarType, SetType>>(data);
+    return std::make_unique<MMPC<Data, Var, Set>>(data);
   }
   ss << "mmpc,";
   if (algoName.compare("hiton") == 0) {
-    return std::make_unique<HITON<DataType, VarType, SetType>>(data);
+    return std::make_unique<HITON<Data, Var, Set>>(data);
   }
   ss << "hiton,";
   if (algoName.compare("si.hiton.pc") == 0) {
-    return std::make_unique<SemiInterleavedHITON<DataType, VarType, SetType>>(data);
+    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(data);
   }
   ss << "si.hiton.pc,";
   if (algoName.compare("getpc") == 0) {
-    return std::make_unique<GetPC<DataType, VarType, SetType>>(data);
+    return std::make_unique<GetPC<Data, Var, Set>>(data);
   }
   ss << "getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
-  return std::unique_ptr<ConstraintBasedDiscovery<DataType, VarType, SetType>>();
+  return std::unique_ptr<ConstraintBasedDiscovery<Data, Var, Set>>();
 }
 
 /**
  * @brief Gets the neighborhood for the given target variable.
  *
- * @tparam VarType Type of the variables (expected to be an integral type).
+ * @tparam Var Type of the variables (expected to be an integral type).
  * @tparam Counter Type of the object that provides counting queries.
  * @param counter Object that executes counting queries.
  * @param varNames Names of all the variables.
@@ -83,7 +83,7 @@ getAlgorithm(
  *
  * @return The list of labels of the variables in the neighborhood.
  */
-template <typename VarType, typename Counter>
+template <typename Var, typename Counter>
 std::vector<std::string>
 getNeighborhood(
   const Counter& counter,
@@ -91,8 +91,8 @@ getNeighborhood(
   const ProgramOptions& options
 )
 {
-  Data<Counter, VarType> data(counter, varNames);
-  auto algo = getAlgorithm<VarType, UintSet<VarType>>(options.algoName(), data);
+  DataQuery<Counter, Var> data(counter, varNames);
+  auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
     Timer tNeighborhood;
@@ -194,12 +194,12 @@ main(
     uint32_t n = options.numVars();
     uint32_t m = options.numObs();
     Timer tRead;
-    std::unique_ptr<DataFile<uint8_t>> dataFile;
+    std::unique_ptr<DataReader<uint8_t>> dataFile;
     if (options.colObs()) {
-      dataFile.reset(new ColumnObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
+      dataFile.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
     else {
-      dataFile.reset(new RowObservationFile<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
+      dataFile.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
     if (options.wallTime()) {
       std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;

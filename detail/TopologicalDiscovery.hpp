@@ -13,19 +13,19 @@
 #include <algorithm>
 
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Constructs the object with the given data.
  *
- * @param data Reference to an object of the DataType.
+ * @param data Reference to an object of the Data.
  */
-TopologicalDiscovery<DataType, VarType, SetType>::TopologicalDiscovery(
-  const DataType& data
-) : ConstraintBasedDiscovery<DataType, VarType, SetType>(data)
+TopologicalDiscovery<Data, Var, Set>::TopologicalDiscovery(
+  const Data& data
+) : ConstraintBasedDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Removes false positives from the given candidate PC set
  *        for the given target variable.
@@ -37,15 +37,15 @@ template <typename DataType, typename VarType, typename SetType>
  * @return A set containing the indices of all the variables removed
  *         from the candidate PC set.
  */
-SetType
-TopologicalDiscovery<DataType, VarType, SetType>::removeFalsePC(
-  const VarType target,
-  SetType& cpc
+Set
+TopologicalDiscovery<Data, Var, Set>::removeFalsePC(
+  const Var target,
+  Set& cpc
 ) const
 {
-  auto removed = set_init(SetType(), this->m_data.numVars());
+  auto removed = set_init(Set(), this->m_data.numVars());
   auto initial = cpc;
-  for (const VarType x: initial) {
+  for (const Var x: initial) {
     cpc.erase(x);
     LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
     if (this->m_data.isIndependentAnySubset(target, x, cpc)) {
@@ -59,7 +59,7 @@ TopologicalDiscovery<DataType, VarType, SetType>::removeFalsePC(
   return removed;
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief The top level function for getting the candidate MB for the given
  *        target variable, using the PC sets, as per the algorithm proposed
@@ -71,20 +71,20 @@ template <typename DataType, typename VarType, typename SetType>
  * @return A set containing the indices of all the variables
  *         in the MB of the given target variable.
  */
-SetType
-TopologicalDiscovery<DataType, VarType, SetType>::getCandidateMB(
-  const VarType target,
-  SetType candidates
+Set
+TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
-  auto cmb = set_init(SetType(), this->m_data.numVars());
+  auto cmb = set_init(Set(), this->m_data.numVars());
   auto pc = this->getPC(target);
-  for (const VarType y: pc) {
+  for (const Var y: pc) {
     LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)", this->m_data.varName(y), this->m_data.varName(target));
     cmb.insert(y);
     auto pcY = this->getPC(y);
-    for (const VarType x: pcY) {
+    for (const Var x: pcY) {
       if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
@@ -105,31 +105,31 @@ TopologicalDiscovery<DataType, VarType, SetType>::getCandidateMB(
   return cmb;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-MMPC<DataType, VarType, SetType>::MMPC(
-  const DataType& data
-) : TopologicalDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+MMPC<Data, Var, Set>::MMPC(
+  const Data& data
+) : TopologicalDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-MMPC<DataType, VarType, SetType>::getCandidatePC(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+MMPC<Data, Var, Set>::getCandidatePC(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
-  auto cpc = set_init(SetType(), this->m_data.numVars());
+  auto cpc = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
     // Find the variable which maximizes the minimum association score with the target,
     // given any subset of the current candidate PC
-    VarType x = this->m_data.numVars();
+    Var x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
-    for (const VarType y: candidates) {
+    for (const Var y: candidates) {
       LOG_MESSAGE(debug, "MMPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (std::isless(scoreX, scoreY)) {
@@ -153,28 +153,28 @@ MMPC<DataType, VarType, SetType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-HITON<DataType, VarType, SetType>::HITON(
-  const DataType& data
-) : TopologicalDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+HITON<Data, Var, Set>::HITON(
+  const Data& data
+) : TopologicalDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-HITON<DataType, VarType, SetType>::getCandidatePC(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+HITON<Data, Var, Set>::getCandidatePC(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  auto cpc = set_init(SetType(), this->m_data.numVars());
+  auto cpc = set_init(Set(), this->m_data.numVars());
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
-    VarType x = this->m_data.numVars();
+    Var x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
-    for (const VarType y: candidates) {
+    for (const Var y: candidates) {
       LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
       if (std::isless(scoreX, scoreY)) {
@@ -194,29 +194,29 @@ HITON<DataType, VarType, SetType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SemiInterleavedHITON<DataType, VarType, SetType>::SemiInterleavedHITON(
-  const DataType& data
-) : TopologicalDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
+  const Data& data
+) : TopologicalDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-SemiInterleavedHITON<DataType, VarType, SetType>::getCandidatePC(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  auto cpc = set_init(SetType(), this->m_data.numVars());
+  auto cpc = set_init(Set(), this->m_data.numVars());
   while (candidates.size() > 0) {
     // Find the variable which maximizes the marginal association score with the target
-    VarType x = this->m_data.numVars();
+    Var x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
-    auto remove = set_init(SetType(), this->m_data.numVars());
-    for (const VarType y: candidates) {
+    auto remove = set_init(Set(), this->m_data.numVars());
+    for (const Var y: candidates) {
       LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y);
       if (this->m_data.isIndependent(scoreY)) {
@@ -231,7 +231,7 @@ SemiInterleavedHITON<DataType, VarType, SetType>::getCandidatePC(
       }
     }
     // Remove all the candidates which can not be added
-    for (const VarType y: remove) {
+    for (const Var y: remove) {
       candidates.erase(y);
     }
     if (candidates.empty()) {
@@ -249,32 +249,32 @@ SemiInterleavedHITON<DataType, VarType, SetType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-GetPC<DataType, VarType, SetType>::GetPC(
-  const DataType& data
-) : TopologicalDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+GetPC<Data, Var, Set>::GetPC(
+  const Data& data
+) : TopologicalDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-GetPC<DataType, VarType, SetType>::getCandidatePC(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+GetPC<Data, Var, Set>::getCandidatePC(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
-  auto cpc = set_init(SetType(), this->m_data.numVars());
+  auto cpc = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
     // Find the variable which maximizes the minimum association score with the target,
     // given any subset of the current candidate PC
-    VarType x = this->m_data.numVars();
+    Var x = this->m_data.numVars();
     double scoreX = std::numeric_limits<double>::lowest();
-    auto remove = set_init(SetType(), this->m_data.numVars());
-    for (const VarType y: candidates) {
+    auto remove = set_init(Set(), this->m_data.numVars());
+    for (const Var y: candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto scoreY = this->m_data.minAssocScore(target, y, cpc);
       if (this->m_data.isIndependent(scoreY)) {
@@ -289,7 +289,7 @@ GetPC<DataType, VarType, SetType>::getCandidatePC(
       }
     }
     // Remove all the candidates which can not be added
-    for (const VarType y: remove) {
+    for (const Var y: remove) {
       candidates.erase(y);
     }
     if (candidates.empty()) {

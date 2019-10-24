@@ -11,11 +11,11 @@
 #include <boost/graph/tiernan_all_cycles.hpp>
 
 
-template <typename VarType>
+template <typename Var>
 /**
   * @brief Helper class that implements the anti-parallel edge filter functionality.
  */
-class BayesianNetwork<VarType>::AntiParallelEdgeFilter {
+class BayesianNetwork<Var>::AntiParallelEdgeFilter {
 public:
   AntiParallelEdgeFilter(
   ) : m_graph(nullptr)
@@ -43,15 +43,15 @@ private:
   const GraphImpl* m_graph;
 }; // class AntiParallelEdgeFilter
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Helper class for counting all the simple cycles that
  *        an edge is part of.
  */
-class BayesianNetwork<VarType>::EdgeCycleCounter {
+class BayesianNetwork<Var>::EdgeCycleCounter {
 public:
   EdgeCycleCounter(
-    const Graph<BidirectionalAdjacencyList, VertexLabel, VarType>& graph,
+    const Graph<BidirectionalAdjacencyList, VertexLabel, Var>& graph,
     std::unordered_map<Edge, size_t, typename Edge::Hash>& counts
   ) : m_graph(graph),
       m_counts(counts)
@@ -87,27 +87,27 @@ public:
   }
 
 private:
-  const Graph<BidirectionalAdjacencyList, VertexLabel, VarType>& m_graph;
+  const Graph<BidirectionalAdjacencyList, VertexLabel, Var>& m_graph;
   std::unordered_map<Edge, size_t, typename Edge::Hash>& m_counts;
 }; // class EdgeCycleCounter
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Constructs empty network with given labels as vertices.
  */
-BayesianNetwork<VarType>::BayesianNetwork(
+BayesianNetwork<Var>::BayesianNetwork(
   const std::vector<std::string>& varLabels
-) : Graph<BidirectionalAdjacencyList, VertexLabel, VarType>(varLabels),
+) : Graph<BidirectionalAdjacencyList, VertexLabel, Var>(varLabels),
     m_directed(this->filterAntiParallelEdges())
 {
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Returns a filtered view of the current graph with the anti-parallel edges removed.
  */
-typename BayesianNetwork<VarType>::FilteredGraph
-BayesianNetwork<VarType>::filterAntiParallelEdges(
+typename BayesianNetwork<Var>::FilteredGraph
+BayesianNetwork<Var>::filterAntiParallelEdges(
 ) const
 {
   AntiParallelEdgeFilter bef(this->m_graph);
@@ -115,27 +115,27 @@ BayesianNetwork<VarType>::filterAntiParallelEdges(
   return FilteredGraph(std::move(fg), this->m_idVertexMap);
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Function which checks if the network has directed cycles.
  */
 bool
-BayesianNetwork<VarType>::hasDirectedCycles(
+BayesianNetwork<Var>::hasDirectedCycles(
 ) const
 {
   return m_directed.hasCycles();
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Counts the number of simple cycles that each edge is part of.
  */
-std::unordered_map<typename BayesianNetwork<VarType>::Edge, size_t, typename BayesianNetwork<VarType>::Edge::Hash>
-BayesianNetwork<VarType>::countEdgeCycles(
+std::unordered_map<typename BayesianNetwork<Var>::Edge, size_t, typename BayesianNetwork<Var>::Edge::Hash>
+BayesianNetwork<Var>::countEdgeCycles(
 ) const
 {
   // Copy the directed view of the graph to a directed graph
-  typename DirectedGraph<VertexLabel, VarType>::Impl dg;
+  typename DirectedGraph<VertexLabel, Var>::Impl dg;
   boost::copy_graph(*m_directed, dg);
   // Record all the counts
   std::unordered_map<Edge, size_t, typename Edge::Hash> counts;
@@ -144,13 +144,13 @@ BayesianNetwork<VarType>::countEdgeCycles(
   return counts;
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Function which breaks directed cycles in the network by reversing
  *        the direction of the edge which is part of most cycles.
  */
 void
-BayesianNetwork<VarType>::breakDirectedCycles(
+BayesianNetwork<Var>::breakDirectedCycles(
 )
 {
   Edge e;
@@ -169,7 +169,7 @@ BayesianNetwork<VarType>::breakDirectedCycles(
   this->addEdge(target, source);
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Function which orients an edge, if it doesn't create directed cycles.
  *
@@ -178,7 +178,7 @@ template <typename VarType>
  * @returns true if any changes were made, otherwise returns false.
  */
 bool
-BayesianNetwork<VarType>::removeEdgeAcyclic(
+BayesianNetwork<Var>::removeEdgeAcyclic(
   Edge&& e
 )
 {
@@ -192,13 +192,13 @@ BayesianNetwork<VarType>::removeEdgeAcyclic(
   return true;
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Function which checks if the undirected edge Y - Z can be
  *        oriented as Y -> Z to prevent new unshielded colliders.
  */
 bool
-BayesianNetwork<VarType>::unshieldedColliderRule(
+BayesianNetwork<Var>::unshieldedColliderRule(
   const Vertex& y,
   const Vertex& z
 ) const
@@ -219,13 +219,13 @@ BayesianNetwork<VarType>::unshieldedColliderRule(
   return potential;
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Function which checks if the undirected edge X - Z can be
  *        oriented as X -> Z to prevent directed cycles.
  */
 bool
-BayesianNetwork<VarType>::acyclicityRule(
+BayesianNetwork<Var>::acyclicityRule(
   const Vertex& x,
   const Vertex& z
 ) const
@@ -256,13 +256,13 @@ BayesianNetwork<VarType>::acyclicityRule(
   return (orientEdge && !immorality);
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Function which checks if the undirected edge X - Z can be
  *        oriented as X -> Z by applying the hybrid rule.
  */
 bool
-BayesianNetwork<VarType>::hybridRule(
+BayesianNetwork<Var>::hybridRule(
   const Vertex& x,
   const Vertex& z
 ) const
@@ -280,14 +280,14 @@ BayesianNetwork<VarType>::hybridRule(
   return (countY >= 2);
 }
 
-template <typename VarType>
+template <typename Var>
 /**
  * @brief Top level function for orienting edges using Meek's rules.
  *
  * @returns true if any changes were made, otherwise returns false.
  */
 bool
-BayesianNetwork<VarType>::applyMeekRules(
+BayesianNetwork<Var>::applyMeekRules(
 )
 {
   bool changed = false;

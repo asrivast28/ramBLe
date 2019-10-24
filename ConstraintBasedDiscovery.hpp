@@ -13,66 +13,66 @@
 /**
  * @brief Abstract base class for causal discovery using constraint-based learning.
  *
- * @tparam DataType Type of the object which is used for querying the data.
- * @tparam VarType Type of variable indices (expected to be an integer type).
- * @tparam SetType Type of set container.
+ * @tparam Data Type of the object which is used for querying the data.
+ * @tparam Var Type of variable indices (expected to be an integer type).
+ * @tparam Set Type of set container.
  */
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 class ConstraintBasedDiscovery {
 public:
-  ConstraintBasedDiscovery(const DataType&);
+  ConstraintBasedDiscovery(const Data&);
 
-  SetType
-  getPC(const VarType) const;
+  Set
+  getPC(const Var) const;
 
-  SetType
-  getMB(const VarType) const;
+  Set
+  getMB(const Var) const;
 
-  BayesianNetwork<VarType>
+  BayesianNetwork<Var>
   getNetwork(const bool = false) const;
 
   virtual
   ~ConstraintBasedDiscovery() { }
 
 protected:
-  SetType
-  getCandidates(const VarType) const;
+  Set
+  getCandidates(const Var) const;
 
   virtual
-  SetType
-  getCandidatePC(const VarType, SetType) const = 0;
+  Set
+  getCandidatePC(const Var, Set) const = 0;
 
   virtual
-  SetType
-  getCandidateMB(const VarType, SetType) const = 0;
+  Set
+  getCandidateMB(const Var, Set) const = 0;
 
 private:
-  std::pair<SetType, bool>
-  getCandidatePC_cache(const VarType, SetType) const;
+  std::pair<Set, bool>
+  getCandidatePC_cache(const Var, Set) const;
 
   void
-  symmetryCorrectPC(const VarType, SetType&) const;
+  symmetryCorrectPC(const Var, Set&) const;
 
-  std::pair<SetType, bool>
-  getCandidateMB_cache(const VarType, SetType) const;
+  std::pair<Set, bool>
+  getCandidateMB_cache(const Var, Set) const;
 
   void
-  symmetryCorrectMB(const VarType, SetType&) const;
+  symmetryCorrectMB(const Var, Set&) const;
 
   bool
-  isCollider(const VarType, const VarType, const VarType) const;
+  isCollider(const Var, const Var, const Var) const;
 
-  template <typename GraphType>
+  template <typename Network>
   void
-  addVarNeighbors(const VarType, GraphType&, const bool) const;
+  addVarNeighbors(const Var, Network&, const bool) const;
 
 protected:
-  const DataType m_data;
-  SetType m_allVars;
+  const Data m_data;
+  Set m_allVars;
 
 private:
-  mutable std::unordered_map<VarType, std::pair<SetType, bool>> m_cachedPC;
-  mutable std::unordered_map<VarType, std::pair<SetType, bool>> m_cachedMB;
+  mutable std::unordered_map<Var, std::pair<Set, bool>> m_cachedPC;
+  mutable std::unordered_map<Var, std::pair<Set, bool>> m_cachedMB;
 }; // class ConstraintBasedDiscovery
 
 #include "detail/ConstraintBasedDiscovery.hpp"

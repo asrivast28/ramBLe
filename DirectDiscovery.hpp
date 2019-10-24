@@ -8,26 +8,24 @@
 
 #include "ConstraintBasedDiscovery.hpp"
 
-#include <set>
-
 
 /**
  * @brief Abstract base class for causal discovery by first learning MB sets.
  *
- * @tparam DataType Type of the object which is used for querying the data.
- * @tparam VarType Type of variable indices (expected to be an integer type).
- * @tparam SetType Type of set container.
+ * @tparam Data Type of the object which is used for querying the data.
+ * @tparam Var Type of variable indices (expected to be an integer type).
+ * @tparam Set Type of set container.
  */
-template <typename DataType, typename VarType, typename SetType>
-class DirectDiscovery : public ConstraintBasedDiscovery<DataType, VarType, SetType> {
+template <typename Data, typename Var, typename Set>
+class DirectDiscovery : public ConstraintBasedDiscovery<Data, Var, Set> {
 public:
-  DirectDiscovery(const DataType&);
+  DirectDiscovery(const Data&);
 
-  SetType
-  getCandidatePC(const VarType, SetType) const override;
+  Set
+  getCandidatePC(const Var, Set) const override;
 
-  SetType
-  shrinkMB(const VarType, SetType&) const;
+  Set
+  shrinkMB(const Var, Set&) const;
 
   virtual
   ~DirectDiscovery() { }
@@ -37,51 +35,51 @@ public:
  * @brief Class that implements Grow-Shrink strategy for MB discovery,
  *        as described by Margaritis & Thrun.
  *
- * @tparam DataType Type of the object which is used for querying the data.
- * @tparam VarType Type of variable indices (expected to be an integer type).
- * @tparam SetType Type of set container.
+ * @tparam Data Type of the object which is used for querying the data.
+ * @tparam Var Type of variable indices (expected to be an integer type).
+ * @tparam Set Type of set container.
  */
-template <typename DataType, typename VarType, typename SetType>
-class GSMB: public DirectDiscovery<DataType, VarType, SetType> {
+template <typename Data, typename Var, typename Set>
+class GSMB: public DirectDiscovery<Data, Var, Set> {
 public:
-  GSMB(const DataType&);
+  GSMB(const Data&);
 
-  SetType
-  getCandidateMB(const VarType, SetType) const override;
+  Set
+  getCandidateMB(const Var, Set) const override;
 }; // class GSMB
 
 /**
  * @brief Class that implements Incremental Association strategy for MB discovery,
  *        as described by Tsamardinos et al.
  *
- * @tparam DataType Type of the object which is used for querying the data.
- * @tparam VarType Type of variable indices (expected to be an integer type).
- * @tparam SetType Type of set container.
+ * @tparam Data Type of the object which is used for querying the data.
+ * @tparam Var Type of variable indices (expected to be an integer type).
+ * @tparam Set Type of set container.
  */
-template <typename DataType, typename VarType, typename SetType>
-class IAMB: public DirectDiscovery<DataType, VarType, SetType> {
+template <typename Data, typename Var, typename Set>
+class IAMB: public DirectDiscovery<Data, Var, Set> {
 public:
-  IAMB(const DataType&);
+  IAMB(const Data&);
 
-  SetType
-  getCandidateMB(const VarType, SetType) const override;
+  Set
+  getCandidateMB(const Var, Set) const override;
 }; // class IAMB
 
 /**
  * @brief Class that implements Interleaved Incremental Association strategy
  *        for MB discovery, as described by Tsamardinos et al.
  *
- * @tparam DataType Type of the object which is used for querying the data.
- * @tparam VarType Type of variable indices (expected to be an integer type).
- * @tparam SetType Type of set container.
+ * @tparam Data Type of the object which is used for querying the data.
+ * @tparam Var Type of variable indices (expected to be an integer type).
+ * @tparam Set Type of set container.
  */
-template <typename DataType, typename VarType, typename SetType>
-class InterIAMB: public DirectDiscovery<DataType, VarType, SetType> {
+template <typename Data, typename Var, typename Set>
+class InterIAMB: public DirectDiscovery<Data, Var, Set> {
 public:
-  InterIAMB(const DataType&);
+  InterIAMB(const Data&);
 
-  SetType
-  getCandidateMB(const VarType, SetType) const override;
+  Set
+  getCandidateMB(const Var, Set) const override;
 }; // class InterIAMB
 
 #include "detail/DirectDiscovery.hpp"

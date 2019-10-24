@@ -1,10 +1,11 @@
 /**
- * @file DataFile.hpp
+ * @file DataReader.hpp
  * @brief Implementation of the functions for reading files.
  */
-#ifndef DETAIL_DATAFILE_HPP_
-#define DETAIL_DATAFILE_HPP_
+#ifndef DETAIL_DATAREADER_HPP_
+#define DETAIL_DATAREADER_HPP_
 
+#include <algorithm>
 #include <fstream>
 
 
@@ -15,7 +16,7 @@ template <typename DataType>
  * @param n The number of variables in the file.
  * @param m The number of observations in the file.
  */
-DataFile<DataType>::DataFile(
+DataReader<DataType>::DataReader(
   const uint32_t n,
   const uint32_t m
 ) : m_data(n*m),
@@ -31,7 +32,7 @@ template <typename DataType>
  * @param is The stream from which data is to be extracted.
  */
 void
-DataFile<DataType>::data(
+DataReader<DataType>::data(
   const size_t index,
   std::istringstream& is
 )
@@ -51,7 +52,7 @@ template <typename DataType>
  * @brief Returns the data read from the file.
  */
 const std::vector<DataType>&
-DataFile<DataType>::data(
+DataReader<DataType>::data(
 ) const
 {
   return m_data;
@@ -62,7 +63,7 @@ template <typename DataType>
  * @brief Returns the variable names corresponding to the data.
  */
 const std::vector<std::string>&
-DataFile<DataType>::varNames(
+DataReader<DataType>::varNames(
 ) const
 {
   return m_varNames;
@@ -80,7 +81,7 @@ template <typename DataType>
  * @param obsIndices If the file contains observation indices in the first column.
  * @param columnMajor If the data should be stored in column-major format.
  */
-RowObservationFile<DataType>::RowObservationFile(
+RowObservationReader<DataType>::RowObservationReader(
   const std::string& fileName,
   const uint32_t numCols,
   const uint32_t numRows,
@@ -88,7 +89,7 @@ RowObservationFile<DataType>::RowObservationFile(
   const bool varNames,
   const bool obsIndices,
   const bool columnMajor
-) : DataFile<DataType>(numCols, numRows)
+) : DataReader<DataType>(numCols, numRows)
 {
   std::ifstream dataFile(fileName);
   std::string line;
@@ -155,7 +156,7 @@ template <typename DataType>
  * @param obsIndices If the file contains observation indices in the first row.
  * @param columnMajor If the data should be stored in column-major format.
  */
-ColumnObservationFile<DataType>::ColumnObservationFile(
+ColumnObservationReader<DataType>::ColumnObservationReader(
   const std::string& fileName,
   const uint32_t numRows,
   const uint32_t numCols,
@@ -163,7 +164,7 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
   const bool varNames,
   const bool obsIndices,
   const bool columnMajor
-) : DataFile<DataType>(numRows, numCols)
+) : DataReader<DataType>(numRows, numCols)
 {
   std::ifstream dataFile(fileName);
   std::string line;
@@ -212,4 +213,4 @@ ColumnObservationFile<DataType>::ColumnObservationFile(
   }
 }
 
-#endif // DETAIL_DATAFILE_HPP_
+#endif // DETAIL_DATAREADER_HPP_

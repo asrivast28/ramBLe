@@ -144,11 +144,11 @@ set_difference<std::set<uint32_t>>(
 /**
  * @brief Function for getting the output represention of a set.
  */
-template <typename ValueType>
+template <typename Element>
 std::ostream&
 operator<<(
   std::ostream& stream,
-  const std::set<ValueType>& set
+  const std::set<Element>& set
 )
 {
   stream << "{";

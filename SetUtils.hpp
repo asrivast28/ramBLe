@@ -13,28 +13,28 @@
 /**
  * @brief Class that provides a lightweight subset wrapper over an STL container.
  *
- * @tparam IteratorType The type of the iterator.
+ * @tparam Iterator The type of the iterator.
  *
  * This class allows iterating over a contiguous subset of a container as defined
  * by the first iterator, the last iterator, and the size of the slice.
  */
-template <typename IteratorType>
+template <typename Iterator>
 class SubsetWrapper {
 public:
-  SubsetWrapper(const IteratorType first, const IteratorType last, const uint32_t size)
+  SubsetWrapper(const Iterator first, const Iterator last, const uint32_t size)
     : m_begin(first),
       m_end(last),
       m_size(size)
   {
   }
 
-  const IteratorType&
+  const Iterator&
   begin() const
   {
     return m_begin;
   }
 
-  const IteratorType&
+  const Iterator&
   end() const
   {
     return m_end;
@@ -47,21 +47,21 @@ public:
   }
 
 private:
-  const IteratorType m_begin;
-  const IteratorType m_end;
+  const Iterator m_begin;
+  const Iterator m_end;
   const uint32_t m_size;
 }; // class SubsetWrapper
 
 /**
  * @brief Class that iterates over all the subsets of the given size of a given set.
  *
- * @tparam SetType Type of the set container.
- * @tparam ValueType Type of the variable (expected to be an integral type).
+ * @tparam Set Type of the set container.
+ * @tparam Element Type of the variable (expected to be an integral type).
  */
-template <typename SetType, typename ValueType>
+template <typename Set, typename Element>
 class SubsetIterator {
 public:
-  SubsetIterator(const SetType& given, const uint32_t k)
+  SubsetIterator(const Set& given, const uint32_t k)
     : m_given(given.begin(), given.end()),
       m_first(m_given.begin()),
       m_current(m_given.begin()+k),
@@ -107,17 +107,17 @@ public:
     return m_valid;
   }
 
-  SubsetWrapper<typename std::vector<ValueType>::iterator>
+  SubsetWrapper<typename std::vector<Element>::iterator>
   get() const
   {
-    return SubsetWrapper<typename std::vector<ValueType>::iterator>(m_first, m_current, m_k);
+    return SubsetWrapper<typename std::vector<Element>::iterator>(m_first, m_current, m_k);
   }
 
 private:
-  std::vector<ValueType> m_given;
-  const typename std::vector<ValueType>::iterator m_first;
-  const typename std::vector<ValueType>::iterator m_current;
-  const typename std::vector<ValueType>::iterator m_last;
+  std::vector<Element> m_given;
+  const typename std::vector<Element>::iterator m_first;
+  const typename std::vector<Element>::iterator m_current;
+  const typename std::vector<Element>::iterator m_last;
   const uint32_t m_k;
   bool m_valid;
 }; // class SubsetIterator
@@ -126,39 +126,39 @@ private:
 /**
  * @brief Function for initializing a given set.
  */
-template <typename SetType, typename ValueType>
-SetType
-set_init(SetType&&, const ValueType);
+template <typename Set, typename Element>
+Set
+set_init(Set&&, const Element);
 
 /**
  * @brief Function for checking if a given set contains a value.
  */
-template <typename SetType, typename ValueType>
+template <typename Set, typename Element>
 bool
-set_contains(const SetType&, const ValueType);
+set_contains(const Set&, const Element);
 
 /**
  * @brief Function for getting the union of two given sets.
  */
-template <typename SetType>
-SetType
-set_union(const SetType&, const SetType&);
+template <typename Set>
+Set
+set_union(const Set&, const Set&);
 
 /**
  * @brief Function for getting the difference of the second set from the first.
  */
-template <typename SetType>
-SetType
-set_difference(const SetType&, const SetType&);
+template <typename Set>
+Set
+set_difference(const Set&, const Set&);
 
 /**
  * @brief Function for checking if the first set is a subset of the second.
  */
-template <typename SetType>
+template <typename Set>
 bool
 is_subset(
-  const SetType& first,
-  const SetType& second
+  const Set& first,
+  const Set& second
 )
 {
   auto diff = set_difference(first, second);

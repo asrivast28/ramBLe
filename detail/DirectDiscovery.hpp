@@ -13,19 +13,19 @@
 #include <numeric>
 
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Constructs the object with the given data.
  *
- * @param data Reference to an object of the DataType.
+ * @param data Reference to an object of the Data.
  */
-DirectDiscovery<DataType, VarType, SetType>::DirectDiscovery(
-  const DataType& data
-) : ConstraintBasedDiscovery<DataType, VarType, SetType>(data)
+DirectDiscovery<Data, Var, Set>::DirectDiscovery(
+  const Data& data
+) : ConstraintBasedDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Function that shrinks the given candidate MB.
  *
@@ -35,18 +35,18 @@ template <typename DataType, typename VarType, typename SetType>
  *
  * @return The indices of the variables that were removed from the candidate MB.
  */
-SetType
-DirectDiscovery<DataType, VarType, SetType>::shrinkMB(
-  const VarType target,
-  SetType& cmb
+Set
+DirectDiscovery<Data, Var, Set>::shrinkMB(
+  const Var target,
+  Set& cmb
 ) const
 {
-  auto removed = set_init(SetType(), this->m_data.numVars());
+  auto removed = set_init(Set(), this->m_data.numVars());
   if (cmb.empty()) {
     return removed;
   }
   auto initial = cmb;
-  for (const VarType x: initial) {
+  for (const Var x: initial) {
     cmb.erase(x);
     LOG_MESSAGE(debug, "Shrink Phase: Evaluating %s for removal from the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
     if (this->m_data.isIndependent(target, x, cmb)) {
@@ -60,7 +60,7 @@ DirectDiscovery<DataType, VarType, SetType>::shrinkMB(
   return removed;
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief The top level function for getting the candidate PC for the given
  *        target variable, using the MB of the variable.
@@ -71,16 +71,16 @@ template <typename DataType, typename VarType, typename SetType>
  * @return A set containing the indices of all the variables
  *         in the PC of the given target variable.
  */
-SetType
-DirectDiscovery<DataType, VarType, SetType>::getCandidatePC(
-  const VarType target,
-  SetType candidates
+Set
+DirectDiscovery<Data, Var, Set>::getCandidatePC(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "Direct Discovery: Getting PC from MB for %s", this->m_data.varName(target));
-  auto cpc = set_init(SetType(), this->m_data.numVars());
+  auto cpc = set_init(Set(), this->m_data.numVars());
   auto mb = this->getMB(target);
-  for (const VarType y: mb) {
+  for (const Var y: mb) {
     LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC", this->m_data.varName(y));
     auto mbTest = mb;
     auto mbY = this->getMB(y);
@@ -100,23 +100,23 @@ DirectDiscovery<DataType, VarType, SetType>::getCandidatePC(
   return cpc;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-GSMB<DataType, VarType, SetType>::GSMB(
-  const DataType& data
-) : DirectDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+GSMB<Data, Var, Set>::GSMB(
+  const Data& data
+) : DirectDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-GSMB<DataType, VarType, SetType>::getCandidateMB(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+GSMB<Data, Var, Set>::getCandidateMB(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
-  auto cmb = set_init(SetType(), this->m_data.numVars());
+  auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
@@ -139,31 +139,31 @@ GSMB<DataType, VarType, SetType>::getCandidateMB(
   return cmb;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-IAMB<DataType, VarType, SetType>::IAMB(
-  const DataType& data
-) : DirectDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+IAMB<Data, Var, Set>::IAMB(
+  const Data& data
+) : DirectDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-IAMB<DataType, VarType, SetType>::getCandidateMB(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+IAMB<Data, Var, Set>::getCandidateMB(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
-  auto cmb = set_init(SetType(), this->m_data.numVars());
+  auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
     // Find the variable with the maximum association score with target,
     // given the current candidate MB
-    VarType x = this->m_data.numVars();
+    Var x = this->m_data.numVars();
     double scoreX = 0.0;
-    for (const VarType y: candidates) {
+    for (const Var y: candidates) {
       LOG_MESSAGE(debug, "IAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y, cmb);
       if (std::isless(scoreX, scoreY)) {
@@ -186,31 +186,31 @@ IAMB<DataType, VarType, SetType>::getCandidateMB(
   return cmb;
 }
 
-template <typename DataType, typename VarType, typename SetType>
-InterIAMB<DataType, VarType, SetType>::InterIAMB(
-  const DataType& data
-) : DirectDiscovery<DataType, VarType, SetType>(data)
+template <typename Data, typename Var, typename Set>
+InterIAMB<Data, Var, Set>::InterIAMB(
+  const Data& data
+) : DirectDiscovery<Data, Var, Set>(data)
 {
 }
 
-template <typename DataType, typename VarType, typename SetType>
-SetType
-InterIAMB<DataType, VarType, SetType>::getCandidateMB(
-  const VarType target,
-  SetType candidates
+template <typename Data, typename Var, typename Set>
+Set
+InterIAMB<Data, Var, Set>::getCandidateMB(
+  const Var target,
+  Set candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
-  auto cmb = set_init(SetType(), this->m_data.numVars());
+  auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
     // Find the variable with the maximum association score with target,
     // given the current candidate MB
-    VarType x = this->m_data.numVars();
+    Var x = this->m_data.numVars();
     double scoreX = 0.0;
-    for (const VarType y: candidates) {
+    for (const Var y: candidates) {
       LOG_MESSAGE(debug, "InterIAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
       double scoreY = this->m_data.assocScore(target, y, cmb);
       if (std::isless(scoreX, scoreY)) {
@@ -231,7 +231,7 @@ InterIAMB<DataType, VarType, SetType>::getCandidateMB(
       auto removed = this->shrinkMB(target, cmb);
       // If the last added variable was removed then the candidate MB
       // did not really change
-      if (removed != SetType{x}) {
+      if (removed != Set{x}) {
         candidates = set_union(candidates, removed);
       }
       else {

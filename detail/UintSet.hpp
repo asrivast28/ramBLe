@@ -21,7 +21,7 @@ public:
   static constexpr int N = 1;
 
 public:
-  using SetType = uint_type<N>;
+  using Set = uint_type<N>;
 
 public:
   static
@@ -29,7 +29,7 @@ public:
   uint32_t
   max()
   {
-    return static_cast<uint32_t>(set_max_size<SetType>());
+    return static_cast<uint32_t>(set_max_size<Set>());
   }
 };
 
@@ -42,7 +42,7 @@ public:
   static constexpr int N = 2;
 
 public:
-  using SetType = uint_type<N>;
+  using Set = uint_type<N>;
 
 public:
   static
@@ -50,7 +50,7 @@ public:
   uint32_t
   max()
   {
-    return static_cast<uint32_t>(set_max_size<SetType>());
+    return static_cast<uint32_t>(set_max_size<Set>());
   }
 };
 
@@ -63,7 +63,7 @@ public:
   static constexpr int N = 4;
 
 public:
-  using SetType = uint_type<N>;
+  using Set = uint_type<N>;
 
 public:
   static
@@ -71,21 +71,21 @@ public:
   uint32_t
   max()
   {
-    return static_cast<uint32_t>(set_max_size<SetType>());
+    return static_cast<uint32_t>(set_max_size<Set>());
   }
 };
 
 
-template <typename ValueType>
+template <typename Element>
 /**
  * @brief Iterator for UintSet.
  */
-class UintSet<ValueType>::Iterator : public std::iterator<std::forward_iterator_tag, ValueType> {
+class UintSet<Element>::Iterator : public std::iterator<std::forward_iterator_tag, Element> {
 public:
-  using SetType = typename UintTypeTrait<ValueType>::SetType;
+  using Set = typename UintTypeTrait<Element>::Set;
 
 public:
-  Iterator(const SetType* set, const ValueType max, const ValueType curr = UintTypeTrait<ValueType>::max())
+  Iterator(const Set* set, const Element max, const Element curr = UintTypeTrait<Element>::max())
     : m_set(set),
       m_max(max),
       m_curr((curr > max)? max: curr)
@@ -113,7 +113,7 @@ public:
     return m_curr != *other;
   }
 
-  ValueType
+  Element
   operator*() const
   {
     return m_curr;
@@ -129,66 +129,66 @@ private:
   }
 
 private:
-  const SetType* m_set;
-  ValueType m_max;
-  ValueType m_curr;
+  const Set* m_set;
+  Element m_max;
+  Element m_curr;
 };
 
 
-template <typename ValueType>
+template <typename Element>
 /**
- * @brief The capacity of a set of type UintSet<ValueType>.
+ * @brief The capacity of a set of type UintSet<Element>.
  */
 constexpr
 uint32_t
-UintSet<ValueType>::capacity(
+UintSet<Element>::capacity(
 )
 {
-  return UintTypeTrait<ValueType>::max();
+  return UintTypeTrait<Element>::max();
 }
 
-template <typename ValueType>
-UintSet<ValueType>::UintSet(
-  const ValueType max
-) : m_set(set_empty<SetType>()),
+template <typename Element>
+UintSet<Element>::UintSet(
+  const Element max
+) : m_set(set_empty<Set>()),
     m_max(max)
 {
 }
 
-template <typename ValueType>
-UintSet<ValueType>::UintSet(
-  const std::initializer_list<ValueType>& s,
-  const ValueType max
-) : m_set(as_set<SetType>(s.begin(), s.end())),
+template <typename Element>
+UintSet<Element>::UintSet(
+  const std::initializer_list<Element>& s,
+  const Element max
+) : m_set(as_set<Set>(s.begin(), s.end())),
     m_max(max)
 {
 }
 
-template <typename ValueType>
-UintSet<ValueType>::UintSet(
-  const typename UintSet<ValueType>::Iterator& first,
-  const typename UintSet<ValueType>::Iterator& last,
-  const ValueType max
-) : m_set(as_set<SetType>(first, last)),
+template <typename Element>
+UintSet<Element>::UintSet(
+  const typename UintSet<Element>::Iterator& first,
+  const typename UintSet<Element>::Iterator& last,
+  const Element max
+) : m_set(as_set<Set>(first, last)),
     m_max(max)
 {
 }
 
-template <typename ValueType>
-UintSet<ValueType>::UintSet(
-  const typename std::vector<ValueType>::iterator& first,
-  const typename std::vector<ValueType>::iterator& last,
-  const ValueType max
-) : m_set(as_set<SetType>(first, last)),
+template <typename Element>
+UintSet<Element>::UintSet(
+  const typename std::vector<Element>::iterator& first,
+  const typename std::vector<Element>::iterator& last,
+  const Element max
+) : m_set(as_set<Set>(first, last)),
     m_max(max)
 {
 }
 
-template <typename ValueType>
-UintSet<ValueType>::UintSet(
+template <typename Element>
+UintSet<Element>::UintSet(
   const std::vector<bool>& bitset,
-  const ValueType max
-) : m_set(set_empty<SetType>()),
+  const Element max
+) : m_set(set_empty<Set>()),
     m_max(max)
 {
   auto i = 0u;
@@ -200,44 +200,44 @@ UintSet<ValueType>::UintSet(
   }
 }
 
-template <typename ValueType>
-const typename UintSet<ValueType>::SetType&
-UintSet<ValueType>::operator*(
+template <typename Element>
+const typename UintSet<Element>::Set&
+UintSet<Element>::operator*(
 ) const
 {
   return m_set;
 }
 
-template <typename ValueType>
-typename UintSet<ValueType>::SetType&
-UintSet<ValueType>::operator*(
+template <typename Element>
+typename UintSet<Element>::Set&
+UintSet<Element>::operator*(
 )
 {
   return m_set;
 }
 
-template <typename ValueType>
+template <typename Element>
 bool
-UintSet<ValueType>::operator==(
-  const UintSet<ValueType>& other
+UintSet<Element>::operator==(
+  const UintSet<Element>& other
 ) const
 {
   return (m_set == other.m_set);
 }
 
-template <typename ValueType>
+template <typename Element>
 bool
-UintSet<ValueType>::operator!=(
-  const UintSet<ValueType>& other
+UintSet<Element>::operator!=(
+  const UintSet<Element>& other
 ) const
 {
   return (m_set != other.m_set);
 }
 
-template <typename ValueType>
-typename UintSet<ValueType>::Iterator
-UintSet<ValueType>::insert(
-  const ValueType x
+template <typename Element>
+typename UintSet<Element>::Iterator
+UintSet<Element>::insert(
+  const Element x
 )
 {
   LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
@@ -245,11 +245,11 @@ UintSet<ValueType>::insert(
   return end();
 }
 
-template <typename ValueType>
-typename UintSet<ValueType>::Iterator
-UintSet<ValueType>::insert(
+template <typename Element>
+typename UintSet<Element>::Iterator
+UintSet<Element>::insert(
   const Iterator&,
-  const ValueType x
+  const Element x
 )
 {
   LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
@@ -257,69 +257,69 @@ UintSet<ValueType>::insert(
   return end();
 }
 
-template <typename ValueType>
+template <typename Element>
 void
-UintSet<ValueType>::erase(
-  const ValueType x
+UintSet<Element>::erase(
+  const Element x
 )
 {
   LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%d) which does not exist in the set", static_cast<int>(x));
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
 }
 
-template <typename ValueType>
-ValueType
-UintSet<ValueType>::max(
+template <typename Element>
+Element
+UintSet<Element>::max(
 ) const
 {
   return m_max;
 }
 
-template <typename ValueType>
+template <typename Element>
 uint32_t
-UintSet<ValueType>::size(
+UintSet<Element>::size(
 ) const
 {
-  return static_cast<ValueType>(set_size(m_set));
+  return static_cast<Element>(set_size(m_set));
 }
 
-template <typename ValueType>
+template <typename Element>
 bool
-UintSet<ValueType>::empty(
+UintSet<Element>::empty(
 ) const
 {
   return is_emptyset(m_set);
 }
 
-template <typename ValueType>
+template <typename Element>
 bool
-UintSet<ValueType>::contains(
-  const ValueType x
+UintSet<Element>::contains(
+  const Element x
 ) const
 {
   return in_set(m_set, static_cast<int>(x));
 }
 
-template <typename ValueType>
-typename UintSet<ValueType>::Iterator
-UintSet<ValueType>::begin(
+template <typename Element>
+typename UintSet<Element>::Iterator
+UintSet<Element>::begin(
 ) const
 {
   return Iterator(&m_set, m_max, 0);
 }
 
-template <typename ValueType>
-typename UintSet<ValueType>::Iterator
-UintSet<ValueType>::end(
+template <typename Element>
+typename UintSet<Element>::Iterator
+UintSet<Element>::end(
 ) const
 {
   return Iterator(&m_set, m_max);
 }
 
-template <typename ValueType>
-typename UintSet<ValueType>::Iterator
-UintSet<ValueType>::find(
-  const ValueType x
+template <typename Element>
+typename UintSet<Element>::Iterator
+UintSet<Element>::find(
+  const Element x
 ) const
 {
   return contains(x) ? Iterator(&m_set, m_max, x): end();

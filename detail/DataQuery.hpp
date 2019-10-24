@@ -1,9 +1,9 @@
 /**
- * @file Data.hpp
+ * @file DataQuery.hpp
  * @brief Implementation of the the functions used for querying the data.
  */
-#ifndef DETAIL_DATA_HPP_
-#define DETAIL_DATA_HPP_
+#ifndef DETAIL_DATAQUERY_HPP_
+#define DETAIL_DATAQUERY_HPP_
 
 #include "../SetUtils.hpp"
 #include "../UintSet.hpp"
@@ -17,7 +17,7 @@
  * @brief Class that provides an iterator over all combinations of
  *        the states that different variables can take.
  *
- * @tparam DataType Type of the variable states, expected to be an integral type.
+ * @tparam State Type of the variable states, expected to be an integral type.
  *
  * This class provides a (supposedly) lightweight way of iterating over
  * all the combinations of states of different variables. Variable i
@@ -26,10 +26,10 @@
  * It further allows including a single user-provided state for another
  * variable x, whose index is provided by idxX.
  */
-template <typename DataType>
+template <typename State>
 class StateIterator {
 public:
-  StateIterator(const std::vector<DataType>& bounds)
+  StateIterator(const std::vector<State>& bounds)
     : m_bounds(bounds),
       m_state(bounds.size(), 0),
       m_valid(true)
@@ -60,30 +60,30 @@ public:
     return m_valid;
   }
 
-  const std::vector<DataType>&
+  const std::vector<State>&
   state() const
   {
     return m_state;
   }
 
 private:
-  const std::vector<DataType> m_bounds;
-  std::vector<DataType> m_state;
+  const std::vector<State> m_bounds;
+  std::vector<State> m_state;
   bool m_valid;
 }; // class StateIterator
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Default constructor.
  */
-Data<CounterType, VarType>::Data(
+DataQuery<Counter, Var>::DataQuery(
 ) : m_counter(),
     m_varNames(),
     m_threshold()
 {
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Constructs the object for querying the given dataset.
  *
@@ -91,8 +91,8 @@ template <typename CounterType, typename VarType>
  * @param varNames Names of all the variables.
  * @param threshold Target nominal type I error rate.
  */
-Data<CounterType, VarType>::Data(
-  const CounterType& counter,
+DataQuery<Counter, Var>::DataQuery(
+  const Counter& counter,
   const std::vector<std::string>& varNames,
   const double threshold
 ) : m_counter(counter),
@@ -102,29 +102,29 @@ Data<CounterType, VarType>::Data(
   LOG_MESSAGE_IF(numVars() != varNames.size(), error, "Number of variables (%d) != Number of variable names", counter.n(), varNames.size());
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @return Number of variables in the given dataset.
  */
-VarType
-Data<CounterType, VarType>::numVars(
+Var
+DataQuery<Counter, Var>::numVars(
 ) const
 {
-  return static_cast<VarType>(m_counter.n());
+  return static_cast<Var>(m_counter.n());
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @return Number of rows (observations) in the given dataset.
  */
 uint32_t
-Data<CounterType, VarType>::numRows(
+DataQuery<Counter, Var>::numRows(
 ) const
 {
   return static_cast<uint32_t>(m_counter.m());
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Returns the name of a variable.
  *
@@ -133,27 +133,27 @@ template <typename CounterType, typename VarType>
  * @return The name of the query variable.
  */
 const std::string&
-Data<CounterType, VarType>::varName(
-  const VarType x
+DataQuery<Counter, Var>::varName(
+  const Var x
 ) const
 {
   LOG_MESSAGE_IF(x >= m_varNames.size(), error, "Variable index %d out of range.", static_cast<uint32_t>(x));
   return m_varNames[x];
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Returns the names of all the variables in the given set.
  *
- * @tparam SetType The type of container for the variable indices.
+ * @tparam Set The type of container for the variable indices.
  * @param vars The indices of all the query variable.
  *
  * @return The name of all the query variables.
  */
-template <typename SetType>
+template <typename Set>
 std::vector<std::string>
-Data<CounterType, VarType>::varNames(
-  const SetType& vars
+DataQuery<Counter, Var>::varNames(
+  const Set& vars
 ) const
 {
   std::vector<std::string> names(vars.size());
@@ -165,7 +165,7 @@ Data<CounterType, VarType>::varNames(
   return names;
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Returns the index of a variable.
  *
@@ -173,12 +173,12 @@ template <typename CounterType, typename VarType>
  *
  * @return The index of the query variable.
  */
-VarType
-Data<CounterType, VarType>::varIndex(
+Var
+DataQuery<Counter, Var>::varIndex(
   const std::string& name
 ) const
 {
-  VarType x = 0u;
+  Var x = 0u;
   for (const auto& var: m_varNames) {
     if (var.compare(name) == 0) {
       break;
@@ -189,49 +189,49 @@ Data<CounterType, VarType>::varIndex(
   return x;
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Returns indices of multiple variables.
  *
- * @tparam SetType The type of container to be used for returning indices.
+ * @tparam Set The type of container to be used for returning indices.
  * @param names The list of names of the query variables.
  *
  * @return The indices of all the queried variables.
  */
-template <typename SetType>
-SetType
-Data<CounterType, VarType>::varIndices(
+template <typename Set>
+Set
+DataQuery<Counter, Var>::varIndices(
   const std::vector<std::string>& names
 ) const
 {
-  auto indices = set_init(SetType(), numVars());
+  auto indices = set_init(Set(), numVars());
   for (const auto& name: names) {
     indices.insert(indices.end(), this->varIndex(name));
   }
   return indices;
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Computes the p-value for the variables, given the conditioning set,
  *        and the corresponding degree of freedom.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  *
  * @return Pair of degree of freedom and the computed G^2 value.
  */
-template <typename SetType>
+template <typename Set>
 std::pair<uint32_t, double>
-Data<CounterType, VarType>::gSquare(
-  const VarType x,
-  const VarType y,
-  const SetType& given
+DataQuery<Counter, Var>::gSquare(
+  const Var x,
+  const Var y,
+  const Set& given
 ) const
 {
-  using data_type = typename CounterType::data_type;
+  using data_type = typename Counter::data_type;
 
   auto r_x = m_counter.r(x);
   auto r_y = m_counter.r(y);
@@ -287,21 +287,21 @@ Data<CounterType, VarType>::gSquare(
   return std::make_pair(df, gSquare);
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Computes the p-value for the variables, given the conditioning set.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  */
-template <typename SetType>
+template <typename Set>
 double
-Data<CounterType, VarType>::pValue(
-  const VarType x,
-  const VarType y,
-  const SetType& given
+DataQuery<Counter, Var>::pValue(
+  const Var x,
+  const Var y,
+  const Set& given
 ) const
 {
   auto ret = this->gSquare(x, y, given);
@@ -314,12 +314,12 @@ Data<CounterType, VarType>::pValue(
   return pValue;
 }
 
-template <typename CounterType, typename VarType>
-template <typename SetType>
+template <typename Counter, typename Var>
+template <typename Set>
 /**
  * @brief Computes the association score for the given variables, given the conditioning set.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -328,55 +328,55 @@ template <typename SetType>
  *         the strength of association between the given variables.
  */
 double
-Data<CounterType, VarType>::assocScore(
-  const VarType x,
-  const VarType y,
-  const SetType& given
+DataQuery<Counter, Var>::assocScore(
+  const Var x,
+  const Var y,
+  const Set& given
 ) const
 {
   return (1.0 - this->pValue(x, y, given));
 }
 
-template <typename CounterType, typename VarType>
-template <typename SetType>
+template <typename Counter, typename Var>
+template <typename Set>
 /**
  * @brief Checks if the variables are independent, given the conditioning set.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  */
 bool
-Data<CounterType, VarType>::isIndependent(
-  const VarType x,
-  const VarType y,
-  const SetType& given
+DataQuery<Counter, Var>::isIndependent(
+  const Var x,
+  const Var y,
+  const Set& given
 ) const
 {
   return std::isgreater(this->pValue(x, y, given), m_threshold);
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Checks for independence, given the association score.
  *
  * @param assocScore The association score, expected to be in the range [0.0, 1.0].
  */
 bool
-Data<CounterType, VarType>::isIndependent(
+DataQuery<Counter, Var>::isIndependent(
   const double assocScore
 ) const
 {
   return std::isgreater(1.0 - assocScore, m_threshold);
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Finds the minimum strength of association between the given variables,
  *        conditioned on any subset of the given conditioning set.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -384,19 +384,19 @@ template <typename CounterType, typename VarType>
  *
  * @return The computed minimum association score.
  */
-template <typename SetType>
+template <typename Set>
 double
-Data<CounterType, VarType>::minAssocScore(
-  const VarType x,
-  const VarType y,
-  const SetType& given,
+DataQuery<Counter, Var>::minAssocScore(
+  const Var x,
+  const Var y,
+  const Set& given,
   const uint32_t maxSize
 ) const
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
   double minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    SubsetIterator<SetType, VarType> sit(given, i);
+    SubsetIterator<Set, Var> sit(given, i);
     do {
       double thisScore = this->assocScore(x, y, sit.get());
       minScore = std::min(thisScore, minScore);
@@ -407,12 +407,12 @@ Data<CounterType, VarType>::minAssocScore(
   return minScore;
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Finds the minimum strength of association between the given variables,
  *        conditioned on any subset of the given conditioning set.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -421,23 +421,23 @@ template <typename CounterType, typename VarType>
  *
  * @return The computed minimum association score.
  */
-template <typename SetType>
+template <typename Set>
 double
-Data<CounterType, VarType>::minAssocScore(
-  const VarType x,
-  const VarType y,
-  const SetType& given,
-  const SetType& seed,
+DataQuery<Counter, Var>::minAssocScore(
+  const Var x,
+  const Var y,
+  const Set& given,
+  const Set& seed,
   const uint32_t maxSize
 ) const
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    SubsetIterator<SetType, VarType> sit(given, i);
+    SubsetIterator<Set, Var> sit(given, i);
     do {
       auto subset = sit.get();
-      auto condition = SetType(subset.begin(), subset.end());
+      auto condition = Set(subset.begin(), subset.end());
       // Always include the seed set in the conditioning set
       condition = set_union(condition, seed);
       auto thisScore = this->assocScore(x, y, condition);
@@ -449,12 +449,12 @@ Data<CounterType, VarType>::minAssocScore(
   return minScore;
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Finds the subset of the given conditioning set that minimizes
  *        the strength of association between the given variables.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -462,26 +462,26 @@ template <typename CounterType, typename VarType>
  *
  * @return A pair with the computed minimum score and the corresponding subset.
  */
-template <typename SetType>
-std::pair<double, SetType>
-Data<CounterType, VarType>::minAssocScoreSubset(
-  const VarType x,
-  const VarType y,
-  const SetType& given,
+template <typename Set>
+std::pair<double, Set>
+DataQuery<Counter, Var>::minAssocScoreSubset(
+  const Var x,
+  const Var y,
+  const Set& given,
   const uint32_t maxSize
 ) const
 {
   auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
-  auto z = set_init(SetType(), numVars());
+  auto z = set_init(Set(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    SubsetIterator<SetType, VarType> sit(given, i);
+    SubsetIterator<Set, Var> sit(given, i);
     do {
       auto thisScore = this->assocScore(x, y, sit.get());
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;
         auto subset = sit.get();
-        z = set_init(SetType(subset.begin(), subset.end()), numVars());
+        z = set_init(Set(subset.begin(), subset.end()), numVars());
       }
       sit.next();
     } while (sit.valid() && std::isgreater(minScore, m_threshold));
@@ -490,23 +490,23 @@ Data<CounterType, VarType>::minAssocScoreSubset(
   return std::make_pair(minScore, z);
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Checks if the given variables are independent, given any
  *        subset of the given conditioning subset.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  * @param maxSize The maximum size of the subset to be tested.
  */
-template <typename SetType>
+template <typename Set>
 bool
-Data<CounterType, VarType>::isIndependentAnySubset(
-  const VarType x,
-  const VarType y,
-  const SetType& given,
+DataQuery<Counter, Var>::isIndependentAnySubset(
+  const Var x,
+  const Var y,
+  const Set& given,
   const uint32_t maxSize
 ) const
 {
@@ -514,25 +514,25 @@ Data<CounterType, VarType>::isIndependentAnySubset(
   return this->isIndependent(minScore);
 }
 
-template <typename CounterType, typename VarType>
+template <typename Counter, typename Var>
 /**
  * @brief Checks if the given variables are independent, given any
  *        subset of the given conditioning subset.
  *
- * @tparam SetType The type of the container used for indices of the given variables.
+ * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  * @param seed The indices of the variables to be included in every subset.
  * @param maxSize The maximum size of the subset to be tested.
  */
-template <typename SetType>
+template <typename Set>
 bool
-Data<CounterType, VarType>::isIndependentAnySubset(
-  const VarType x,
-  const VarType y,
-  const SetType& given,
-  const SetType& seed,
+DataQuery<Counter, Var>::isIndependentAnySubset(
+  const Var x,
+  const Var y,
+  const Set& given,
+  const Set& seed,
   const uint32_t maxSize
 ) const
 {
@@ -540,4 +540,4 @@ Data<CounterType, VarType>::isIndependentAnySubset(
   return this->isIndependent(minScore);
 }
 
-#endif // DETAIL_DATA_HPP_
+#endif // DETAIL_DATAQUERY_HPP_

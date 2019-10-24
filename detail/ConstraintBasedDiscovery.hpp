@@ -10,23 +10,23 @@
 #include "utils/Logging.hpp"
 
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Constructs the object with the given data.
  *
- * @param data Reference to an object of the DataType.
+ * @param data Reference to an object of the Data.
  */
-ConstraintBasedDiscovery<DataType, VarType, SetType>::ConstraintBasedDiscovery(
-  const DataType& data
+ConstraintBasedDiscovery<Data, Var, Set>::ConstraintBasedDiscovery(
+  const Data& data
 ) : m_data(data),
-    m_allVars(set_init(SetType(), data.numVars()))
+    m_allVars(set_init(Set(), data.numVars()))
 {
   for (auto i = 0u; i < data.numVars(); ++i) {
     m_allVars.insert(m_allVars.end(), i);
   }
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Function for getting all the candidates for the given target variable.
  *
@@ -34,9 +34,9 @@ template <typename DataType, typename VarType, typename SetType>
  *
  * @return The indices of all the variables except the target.
  */
-SetType
-ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidates(
-  const VarType target
+Set
+ConstraintBasedDiscovery<Data, Var, Set>::getCandidates(
+  const Var target
 ) const
 {
   auto candidates = m_allVars;
@@ -44,7 +44,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidates(
   return candidates;
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Finds the candidate PC for a variable, and caches the result.
  *
@@ -55,10 +55,10 @@ template <typename DataType, typename VarType, typename SetType>
  *         all the variables in the candidate PC of the given target variable,
  *         and the second element specifying if the set has been symmetry corrected.
  */
-std::pair<SetType, bool>
-ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidatePC_cache(
-  const VarType target,
-  SetType candidates
+std::pair<Set, bool>
+ConstraintBasedDiscovery<Data, Var, Set>::getCandidatePC_cache(
+  const Var target,
+  Set candidates
 ) const
 {
   auto cacheIt = m_cachedPC.find(target);
@@ -73,7 +73,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidatePC_cache(
   }
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Performs symmetry correction on the given PC set for the given variable.
  *
@@ -82,13 +82,13 @@ template <typename DataType, typename VarType, typename SetType>
  *            the candidate PC set.
  */
 void
-ConstraintBasedDiscovery<DataType, VarType, SetType>::symmetryCorrectPC(
-  const VarType target,
-  SetType& cpc
+ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectPC(
+  const Var target,
+  Set& cpc
 ) const
 {
   auto initial = cpc;
-  for (const VarType x: initial) {
+  for (const Var x: initial) {
     auto candidatesX = this->getCandidates(x);
     auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX)).first;
     if (!set_contains(cpcX, target)) {
@@ -98,7 +98,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::symmetryCorrectPC(
   }
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief The top level function for getting the correct PC set
  *        for the given target variable.
@@ -108,9 +108,9 @@ template <typename DataType, typename VarType, typename SetType>
  * @return A set containing the indices of all the variables
  *         in the correct PC set of the target variable.
  */
-SetType
-ConstraintBasedDiscovery<DataType, VarType, SetType>::getPC(
-  const VarType target
+Set
+ConstraintBasedDiscovery<Data, Var, Set>::getPC(
+  const Var target
 ) const
 {
   auto candidates = this->getCandidates(target);
@@ -122,7 +122,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getPC(
   return cpc.first;
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Finds the candidate MB for a variable, and caches the result.
  *
@@ -133,10 +133,10 @@ template <typename DataType, typename VarType, typename SetType>
  *         all the variables in the candidate MB of the given target variable,
  *         and the second element specifying if the set has been symmetry corrected.
  */
-std::pair<SetType, bool>
-ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidateMB_cache(
-  const VarType target,
-  SetType candidates
+std::pair<Set, bool>
+ConstraintBasedDiscovery<Data, Var, Set>::getCandidateMB_cache(
+  const Var target,
+  Set candidates
 ) const
 {
   auto cacheIt = m_cachedMB.find(target);
@@ -151,7 +151,7 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getCandidateMB_cache(
   }
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Symmetry corrects the candidate MB of the target variable.
  *
@@ -160,13 +160,13 @@ template <typename DataType, typename VarType, typename SetType>
  *                The function removes the indices from the candidate set.
  */
 void
-ConstraintBasedDiscovery<DataType, VarType, SetType>::symmetryCorrectMB(
-  const VarType target,
-  SetType& cmb
+ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectMB(
+  const Var target,
+  Set& cmb
 ) const
 {
   auto initial = cmb;
-  for (const VarType x: initial) {
+  for (const Var x: initial) {
     auto candidatesX = this->getCandidates(x);
     auto cmbX = this->getCandidateMB_cache(x, std::move(candidatesX)).first;
     if (!set_contains(cmbX, target)) {
@@ -176,15 +176,15 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::symmetryCorrectMB(
   }
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Top level function for getting the MB of the target variable.
  *
  * @param target The index of the target variable.
  */
-SetType
-ConstraintBasedDiscovery<DataType, VarType, SetType>::getMB(
-  const VarType target
+Set
+ConstraintBasedDiscovery<Data, Var, Set>::getMB(
+  const Var target
 ) const
 {
   auto candidates = this->getCandidates(target);
@@ -196,20 +196,20 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::getMB(
   return cmb.first;
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Checks if y-x-z forms a v-structure.
  */
 bool
-ConstraintBasedDiscovery<DataType, VarType, SetType>::isCollider(
-  const VarType y,
-  const VarType x,
-  const VarType z
+ConstraintBasedDiscovery<Data, Var, Set>::isCollider(
+  const Var y,
+  const Var x,
+  const Var z
 ) const
 {
-  static auto smallerSet = [] (const SetType& first, const SetType& second)
+  static auto smallerSet = [] (const Set& first, const Set& second)
                               { return (first.size() <= second.size()) ? first: second; };
-  auto setX = set_init(SetType(), this->m_data.numVars());
+  auto setX = set_init(Set(), this->m_data.numVars());
   setX.insert(x);
   auto mbY = this->getMB(y);
   if (mbY.contains(z)) {
@@ -223,25 +223,25 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::isCollider(
   return !this->m_data.isIndependentAnySubset(y, z, u, setX);
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Adds the neighbors for the given var to the given network.
  *
- * @tparam GraphType The type of graph used for representing the network.
+ * @tparam Network The type of graph used for representing the network.
  * @param x The variable for which edges are added for the graph.
  * @param g The causal network.
  * @param directEdges Specifies if the edges should be directed.
  */
-template <typename GraphType>
+template <typename Network>
 void
-ConstraintBasedDiscovery<DataType, VarType, SetType>::addVarNeighbors(
-  const VarType x,
-  GraphType& g,
+ConstraintBasedDiscovery<Data, Var, Set>::addVarNeighbors(
+  const Var x,
+  Network& g,
   const bool directEdges
 ) const
 {
   auto pcX = this->getPC(x);
-  SetType paX;
+  Set paX;
   for (const auto y: pcX) {
     if (!directEdges) {
       LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
@@ -277,19 +277,19 @@ ConstraintBasedDiscovery<DataType, VarType, SetType>::addVarNeighbors(
   }
 }
 
-template <typename DataType, typename VarType, typename SetType>
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Top level function for getting the complete causal network.
  *
  * @param directEdges Specifies if the edges of the network should be directed.
  */
-BayesianNetwork<VarType>
-ConstraintBasedDiscovery<DataType, VarType, SetType>::getNetwork(
+BayesianNetwork<Var>
+ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
   const bool directEdges
 ) const
 {
   auto varNames = this->m_data.varNames(m_allVars);
-  BayesianNetwork<VarType> bn(varNames);
+  BayesianNetwork<Var> bn(varNames);
   for (const auto x: m_allVars) {
     this->addVarNeighbors(x, bn, directEdges);
   }

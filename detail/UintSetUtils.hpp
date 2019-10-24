@@ -13,16 +13,15 @@
 /**
  * @brief Class that iterates over all the subsets of the given size of a given UintSet.
  *
- * @tparam SetType Type of the set container.
- * @tparam ValueType Type of the variable (expected to be an integral type).
+ * @tparam Element Type of the variable (expected to be an integral type).
  */
-template <typename ValueType>
-class SubsetIterator<UintSet<ValueType>, ValueType> {
+template <typename Element>
+class SubsetIterator<UintSet<Element>, Element> {
 public:
-  static constexpr int N = UintTypeTrait<ValueType>::N;
+  static constexpr int N = UintTypeTrait<Element>::N;
 
 public:
-  SubsetIterator(const UintSet<ValueType>& given, const uint32_t k)
+  SubsetIterator(const UintSet<Element>& given, const uint32_t k)
     : m_given(given),
       m_subset(),
       m_candidates(given.max(), false),
@@ -32,7 +31,7 @@ public:
     for (auto it = m_candidates.begin(); i < k; ++it, ++i) {
       *it = true;
     }
-    m_subset = UintSet<ValueType>(m_candidates, m_subset.max());
+    m_subset = UintSet<Element>(m_candidates, m_subset.max());
     if (!is_subset(m_subset, m_given)) {
       next();
     }
@@ -46,7 +45,7 @@ public:
     }
     m_valid = false;
     while (std::prev_permutation(m_candidates.begin(), m_candidates.end())) {
-      m_subset = UintSet<ValueType>(m_candidates, m_subset.max());
+      m_subset = UintSet<Element>(m_candidates, m_subset.max());
       if (is_subset(m_subset, m_given)) {
         m_valid = true;
         break;
@@ -60,15 +59,15 @@ public:
     return m_valid;
   }
 
-  const UintSet<ValueType>&
+  const UintSet<Element>&
   get() const
   {
     return (!m_valid) ? m_given: m_subset;
   }
 
 private:
-  const UintSet<ValueType>& m_given;
-  UintSet<ValueType> m_subset;
+  const UintSet<Element>& m_given;
+  UintSet<Element> m_subset;
   std::vector<bool> m_candidates;
   bool m_valid;
 }; // class SubsetIterator
@@ -241,11 +240,11 @@ is_subset<UintSet<uint32_t>>(
 /**
  * @brief Function for getting the output represention of a set.
  */
-template <typename ValueType>
+template <typename Element>
 std::ostream&
 operator<<(
   std::ostream& stream,
-  const UintSet<ValueType>& set
+  const UintSet<Element>& set
 )
 {
   stream << "{";
