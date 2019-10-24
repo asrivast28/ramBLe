@@ -13,65 +13,6 @@
 #include <boost/math/distributions/chi_squared.hpp>
 
 
-/**
- * @brief Class that provides an iterator over all combinations of
- *        the states that different variables can take.
- *
- * @tparam State Type of the variable states, expected to be an integral type.
- *
- * This class provides a (supposedly) lightweight way of iterating over
- * all the combinations of states of different variables. Variable i
- * is supposed to take all the states between 0 and bounds[i] - 1.
- *
- * It further allows including a single user-provided state for another
- * variable x, whose index is provided by idxX.
- */
-template <typename State>
-class StateIterator {
-public:
-  StateIterator(const std::vector<State>& bounds)
-    : m_bounds(bounds),
-      m_state(bounds.size(), 0),
-      m_valid(true)
-  {
-  }
-
-  void
-  next()
-  {
-    auto it = 0u;
-    m_valid = false;
-    while (it < m_bounds.size()) {
-      ++m_state[it];
-      if (m_state[it] == m_bounds[it]) {
-        m_state[it] = 0;
-        ++it;
-      }
-      else {
-        m_valid = true;
-        break;
-      }
-    }
-  }
-
-  bool
-  valid()
-  {
-    return m_valid;
-  }
-
-  const std::vector<State>&
-  state() const
-  {
-    return m_state;
-  }
-
-private:
-  const std::vector<State> m_bounds;
-  std::vector<State> m_state;
-  bool m_valid;
-}; // class StateIterator
-
 template <typename Counter, typename Var>
 /**
  * @brief Default constructor.
@@ -213,82 +154,6 @@ DataQuery<Counter, Var>::varIndices(
 
 template <typename Counter, typename Var>
 /**
- * @brief Computes the p-value for the variables, given the conditioning set,
- *        and the corresponding degree of freedom.
- *
- * @tparam Set The type of the container used for indices of the given variables.
- * @param x The index of the first variable.
- * @param y The index of the second variable.
- * @param given The indices of the variables to be conditioned on.
- *
- * @return Pair of degree of freedom and the computed G^2 value.
- */
-template <typename Set>
-std::pair<uint32_t, double>
-DataQuery<Counter, Var>::gSquare(
-  const Var x,
-  const Var y,
-  const Set& given
-) const
-{
-  using data_type = typename Counter::data_type;
-
-  auto r_x = m_counter.r(x);
-  auto r_y = m_counter.r(y);
-
-  uint32_t df = (r_x - 1) * (r_y - 1);
-  LOG_MESSAGE(trace, "r_x = %d, r_y = %d", r_x, r_y);
-  double gSquare = 0.0;
-
-  std::vector<data_type> r(given.size());
-  std::vector<int> pa(given.size());
-  auto k = 0u;
-  for (auto xk = given.begin(); xk != given.end(); ++xk, ++k) {
-    pa[k] = *xk;
-    r[k] = m_counter.r(*xk);
-    df *= r[k];
-  }
-
-  for (auto c = StateIterator<data_type>(r); c.valid(); c.next()) {
-    auto base = m_counter.common(pa, c.state());
-    auto sk = m_counter.count(base);
-    if (sk == 0) {
-      continue;
-    }
-    for (data_type a = 0; a < r_x; ++a) {
-      auto count_x = m_counter.common(base, static_cast<int>(x), a);
-      auto sik = m_counter.count(count_x);
-      if (sik == 0) {
-        continue;
-      }
-      for (data_type b = 0; b < r_y; ++b) {
-        auto sjk = m_counter.count(m_counter.common(base, static_cast<int>(y), b));
-        if (sjk == 0) {
-          continue;
-        }
-        auto sijk = m_counter.count(m_counter.common(count_x, static_cast<int>(y), b));
-        if (sijk == 0) {
-          continue;
-        }
-        LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
-        LOG_MESSAGE(trace, "sk = %d, sik = %d, sjk = %d, sijk = %d", sk, sik, sjk, sijk);
-        if (sijk * sk == sik * sjk) {
-          LOG_MESSAGE(trace, "component = 0.0");
-          continue;
-        }
-        auto component = sijk * (log(sijk) + log(sk) - log(sik) - log(sjk));
-        gSquare += component;
-        LOG_MESSAGE(trace, "component = %g", component);
-      }
-    }
-  }
-  gSquare *= 2.0;
-  LOG_MESSAGE(debug, "df = %d, G-square = %g", df, gSquare);
-  return std::make_pair(df, gSquare);
-}
-
-template <typename Counter, typename Var>
-/**
  * @brief Computes the p-value for the variables, given the conditioning set.
  *
  * @tparam Set The type of the container used for indices of the given variables.
@@ -304,7 +169,7 @@ DataQuery<Counter, Var>::pValue(
   const Set& given
 ) const
 {
-  auto ret = this->gSquare(x, y, given);
+  auto ret = computeGSquare(m_counter, x, y, given);
   if (std::fpclassify(ret.second) == FP_ZERO) {
     return 1.0;
   }

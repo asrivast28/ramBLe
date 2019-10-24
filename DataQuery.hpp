@@ -81,16 +81,12 @@ public:
   isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 
 private:
-  template <typename Set>
-  std::pair<uint32_t, double>
-  gSquare(const Var, const Var, const Set&) const;
-
-private:
   Counter m_counter;
   std::vector<std::string> m_varNames;
   double m_threshold;
 };
 
+#include "detail/GSquare.hpp"
 #include "detail/DataQuery.hpp"
 
 #endif // DATAQUERY_HPP_
