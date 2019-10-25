@@ -13,6 +13,7 @@
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
 #include "BVCounter.hpp"
+#include "CTCounter.hpp"
 #include "RadCounter.hpp"
 
 #include <iostream>
@@ -142,8 +143,8 @@ getNeighborhood(
 template <template <int, typename...> class CounterType, typename FileType>
 std::vector<std::string>
 getNeighborhood(
-  const uint32_t& n,
-  const uint64_t& m,
+  const uint32_t n,
+  const uint32_t m,
   std::unique_ptr<FileType>&& dataFile,
   const ProgramOptions& options
 )
@@ -208,6 +209,11 @@ main(
     bool counterFound = false;
     std::stringstream ss;
     std::vector<std::string> nbrVars;
+    if (options.counterType().compare("ct") == 0) {
+      nbrVars = getNeighborhood<CTCounter>(n, m, std::move(dataFile), options);
+      counterFound = true;
+    }
+    ss << "ct,";
     if (options.counterType().compare("bv") == 0) {
       nbrVars = getNeighborhood<BVCounter>(n, m, std::move(dataFile), options);
       counterFound = true;

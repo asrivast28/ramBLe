@@ -47,7 +47,7 @@ ProgramOptions::ProgramOptions(
 
   po::options_description developer("Developer options");
   developer.add_options()
-    ("counter", po::value<std::string>(&m_counterType)->default_value("bv"), "Type of the counter to be used.")
+    ("counter", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
 #ifdef LOGGING
     ("log,g", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
