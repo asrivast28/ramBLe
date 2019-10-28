@@ -18,8 +18,10 @@
 #include <vector>
 
 
-// Different counter implementations
-typedef testing::Types<BVCounter<1>, RadCounter<1>> Counters;
+// All the different counter implementations
+typedef testing::Types<BVCounter<1>, RadCounter<1>> AllCounters;
+// Default counter implementation
+typedef testing::Types<BVCounter<1>> DefaultCounter;
 
 /**
  * @brief Helper for running unit tests on data from the examples
@@ -37,14 +39,14 @@ protected:
       auto fileName = "neapolitan_" + std::to_string(i+1) + ".txt";
       RowObservationReader<uint8_t> dataFile(fileName, n, m, ',', false, false, true);
       auto counter = Counter::create(n, m, std::begin(dataFile.data()));
-      data[i] = DataQuery<decltype(counter), uint8_t>(counter, dataFile.varNames());
+      data[i] = DataQuery<Counter, uint8_t>(counter, dataFile.varNames());
     }
   }
 
   std::vector<DataQuery<Counter, uint8_t>> data;
 }; // class NeapolitanTest
 
-TYPED_TEST_CASE(NeapolitanTest, Counters);
+TYPED_TEST_CASE(NeapolitanTest, AllCounters);
 
 /**
  * @brief Helper for running unit tests on the lizards dataset.
@@ -58,17 +60,18 @@ protected:
     uint32_t m = 409;
     RowObservationReader<uint8_t> dataFile("lizards.csv", n, m, ',', true, false, true);
     auto counter = Counter::create(n, m, std::begin(dataFile.data()));
-    data = DataQuery<decltype(counter), uint8_t>(counter, dataFile.varNames());
+    data = DataQuery<Counter, uint8_t>(counter, dataFile.varNames());
   }
 
   DataQuery<Counter, uint8_t> data;
 }; // class LizardsTest
 
-TYPED_TEST_CASE(LizardsTest, Counters);
+TYPED_TEST_CASE(LizardsTest, AllCounters);
 
 /**
  * @brief Helper for running unit tests on the coronary dataset.
  */
+template <typename Counter>
 class CoronaryTest: public testing::Test {
 protected:
   void
@@ -76,16 +79,19 @@ protected:
     uint32_t n = 6;
     uint32_t m = 1841;
     RowObservationReader<uint8_t> dataFile("coronary.csv", n, m, ',', true, false, true);
-    auto counter = BVCounter<1>::create(n, m, std::begin(dataFile.data()));
-    data = DataQuery<decltype(counter), uint8_t>(counter, dataFile.varNames());
+    auto counter = Counter::create(n, m, std::begin(dataFile.data()));
+    data = DataQuery<Counter, uint8_t>(counter, dataFile.varNames());
   }
 
-  DataQuery<BVCounter<1>, uint8_t> data;
+  DataQuery<Counter, uint8_t> data;
 }; // class CoronaryTest
+
+TYPED_TEST_CASE(CoronaryTest, DefaultCounter);
 
 /**
  * @brief Helper for running unit tests on the coronary dataset.
  */
+template <typename Counter>
 class AsiaTest: public testing::Test {
 protected:
   void
@@ -93,11 +99,13 @@ protected:
     uint32_t n = 8;
     uint32_t m = 5000;
     RowObservationReader<uint8_t> dataFile("asia.csv", n, m, ',', true, false, true);
-    auto counter = BVCounter<1>::create(n, m, std::begin(dataFile.data()));
-    data = DataQuery<decltype(counter), uint8_t>(counter, dataFile.varNames());
+    auto counter = Counter::create(n, m, std::begin(dataFile.data()));
+    data = DataQuery<Counter, uint8_t>(counter, dataFile.varNames());
   }
 
-  DataQuery<BVCounter<1>, uint8_t> data;
+  DataQuery<Counter, uint8_t> data;
 }; // class AsiaTest
+
+TYPED_TEST_CASE(AsiaTest, DefaultCounter);
 
 #endif // TEST_COMMON_HPP_

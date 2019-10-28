@@ -46,38 +46,38 @@ TYPED_TEST(LizardsTest, ConditionalPValue) {
 }
 
 
-TEST_F(CoronaryTest, MarginalPValue) {
-  double mwork_pwork  = data.pValue(1, 2);
+TYPED_TEST(CoronaryTest, MarginalPValue) {
+  double mwork_pwork  = this->data.pValue(1, 2);
   EXPECT_NEAR(mwork_pwork, 0, 0.0001);
 
-  double pwork_press = data.pValue(2, 3);
+  double pwork_press = this->data.pValue(2, 3);
   EXPECT_NEAR(pwork_press, 0.7574, 0.0001);
 
-  double mwork_press = data.pValue(1, 3);
+  double mwork_press = this->data.pValue(1, 3);
   EXPECT_NEAR(mwork_press, 0.0004921, 0.0001);
 
-  double smoke_press = data.pValue(0, 3);
+  double smoke_press = this->data.pValue(0, 3);
   EXPECT_NEAR(smoke_press, 0.0008954, 0.0001);
 
-  double press_family = data.pValue(3, 5);
+  double press_family = this->data.pValue(3, 5);
   EXPECT_NEAR(press_family, 0.2891, 0.0001);
 }
 
-TEST_F(CoronaryTest, ConditionalPValue) {
+TYPED_TEST(CoronaryTest, ConditionalPValue) {
   UintSet<uint8_t> given{0};
-  double press_family  = data.pValue(3, 5, given);
+  double press_family  = this->data.pValue(3, 5, given);
   EXPECT_NEAR(press_family, 0.3172, 0.0001);
 
   given.insert(1);
-  press_family = data.pValue(3, 5, given);
+  press_family = this->data.pValue(3, 5, given);
   EXPECT_NEAR(press_family, 0.2186, 0.0001);
 
   given.insert(2);
-  press_family  = data.pValue(3, 5, given);
+  press_family  = this->data.pValue(3, 5, given);
   EXPECT_NEAR(press_family, 0.2452, 0.0001);
 
   given.insert(4);
-  press_family  = data.pValue(3, 5, given);
+  press_family  = this->data.pValue(3, 5, given);
   EXPECT_NEAR(press_family, 0.0002556, 0.0001);
 }
 
