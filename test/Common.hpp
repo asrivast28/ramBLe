@@ -9,7 +9,6 @@
 #include "DataReader.hpp"
 
 #include "BVCounter.hpp"
-#include "CTCounter.hpp"
 #include "RadCounter.hpp"
 
 #include <gtest/gtest.h>
@@ -20,7 +19,7 @@
 
 
 // All the different counter implementations
-typedef testing::Types<BVCounter<1>, CTCounter<1>, RadCounter<1>> AllCounters;
+typedef testing::Types<BVCounter<1>, RadCounter<1>> AllCounters;
 // Default counter implementation
 typedef testing::Types<BVCounter<1>> DefaultCounter;
 
