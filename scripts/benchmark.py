@@ -47,7 +47,7 @@ def parse_results(output):
     import re
 
     net = float(re.search('Time taken in getting the network: (\d+.\d+) sec', output).group(1))
-    match = re.search('Time taken in calls to SABNAtk: (\d+.\d+) sec', output)
+    match = re.search('Time taken in G-square computations: (\d+.\d+) sec', output)
     sab = float(match.group(1) if match is not None else 0)
     mem = int(re.search('Maximum resident set size \(kbytes\): (\d+)', output).group(1))
     return net, sab, mem
