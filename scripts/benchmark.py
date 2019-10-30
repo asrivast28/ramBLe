@@ -68,7 +68,7 @@ def run_experiments(base, executable, repeat):
                 results.append(parse_results(output))
             print('data/%s/%s.csv' % (d, s))
             print('Network =AVERAGE(%s)' % ','.join(str(r[0]) for r in results))
-            print('SABNAtk =AVERAGE(%s)' % ','.join(str(r[1]) for r in results))
+            print('G-square =AVERAGE(%s)' % ','.join(str(r[1]) for r in results))
             print('Memory =AVERAGE(%s) / 1024' % ','.join(str(r[2]) for r in results))
             print('\n')
 
