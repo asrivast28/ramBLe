@@ -20,8 +20,9 @@ template <typename Data, typename Var, typename Set>
  * @param data Reference to an object of the Data.
  */
 TopologicalDiscovery<Data, Var, Set>::TopologicalDiscovery(
-  const Data& data
-) : ConstraintBasedDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : ConstraintBasedDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -107,8 +108,9 @@ TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 MMPC<Data, Var, Set>::MMPC(
-  const Data& data
-) : TopologicalDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : TopologicalDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -155,8 +157,9 @@ MMPC<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 HITON<Data, Var, Set>::HITON(
-  const Data& data
-) : TopologicalDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : TopologicalDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -196,8 +199,9 @@ HITON<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
-  const Data& data
-) : TopologicalDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : TopologicalDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -251,8 +255,9 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 GetPC<Data, Var, Set>::GetPC(
-  const Data& data
-) : TopologicalDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : TopologicalDiscovery<Data, Var, Set>(data, comm)
 {
 }
 

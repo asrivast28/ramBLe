@@ -82,7 +82,7 @@ private:
   void
   next()
   {
-     while ((m_curr < m_max) && !in_set(*m_set, static_cast<int>(m_curr))) {
+    while ((m_curr < m_max) && !in_set(*m_set, static_cast<int>(m_curr))) {
       ++m_curr;
     }
   }

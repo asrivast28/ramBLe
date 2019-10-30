@@ -7,6 +7,8 @@
 
 #include "BayesianNetwork.hpp"
 
+#include "mxx/comm.hpp"
+
 #include <map>
 #include <unordered_map>
 
@@ -21,7 +23,7 @@
 template <typename Data, typename Var, typename Set>
 class ConstraintBasedDiscovery {
 public:
-  ConstraintBasedDiscovery(const Data&);
+  ConstraintBasedDiscovery(const Data&, const mxx::comm&);
 
   Set
   getPC(const Var) const;
@@ -72,6 +74,7 @@ private:
 
 protected:
   const Data m_data;
+  const mxx::comm& m_comm;
   Set m_allVars;
 
 private:

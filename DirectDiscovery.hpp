@@ -19,7 +19,7 @@
 template <typename Data, typename Var, typename Set>
 class DirectDiscovery : public ConstraintBasedDiscovery<Data, Var, Set> {
 public:
-  DirectDiscovery(const Data&);
+  DirectDiscovery(const Data&, const mxx::comm&);
 
   Set
   getCandidatePC(const Var, Set) const override;
@@ -46,7 +46,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class GSMB: public DirectDiscovery<Data, Var, Set> {
 public:
-  GSMB(const Data&);
+  GSMB(const Data&, const mxx::comm&);
 
   Set
   getCandidateMB(const Var, Set) const override;
@@ -63,7 +63,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class IAMB: public DirectDiscovery<Data, Var, Set> {
 public:
-  IAMB(const Data&);
+  IAMB(const Data&, const mxx::comm&);
 
   Set
   getCandidateMB(const Var, Set) const override;
@@ -80,7 +80,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class InterIAMB: public DirectDiscovery<Data, Var, Set> {
 public:
-  InterIAMB(const Data&);
+  InterIAMB(const Data&, const mxx::comm&);
 
   Set
   getCandidateMB(const Var, Set) const override;

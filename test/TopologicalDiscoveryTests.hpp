@@ -26,7 +26,7 @@ protected:
     auto reader = CoronaryEnvironment::reader;
     auto counter = Counter::create(n, m, std::begin(reader->data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader->varNames());
-    algo = new Algorithm(*data);
+    algo = new Algorithm(*data, comm);
   }
 
   void
@@ -35,6 +35,7 @@ protected:
     delete data;
   }
 
+  mxx::comm comm;
   DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
 };
@@ -84,7 +85,7 @@ protected:
     auto reader = AsiaEnvironment::reader;
     auto counter = Counter::create(n, m, std::begin(reader->data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader->varNames());
-    algo = new Algorithm(*data);
+    algo = new Algorithm(*data, comm);
   }
 
   void
@@ -93,6 +94,7 @@ protected:
     delete data;
   }
 
+  mxx::comm comm;
   DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
 };

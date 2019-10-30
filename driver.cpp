@@ -10,7 +10,7 @@
 #include "TopologicalDiscovery.hpp"
 #include "UintSet.hpp"
 
-#include "mxx/collective.hpp"
+#include "mxx/comm.hpp"
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
 #include "BVCounter.hpp"
@@ -40,36 +40,37 @@ template <typename Var, typename Set, typename Data>
 std::unique_ptr<ConstraintBasedDiscovery<Data, Var, Set>>
 getAlgorithm(
   const std::string& algoName,
-  const Data& data
+  const Data& data,
+  const mxx::comm& comm
 )
 {
   std::stringstream ss;
   if (algoName.compare("gs") == 0) {
-    return std::make_unique<GSMB<Data, Var, Set>>(data);
+    return std::make_unique<GSMB<Data, Var, Set>>(data, comm);
   }
   ss << "gs,";
   if (algoName.compare("iamb") == 0) {
-    return std::make_unique<IAMB<Data, Var, Set>>(data);
+    return std::make_unique<IAMB<Data, Var, Set>>(data, comm);
   }
   ss << "iamb,";
   if (algoName.compare("inter.iamb") == 0) {
-    return std::make_unique<InterIAMB<Data, Var, Set>>(data);
+    return std::make_unique<InterIAMB<Data, Var, Set>>(data, comm);
   }
   ss << "inter.iamb,";
   if (algoName.compare("mmpc") == 0) {
-    return std::make_unique<MMPC<Data, Var, Set>>(data);
+    return std::make_unique<MMPC<Data, Var, Set>>(data, comm);
   }
   ss << "mmpc,";
   if (algoName.compare("hiton") == 0) {
-    return std::make_unique<HITON<Data, Var, Set>>(data);
+    return std::make_unique<HITON<Data, Var, Set>>(data, comm);
   }
   ss << "hiton,";
   if (algoName.compare("si.hiton.pc") == 0) {
-    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(data);
+    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(data, comm);
   }
   ss << "si.hiton.pc,";
   if (algoName.compare("getpc") == 0) {
-    return std::make_unique<GetPC<Data, Var, Set>>(data);
+    return std::make_unique<GetPC<Data, Var, Set>>(data, comm);
   }
   ss << "getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
@@ -95,9 +96,9 @@ getNeighborhood(
   const ProgramOptions& options
 )
 {
-  mxx::comm mc;
+  mxx::comm comm;
   DiscreteData<Counter, Var> data(counter, varNames, options.alpha());
-  auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data);
+  auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data, comm);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
     TIMER_DECLARE(tNeighborhood);
@@ -111,17 +112,17 @@ getNeighborhood(
     else {
       neighborhoodVars = data.varNames(algo->getPC(target));
     }
-    if (mc.rank() == 0) {
+    if (comm.rank() == 0) {
       TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);
     }
   }
   if (options.learnNetwork() || !options.outputFile().empty()) {
     TIMER_DECLARE(tNetwork);
     auto g = algo->getNetwork(options.directEdges());
-    if (mc.rank() == 0) {
+    if (comm.rank() == 0) {
       TIMER_ELAPSED("Time taken in getting the network: ", tNetwork);
     }
-    if ((mc.rank() == 0) && !options.outputFile().empty()) {
+    if ((comm.rank() == 0) && !options.outputFile().empty()) {
       TIMER_DECLARE(tWrite);
       g.writeGraphviz(options.outputFile());
       TIMER_ELAPSED("Time taken in writing the network: ", tNetwork);

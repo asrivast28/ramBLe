@@ -17,8 +17,10 @@ template <typename Data, typename Var, typename Set>
  * @param data Reference to an object of the Data.
  */
 ConstraintBasedDiscovery<Data, Var, Set>::ConstraintBasedDiscovery(
-  const Data& data
+  const Data& data,
+  const mxx::comm& comm
 ) : m_data(data),
+    m_comm(comm),
     m_allVars(set_init(Set(), data.numVars()))
 {
   for (auto i = 0u; i < data.numVars(); ++i) {

@@ -5,6 +5,8 @@
 #ifndef SETUTILS_HPP_
 #define SETUTILS_HPP_
 
+#include "mxx/comm.hpp"
+
 #include <algorithm>
 #include <iterator>
 #include <vector>

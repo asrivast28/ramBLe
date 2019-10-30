@@ -20,8 +20,9 @@ template <typename Data, typename Var, typename Set>
  * @param data Reference to an object of the Data.
  */
 DirectDiscovery<Data, Var, Set>::DirectDiscovery(
-  const Data& data
-) : ConstraintBasedDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : ConstraintBasedDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -124,8 +125,9 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 GSMB<Data, Var, Set>::GSMB(
-  const Data& data
-) : DirectDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : DirectDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -163,8 +165,9 @@ GSMB<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 IAMB<Data, Var, Set>::IAMB(
-  const Data& data
-) : DirectDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : DirectDiscovery<Data, Var, Set>(data, comm)
 {
 }
 
@@ -210,8 +213,9 @@ IAMB<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 InterIAMB<Data, Var, Set>::InterIAMB(
-  const Data& data
-) : DirectDiscovery<Data, Var, Set>(data)
+  const Data& data,
+  const mxx::comm& comm
+) : DirectDiscovery<Data, Var, Set>(data, comm)
 {
 }
 

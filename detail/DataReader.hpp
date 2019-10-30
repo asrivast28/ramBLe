@@ -93,9 +93,9 @@ RowObservationReader<DataType>::RowObservationReader(
   const bool columnMajor
 ) : DataReader<DataType>(numCols, numRows)
 {
-  mxx::comm mc;
+  mxx::comm comm;
   // Read data in processor 0
-  if (mc.rank() == 0) {
+  if (comm.rank() == 0) {
     std::ifstream dataFile(fileName);
     std::string line;
     if (varNames) {
@@ -149,11 +149,11 @@ RowObservationReader<DataType>::RowObservationReader(
     }
   }
   // Broadcast the read data
-  mxx::bcast(this->m_data, 0, mc);
+  mxx::bcast(this->m_data, 0, comm);
   // Can not broadcast a vector of strings
   // Broadcast each string separately
   for (auto& name: this->m_varNames) {
-    mxx::bcast(name, 0, mc);
+    mxx::bcast(name, 0, comm);
   }
 }
 
@@ -179,9 +179,9 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
   const bool columnMajor
 ) : DataReader<DataType>(numRows, numCols)
 {
-  mxx::comm mc;
+  mxx::comm comm;
   // Read data from file in processor 0
-  if (mc.rank() == 0) {
+  if (comm.rank() == 0) {
     std::ifstream dataFile(fileName);
     std::string line;
     auto t = 0u;
@@ -229,11 +229,11 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
     }
   }
   // Broadcast the read data
-  mxx::bcast(this->m_data, 0, mc);
+  mxx::bcast(this->m_data, 0, comm);
   // Can not broadcast a vector of strings
   // Broadcast each string separately
   for (auto& name: this->m_varNames) {
-    mxx::bcast(name, 0, mc);
+    mxx::bcast(name, 0, comm);
   }
 }
 
