@@ -10,6 +10,7 @@
 #include "TopologicalDiscovery.hpp"
 #include "UintSet.hpp"
 
+#include "mxx/collective.hpp"
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
 #include "BVCounter.hpp"
@@ -94,6 +95,7 @@ getNeighborhood(
   const ProgramOptions& options
 )
 {
+  mxx::comm mc;
   DiscreteData<Counter, Var> data(counter, varNames);
   auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
@@ -109,13 +111,17 @@ getNeighborhood(
     else {
       neighborhoodVars = data.varNames(algo->getPC(target));
     }
-    TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);
+    if (mc.rank() == 0) {
+      TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);
+    }
   }
   if (options.learnNetwork() || !options.outputFile().empty()) {
     TIMER_DECLARE(tNetwork);
     auto g = algo->getNetwork(options.directEdges());
-    TIMER_ELAPSED("Time taken in getting the network: ", tNetwork);
-    if (!options.outputFile().empty()) {
+    if (mc.rank() == 0) {
+      TIMER_ELAPSED("Time taken in getting the network: ", tNetwork);
+    }
+    if ((mc.rank() == 0) && !options.outputFile().empty()) {
       TIMER_DECLARE(tWrite);
       g.writeGraphviz(options.outputFile());
       TIMER_ELAPSED("Time taken in writing the network: ", tNetwork);
@@ -225,7 +231,9 @@ main(
     else {
       dataFile.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
-    TIMER_ELAPSED("Time taken in reading the file: ", tRead);
+    if (rank == 0) {
+      TIMER_ELAPSED("Time taken in reading the file: ", tRead);
+    }
 
     bool counterFound = false;
     std::stringstream ss;
@@ -249,15 +257,18 @@ main(
       throw std::runtime_error("Requested counter not found. Supported counter types are: {" + ss.str() + "}");
     }
 
-    for (const auto var: nbrVars) {
-      std::cout << var << ",";
+    if (rank == 0) {
+      for (const auto var: nbrVars) {
+        std::cout << var << ",";
+      }
+      std::cout << std::endl;
     }
-    std::cout << std::endl;
   }
   catch (const std::runtime_error& e) {
     std::cerr << "Encountered runtime error during execution:" << std::endl;
     std::cerr << e.what() << std::endl;
     std::cerr << "Aborting." << std::endl;
+    return 1;
   }
 
   // Finalize MPI
