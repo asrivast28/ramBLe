@@ -154,13 +154,13 @@ getNeighborhood(
   std::vector<std::string> varNames(dataFile->varNames());
   std::vector<std::string> nbrVars;
   if ((n - 1) <= UintSet<uint8_t>::capacity()) {
-    constexpr int N = UintTypeTrait<uint8_t>::N;
+    constexpr int N = maxN<uint8_t>();
     auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
   }
   else if ((n - 1) <= UintSet<uint16_t>::capacity()) {
-    constexpr int N = UintTypeTrait<uint16_t>::N;
+    constexpr int N = maxN<uint16_t>();
     auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
     dataFile.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
