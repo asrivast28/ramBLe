@@ -165,12 +165,6 @@ getNeighborhood(
     dataFile.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
-  else if (n < UintSet<uint32_t>::capacity()) {
-    constexpr int N = UintTypeTrait<uint32_t>::N;
-    auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
-    dataFile.reset();
-    nbrVars = getNeighborhood<uint32_t>(counter, varNames, options);
-  }
   else {
     throw std::runtime_error("The given number of variables is not supported.");
   }

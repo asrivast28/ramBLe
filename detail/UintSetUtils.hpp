@@ -18,9 +18,6 @@
 template <typename Element>
 class SubsetIterator<UintSet<Element>, Element> {
 public:
-  static constexpr int N = UintTypeTrait<Element>::N;
-
-public:
   SubsetIterator(const UintSet<Element>& given, const uint32_t k)
     : m_given(given),
       m_subset(),
@@ -72,170 +69,66 @@ private:
   bool m_valid;
 }; // class SubsetIterator
 
-template <>
-UintSet<uint8_t>
-set_init<UintSet<uint8_t>, uint8_t>(
-  UintSet<uint8_t>&& set,
-  const uint8_t max
-)
-{
-  set.m_max = max;
-  return set;
+
+// Definition of all the operations on UintSet
+#define DEFINE_UINT_SET_OPERATIONS(type) \
+template <> \
+UintSet<type> \
+set_init<UintSet<type>, type>( \
+  UintSet<type>&& set, \
+  const type max \
+) \
+{ \
+  set.m_max = max; \
+  return set; \
+} \
+ \
+template <> \
+bool \
+set_contains<UintSet<type>, type>( \
+  const UintSet<type>& set, \
+  const type value \
+) \
+{ \
+  return set.contains(value); \
+} \
+ \
+template <> \
+UintSet<type> \
+set_union<UintSet<type>>( \
+  const UintSet<type>& first, \
+  const UintSet<type>& second \
+) \
+{ \
+  UintSet<type> result; \
+  *result = *first | *second; \
+  return result; \
+} \
+ \
+template <> \
+UintSet<type> \
+set_difference<UintSet<type>>( \
+  const UintSet<type>& first, \
+  const UintSet<type>& second \
+) \
+{ \
+  UintSet<type> result; \
+  *result = set_diff(*first, *second); \
+  return result; \
+} \
+ \
+template <> \
+bool \
+is_subset<UintSet<type>>( \
+  const UintSet<type>& first, \
+  const UintSet<type>& second \
+) \
+{ \
+  return is_superset(*second, *first); \
 }
 
-template <>
-UintSet<uint16_t>
-set_init<UintSet<uint16_t>, uint16_t>(
-  UintSet<uint16_t>&& set,
-  const uint16_t max
-)
-{
-  set.m_max = max;
-  return set;
-}
-
-template <>
-UintSet<uint32_t>
-set_init<UintSet<uint32_t>, uint32_t>(
-  UintSet<uint32_t>&& set,
-  const uint32_t max
-)
-{
-  set.m_max = max;
-  return set;
-}
-
-template <>
-bool
-set_contains<UintSet<uint8_t>, uint8_t>(
-  const UintSet<uint8_t>& set,
-  const uint8_t value
-)
-{
-  return set.contains(value);
-}
-
-template <>
-bool
-set_contains<UintSet<uint16_t>, uint16_t>(
-  const UintSet<uint16_t>& set,
-  const uint16_t value
-)
-{
-  return set.contains(value);
-}
-
-template <>
-bool
-set_contains<UintSet<uint32_t>, uint32_t>(
-  const UintSet<uint32_t>& set,
-  const uint32_t value
-)
-{
-  return set.contains(value);
-}
-
-template <>
-UintSet<uint8_t>
-set_union<UintSet<uint8_t>>(
-  const UintSet<uint8_t>& first,
-  const UintSet<uint8_t>& second
-)
-{
-  UintSet<uint8_t> result;
-  *result = *first | *second;
-  return result;
-}
-
-template <>
-UintSet<uint16_t>
-set_union<UintSet<uint16_t>>(
-  const UintSet<uint16_t>& first,
-  const UintSet<uint16_t>& second
-)
-{
-  UintSet<uint16_t> result;
-  *result = *first | *second;
-  return result;
-}
-
-template <>
-UintSet<uint32_t>
-set_union<UintSet<uint32_t>>(
-  const UintSet<uint32_t>& first,
-  const UintSet<uint32_t>& second
-)
-{
-  UintSet<uint32_t> result;
-  *result = *first | *second;
-  return result;
-}
-
-template <>
-UintSet<uint8_t>
-set_difference<UintSet<uint8_t>>(
-  const UintSet<uint8_t>& first,
-  const UintSet<uint8_t>& second
-)
-{
-  UintSet<uint8_t> result;
-  *result = set_diff(*first, *second);
-  return result;
-}
-
-template <>
-UintSet<uint16_t>
-set_difference<UintSet<uint16_t>>(
-  const UintSet<uint16_t>& first,
-  const UintSet<uint16_t>& second
-)
-{
-  UintSet<uint16_t> result;
-  *result = set_diff(*first, *second);
-  return result;
-}
-
-template <>
-UintSet<uint32_t>
-set_difference<UintSet<uint32_t>>(
-  const UintSet<uint32_t>& first,
-  const UintSet<uint32_t>& second
-)
-{
-  UintSet<uint32_t> result;
-  *result = set_diff(*first, *second);
-  return result;
-}
-
-template <>
-bool
-is_subset<UintSet<uint8_t>>(
-  const UintSet<uint8_t>& first,
-  const UintSet<uint8_t>& second
-)
-{
-  return is_superset(*second, *first);
-}
-
-template <>
-bool
-is_subset<UintSet<uint16_t>>(
-  const UintSet<uint16_t>& first,
-  const UintSet<uint16_t>& second
-)
-{
-  return is_superset(*second, *first);
-}
-
-template <>
-bool
-is_subset<UintSet<uint32_t>>(
-  const UintSet<uint32_t>& first,
-  const UintSet<uint32_t>& second
-)
-{
-  return is_superset(*second, *first);
-}
+DEFINE_UINT_SET_OPERATIONS(uint8_t)
+DEFINE_UINT_SET_OPERATIONS(uint16_t)
 
 /**
  * @brief Function for getting the output represention of a set.

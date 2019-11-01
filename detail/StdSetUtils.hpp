@@ -9,137 +9,54 @@
 #include <set>
 
 
-template <>
-std::set<uint8_t>
-set_init<std::set<uint8_t>, uint8_t>(
-  std::set<uint8_t>&& set,
-  const uint8_t
-)
-{
-  return set;
+// Definition of all the operations on std::set
+#define DEFINE_STD_SET_OPERATIONS(type) \
+template <> \
+std::set<type> \
+set_init<std::set<type>, type>( \
+  std::set<type>&& set, \
+  const type \
+) \
+{ \
+  return set; \
+} \
+ \
+template <> \
+bool \
+set_contains<std::set<type>, type>( \
+  const std::set<type>& set, \
+  const type value \
+) \
+{ \
+  return (set.find(value) != set.end()); \
+} \
+ \
+template <> \
+std::set<type> \
+set_union<std::set<type>>( \
+  const std::set<type>& first, \
+  const std::set<type>& second \
+) \
+{ \
+  std::set<type> result; \
+  std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin())); \
+  return result; \
+} \
+ \
+template <> \
+std::set<type> \
+set_difference<std::set<type>>( \
+  const std::set<type>& first, \
+  const std::set<type>& second \
+) \
+{ \
+  std::set<type> result; \
+  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin())); \
+  return result; \
 }
 
-template <>
-std::set<uint16_t>
-set_init<std::set<uint16_t>, uint16_t>(
-  std::set<uint16_t>&& set,
-  const uint16_t
-)
-{
-  return set;
-}
-
-template <>
-std::set<uint32_t>
-set_init<std::set<uint32_t>, uint32_t>(
-  std::set<uint32_t>&& set,
-  const uint32_t
-)
-{
-  return set;
-}
-
-template <>
-bool
-set_contains<std::set<uint8_t>, uint8_t>(
-  const std::set<uint8_t>& set,
-  const uint8_t value
-)
-{
-  return (set.find(value) != set.end());
-}
-
-template <>
-bool
-set_contains<std::set<uint16_t>, uint16_t>(
-  const std::set<uint16_t>& set,
-  const uint16_t value
-)
-{
-  return (set.find(value) != set.end());
-}
-
-template <>
-bool
-set_contains<std::set<uint32_t>, uint32_t>(
-  const std::set<uint32_t>& set,
-  const uint32_t value
-)
-{
-  return (set.find(value) != set.end());
-}
-
-template <>
-std::set<uint8_t>
-set_union<std::set<uint8_t>>(
-  const std::set<uint8_t>& first,
-  const std::set<uint8_t>& second
-)
-{
-  std::set<uint8_t> result;
-  std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
-  return result;
-}
-
-template <>
-std::set<uint16_t>
-set_union<std::set<uint16_t>>(
-  const std::set<uint16_t>& first,
-  const std::set<uint16_t>& second
-)
-{
-  std::set<uint16_t> result;
-  std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
-  return result;
-}
-
-template <>
-std::set<uint32_t>
-set_union<std::set<uint32_t>>(
-  const std::set<uint32_t>& first,
-  const std::set<uint32_t>& second
-)
-{
-  std::set<uint32_t> result;
-  std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
-  return result;
-}
-
-template <>
-std::set<uint8_t>
-set_difference<std::set<uint8_t>>(
-  const std::set<uint8_t>& first,
-  const std::set<uint8_t>& second
-)
-{
-  std::set<uint8_t> result;
-  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
-  return result;
-}
-
-template <>
-std::set<uint16_t>
-set_difference<std::set<uint16_t>>(
-  const std::set<uint16_t>& first,
-  const std::set<uint16_t>& second
-)
-{
-  std::set<uint16_t> result;
-  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
-  return result;
-}
-
-template <>
-std::set<uint32_t>
-set_difference<std::set<uint32_t>>(
-  const std::set<uint32_t>& first,
-  const std::set<uint32_t>& second
-)
-{
-  std::set<uint32_t> result;
-  std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(result, result.begin()));
-  return result;
-}
+DEFINE_STD_SET_OPERATIONS(uint8_t)
+DEFINE_STD_SET_OPERATIONS(uint16_t)
 
 /**
  * @brief Function for getting the output represention of a set.

@@ -26,10 +26,10 @@ public:
 public:
   static
   constexpr
-  uint32_t
+  uint8_t
   max()
   {
-    return static_cast<uint32_t>(set_max_size<Set>());
+    return static_cast<uint32_t>(set_max_size<Set>() - 1);
   }
 };
 
@@ -47,10 +47,10 @@ public:
 public:
   static
   constexpr
-  uint32_t
+  uint16_t
   max()
   {
-    return static_cast<uint32_t>(set_max_size<Set>());
+    return static_cast<uint16_t>(set_max_size<Set>() - 1);
   }
 };
 
@@ -85,7 +85,8 @@ public:
   using Set = typename UintTypeTrait<Element>::Set;
 
 public:
-  Iterator(const Set* set, const Element max, const Element curr = UintTypeTrait<Element>::max())
+  Iterator(const Set* set, const Element max, const Element curr = UintSet<Element>::capacity())
+
     : m_set(set),
       m_max(max),
       m_curr((curr > max)? max: curr)
@@ -140,7 +141,7 @@ template <typename Element>
  * @brief The capacity of a set of type UintSet<Element>.
  */
 constexpr
-uint32_t
+Element
 UintSet<Element>::capacity(
 )
 {
@@ -240,7 +241,7 @@ UintSet<Element>::insert(
   const Element x
 )
 {
-  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
+  LOG_MESSAGE_IF(x > m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -252,7 +253,7 @@ UintSet<Element>::insert(
   const Element x
 )
 {
-  LOG_MESSAGE_IF(x >= m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
+  LOG_MESSAGE_IF(x > m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }

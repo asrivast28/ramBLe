@@ -40,7 +40,7 @@ public:
 public:
   static
   constexpr
-  uint32_t
+  Element
   capacity();
 
 public:
