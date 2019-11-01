@@ -54,27 +54,6 @@ public:
   }
 };
 
-/**
- * @brief Specialization of the type trait class.
- */
-template <>
-class UintTypeTrait<uint32_t> {
-public:
-  static constexpr int N = 4;
-
-public:
-  using Set = uint_type<N>;
-
-public:
-  static
-  constexpr
-  uint32_t
-  max()
-  {
-    return static_cast<uint32_t>(set_max_size<Set>());
-  }
-};
-
 
 template <typename Element>
 /**
