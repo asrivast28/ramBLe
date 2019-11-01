@@ -224,7 +224,7 @@ indexGiven(
   const Set& given
 )
 {
-  std::vector<uint32_t> indices(counter.m());
+  std::vector<uint32_t> indices(counter.m(), 0);
   uint64_t levels = 1u;
   if (given.size() > 0) {
     std::vector<uint64_t> cumulative(given.size());
@@ -236,13 +236,13 @@ indexGiven(
     const auto& data = counter.data();
     const auto nobs = counter.m();
     levels = cumulative.back() * counter.r(*xk);
-    for (auto i = 0u; i < nobs; ++i) {
-      uint32_t cfgmap = 0u;
-      auto k = 0u;
-      for (const auto xk: given) {
-        cfgmap += (data[(xk * counter.m()) + i] * cumulative[k++]);
+    auto k = 0u;
+    for (const auto xk: given) {
+      const auto* datak = &data[xk * nobs];
+      for (auto i = 0u; i < nobs; ++i) {
+        indices[i] += (datak[i] * cumulative[k]);
       }
-      indices[i] = cfgmap;
+      ++k;
     }
   }
   return std::make_pair(levels, indices);
