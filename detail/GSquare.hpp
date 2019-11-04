@@ -190,11 +190,12 @@ marginalGSquare(
 
   double gSquare = 0.0;
   for (auto a = 0u, idx = 0u; a < r_x; ++a) {
+    auto first = static_cast<double>(nobs) / mcx[a];
     for (auto b = 0u; b < r_y; ++b) {
       LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
       LOG_MESSAGE(trace, "si = %d, sj = %d, sij = %d", mcx[a], mcy[b], cc[idx]);
       if ((cc[idx] * nobs != mcx[a] * mcy[b]) && (cc[idx] * mcx[a] * mcy[b] != 0)) {
-        auto component = cc[idx] * (log(cc[idx]) + log(nobs) - log(mcx[a]) - log(mcy[b]));
+        auto component = cc[idx] * log((first * cc[idx]) / mcy[b]);
         gSquare += component;
         LOG_MESSAGE(trace, "component = %g", component);
       }
@@ -303,11 +304,12 @@ conditionalGSquare(
       continue;
     }
     for (auto a = 0u, i = c * r_x; a < r_x; ++a, ++i) {
+      auto first = static_cast<double>(mcz[c]) / mcx[i];
       for (auto b = 0u, j = c * r_y; b < r_y; ++b, ++j) {
         LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
         LOG_MESSAGE(trace, "sk = %d, sik = %d, sjk = %d, s = %d", mcz[c], mcx[i], mcy[j], cc[idx]);
         if ((cc[idx] * mcz[c] != mcx[i] * mcy[j]) && (cc[idx] * mcx[i] * mcy[j] != 0)) {
-          auto component = cc[idx] * (log(cc[idx]) + log(mcz[c]) - log(mcx[i]) - log(mcy[j]));
+          auto component = cc[idx] * log((first * cc[idx]) / mcy[j]);
           gSquare += component;
           LOG_MESSAGE(trace, "component = %g", component);
         }
