@@ -98,7 +98,7 @@ getNeighborhood(
   auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
-    Timer tNeighborhood;
+    TIMER_DECLARE(tNeighborhood);
     auto target = data.varIndex(options.targetVar());
     if (target == varNames.size()) {
       throw std::runtime_error("Target variable not found.");
@@ -109,22 +109,16 @@ getNeighborhood(
     else {
       neighborhoodVars = data.varNames(algo->getPC(target));
     }
-    if (options.wallTime()) {
-      std::cout << "Time taken in getting the neighborhood: " << tNeighborhood.elapsed() << " sec" << std::endl;
-    }
+    TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);
   }
   if (options.learnNetwork() || !options.outputFile().empty()) {
-    Timer tNetwork;
+    TIMER_DECLARE(tNetwork);
     auto g = algo->getNetwork(options.directEdges());
-    if (options.wallTime()) {
-      std::cout << "Time taken in getting the network: " << tNetwork.elapsed() << " sec" << std::endl;
-    }
+    TIMER_ELAPSED("Time taken in getting the network: ", tNetwork);
     if (!options.outputFile().empty()) {
-      Timer tWrite;
+      TIMER_DECLARE(tWrite);
       g.writeGraphviz(options.outputFile());
-      if (options.wallTime()) {
-        std::cout << "Time taken in writing the network: " << tWrite.elapsed() << " sec" << std::endl;
-      }
+      TIMER_ELAPSED("Time taken in writing the network: ", tNetwork);
     }
   }
   return neighborhoodVars;
@@ -223,7 +217,7 @@ main(
     INIT_LOGGING(options.logLevel());
     uint32_t n = options.numVars();
     uint32_t m = options.numObs();
-    Timer tRead;
+    TIMER_DECLARE(tRead);
     std::unique_ptr<DataReader<uint8_t>> dataFile;
     if (options.colObs()) {
       dataFile.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
@@ -231,9 +225,7 @@ main(
     else {
       dataFile.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
-    if (options.wallTime()) {
-      std::cout << "Time taken in reading the file: " << tRead.elapsed() << " sec" << std::endl;
-    }
+    TIMER_ELAPSED("Time taken in reading the file: ", tRead);
 
     bool counterFound = false;
     std::stringstream ss;

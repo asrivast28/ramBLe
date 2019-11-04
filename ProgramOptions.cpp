@@ -24,8 +24,7 @@ ProgramOptions::ProgramOptions(
     m_obsIndices(),
     m_discoverMB(),
     m_learnNetwork(),
-    m_directEdges(),
-    m_wallTime()
+    m_directEdges()
 {
   po::options_description visible("Visible options");
   visible.add_options()
@@ -51,7 +50,6 @@ ProgramOptions::ProgramOptions(
 #ifdef LOGGING
     ("log,g", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
-    ("walltime,w", po::bool_switch(&m_wallTime)->default_value(false), "Time the top level operations.")
     ;
 
   m_desc.add(visible).add(developer);
@@ -183,13 +181,6 @@ ProgramOptions::logLevel(
 ) const
 {
   return m_logLevel;
-}
-
-bool
-ProgramOptions::wallTime(
-) const
-{
-  return m_wallTime;
 }
 
 ProgramOptions::~ProgramOptions(

@@ -5,6 +5,8 @@
 #ifndef DATAQUERY_HPP_
 #define DATAQUERY_HPP_
 
+#include "utils/Timer.hpp"
+
 #include <cstdint>
 #include <limits>
 #include <set>
@@ -80,10 +82,13 @@ public:
   bool
   isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 
+  ~DataQuery();
+
 private:
   Counter m_counter;
   std::vector<std::string> m_varNames;
   double m_threshold;
+  TIMER_DECLARE(m_timer, mutable);
 };
 
 #include "detail/GSquare.hpp"

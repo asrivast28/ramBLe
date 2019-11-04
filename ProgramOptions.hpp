@@ -66,9 +66,6 @@ public:
   const std::string&
   logLevel() const;
 
-  bool
-  wallTime() const;
-
   ~ProgramOptions();
 
 private:
@@ -88,7 +85,6 @@ private:
   bool m_discoverMB;
   bool m_learnNetwork;
   bool m_directEdges;
-  bool m_wallTime;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_

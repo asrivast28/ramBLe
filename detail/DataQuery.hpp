@@ -22,6 +22,7 @@ DataQuery<Counter, Var>::DataQuery(
     m_varNames(),
     m_threshold()
 {
+  TIMER_RESET(m_timer);
 }
 
 template <typename Counter, typename Var>
@@ -41,6 +42,7 @@ DataQuery<Counter, Var>::DataQuery(
     m_threshold(threshold)
 {
   LOG_MESSAGE_IF(numVars() != varNames.size(), error, "Number of variables (%d) != Number of variable names", counter.n(), varNames.size());
+  TIMER_RESET(m_timer);
 }
 
 template <typename Counter, typename Var>
@@ -169,7 +171,9 @@ DataQuery<Counter, Var>::pValue(
   const Set& given
 ) const
 {
+  TIMER_START(m_timer);
   auto ret = computeGSquare(m_counter, x, y, given);
+  TIMER_PAUSE(m_timer);
   if (std::fpclassify(ret.second) == FP_ZERO) {
     return 1.0;
   }
@@ -403,6 +407,16 @@ DataQuery<Counter, Var>::isIndependentAnySubset(
 {
   auto minScore = this->minAssocScore(x, y, given, seed, maxSize);
   return this->isIndependent(minScore);
+}
+
+template <typename Counter, typename Var>
+/**
+ * @brief Default destructor.
+ */
+DataQuery<Counter, Var>::~DataQuery(
+)
+{
+  TIMER_ELAPSED_NONZERO("Time taken in G-square computations: ", m_timer);
 }
 
 #endif // DETAIL_DATAQUERY_HPP_

@@ -81,11 +81,18 @@ if enableLogging is not None:
 else:
   # otherwise, enable logging only in debug build
   enableLogging = not releaseBuild
-
 if enableLogging:
   # logging libraries
   cppDefs.append('LOGGING')
   allLibs.extend(['boost_log', 'boost_system', 'pthread'])
+
+enableTimer = ARGUMENTS.get('TIMER', None)
+if enableTimer is not None:
+  # use the user provided option for enabling/disabling timer
+  enableTimer = False if enableTimer in [0, '0'] else True
+if enableTimer:
+  # logging libraries
+  cppDefs.append('TIMER')
 
 # Flag for enabling profiling
 enableProfile = ARGUMENTS.get('PROFILE', 0) not in [0, '0']

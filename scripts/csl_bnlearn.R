@@ -21,7 +21,6 @@ parser <- add_option(parser, c('--learn', '-l'), action='store_true', help='Forc
 parser <- add_option(parser, c('--output', '-o'), type='character', help='Name of the file to which the learned network should be written.')
 parser <- add_option(parser, c('--directed', '-d'), action='store_true', default=FALSE, help='Orient the edges in the learned network.')
 parser <- add_option(parser, c('--log', '-g'), type='character', help='Level of logging.')
-parser <- add_option(parser, c('--walltime', '-w'), action='store_true', default=FALSE, help='Time the top level operations.')
 args <- parse_args(parser, args=commandArgs(trailing=TRUE))
 
 tRead <- proc.time()
@@ -35,9 +34,7 @@ if (!((ncol(data) == args$nvars) && (nrow(data) == args$nobs))) {
         cat('Read dimensions:', nrow(data), 'x', ncol(data), '\n')
         stop('Read file did not match the expected dimensions.')
 }
-if (args$walltime) {
-        cat('Time taken in reading the file:', tRead['elapsed'], 'sec\n')
-}
+cat('Time taken in reading the file:', tRead['elapsed'], 'sec\n')
 
 library('bnlearn')
 network <- NULL
@@ -58,20 +55,14 @@ if (!is.null(args$target)) {
                 neighbors <- pc(network, args$target)
         }
         tNeighborhood <- proc.time() - tNeighborhood
-        if (args$walltime) {
-                cat("Time taken in getting the neighborhod:", tNeighborhood['elapsed'], 'sec\n')
-        }
+        cat("Time taken in getting the neighborhod:", tNeighborhood['elapsed'], 'sec\n')
 }
 
-if (args$walltime) {
-        cat('Time taken in getting the network:', tNetwork['elapsed'], 'sec\n')
-}
+cat('Time taken in getting the network:', tNetwork['elapsed'], 'sec\n')
 
 if (!is.null(args$output)) {
         tWrite <- proc.time()
         write.dot(args$output, network)
         tNetwork <- proc.time() - tWrite
-        if (args$walltime) {
-                cat('Time taken in writing the network:', tWrite['elapsed'], 'sec\n')
-        }
+        cat('Time taken in writing the network:', tWrite['elapsed'], 'sec\n')
 }
