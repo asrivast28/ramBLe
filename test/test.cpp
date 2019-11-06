@@ -3,8 +3,8 @@
  * @brief The main file for running all the unit tests.
  */
 
-#include "Common.hpp"
 #include "SetUtilsTests.hpp"
+#include "Environment.hpp"
 #include "DataTests.hpp"
 #include "DirectDiscoveryTests.hpp"
 #include "TopologicalDiscoveryTests.hpp"
@@ -38,6 +38,10 @@ main(
     return 1;
   }
   INIT_LOGGING(logLevel);
+  testing::AddGlobalTestEnvironment(new NeapolitanEnvironment);
+  testing::AddGlobalTestEnvironment(new LizardsEnvironment);
+  testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
+  testing::AddGlobalTestEnvironment(new AsiaEnvironment);
   auto result = RUN_ALL_TESTS();
   MPI_Finalize();
 

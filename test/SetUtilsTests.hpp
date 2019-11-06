@@ -8,6 +8,8 @@
 #include "SetUtils.hpp"
 #include "UintSet.hpp"
 
+#include <gtest/gtest.h>
+
 #include <cstdint>
 #include <numeric>
 #include <set>
