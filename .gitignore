@@ -3,4 +3,6 @@
 /csl*
 /test/testcsl*
 /.sconsign.dblite
+/.sconf_temp/
+/config.log
 *.un~
