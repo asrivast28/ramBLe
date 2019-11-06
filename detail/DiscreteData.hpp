@@ -110,6 +110,17 @@ DiscreteData<Counter, Var>::varNames(
 
 template <typename Counter, typename Var>
 /**
+ * @brief Returns the names of all the variables.
+ */
+const std::vector<std::string>&
+DiscreteData<Counter, Var>::varNames(
+) const
+{
+  return m_varNames;
+}
+
+template <typename Counter, typename Var>
+/**
  * @brief Returns the index of a variable.
  *
  * @param name The name of the query variable.

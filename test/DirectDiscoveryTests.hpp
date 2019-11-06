@@ -107,6 +107,31 @@ TYPED_TEST(CoronaryDirectDiscovery, ParentsChildren) {
   EXPECT_EQ(computedFamilyPC, trueFamilyPC);
 }
 
+TYPED_TEST(CoronaryDirectDiscovery, DirectedNetwork) {
+  auto computedBN = this->algo->getNetwork(true);
+
+  auto smoking = this->data->varIndex("Smoking");
+  auto mWork = this->data->varIndex("M. Work");
+  auto pWork  = this->data->varIndex("P. Work");
+  auto pressure = this->data->varIndex("Pressure");
+  auto proteins = this->data->varIndex("Proteins");
+  auto family = this->data->varIndex("Family");
+
+  auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
+  expectedBN.addEdge(smoking, mWork);
+  expectedBN.addEdge(smoking, pressure);
+  expectedBN.addEdge(mWork, proteins);
+  expectedBN.addEdge(mWork, family);
+  expectedBN.addEdge(pWork, smoking);
+  expectedBN.addEdge(pWork, mWork);
+  expectedBN.addEdge(pressure, mWork);
+  expectedBN.addEdge(proteins, smoking);
+  expectedBN.addEdge(proteins, mWork);
+  expectedBN.addEdge(proteins, pressure);
+
+  EXPECT_EQ(expectedBN, computedBN);
+}
+
 
 template <typename Algorithm>
 class AsiaDirectDiscovery : public testing::Test {
@@ -215,6 +240,25 @@ TYPED_TEST(AsiaDirectDiscovery, ParentsChildren) {
   auto trueDyspPC = this->data->template varIndices<UintSet<uint8_t>>({"bronc"});
   auto computedDyspPC = this->algo->getPC(target);
   EXPECT_EQ(computedDyspPC, trueDyspPC);
+}
+
+TYPED_TEST(AsiaDirectDiscovery, DirectedNetwork) {
+  auto computedBN = this->algo->getNetwork(true);
+
+  auto smoke = this->data->varIndex("smoke");
+  auto tub = this->data->varIndex("tub");
+  auto lung = this->data->varIndex("lung");
+  auto bronc = this->data->varIndex("bronc");
+  auto either = this->data->varIndex("either");
+  auto dysp = this->data->varIndex("dysp");
+
+  auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
+  expectedBN.addEdge(smoke, bronc);
+  expectedBN.addEdge(tub, either);
+  expectedBN.addEdge(lung, either);
+  expectedBN.addEdge(dysp, bronc);
+
+  EXPECT_EQ(expectedBN, computedBN);
 }
 
 #endif // TEST_DIRECTDISCOVERY_HPP_

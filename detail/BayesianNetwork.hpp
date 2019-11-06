@@ -161,12 +161,14 @@ BayesianNetwork<Var>::breakDirectedCycles(
       maxCount = cc.second;
     }
   }
-  auto source = *e.source();
-  auto target = *e.target();
-  // Reverse the edge
-  LOG_MESSAGE(info, "* Reversing the direction of edge %s -> %s", e.source().property().label, e.target().property().label);
-  this->removeEdge(source, target);
-  this->addEdge(target, source);
+  if (maxCount > 0) {
+    auto source = *e.source();
+    auto target = *e.target();
+    // Reverse the edge
+    LOG_MESSAGE(info, "* Reversing the direction of edge %s -> %s", e.source().property().label, e.target().property().label);
+    this->removeEdge(source, target);
+    this->addEdge(target, source);
+  }
 }
 
 template <typename Var>

@@ -40,6 +40,9 @@ public:
   std::vector<std::string>
   varNames(const Set&) const;
 
+  const std::vector<std::string>&
+  varNames() const;
+
   Var
   varIndex(const std::string&) const;
 
