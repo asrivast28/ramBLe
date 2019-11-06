@@ -1,9 +1,9 @@
 /**
- * @file DataQuery.hpp
+ * @file DiscreteData.hpp
  * @brief Declaration of the functions used for querying the data.
  */
-#ifndef DATAQUERY_HPP_
-#define DATAQUERY_HPP_
+#ifndef DISCRETEDATA_HPP_
+#define DISCRETEDATA_HPP_
 
 #include "utils/Timer.hpp"
 
@@ -15,17 +15,17 @@
 
 
 /**
- * @brief Class that provides functionality for querying the data.
+ * @brief Class that provides functionality for querying discrete data.
  *
  * @tparam Counter Type of the object that provides counting queries.
  * @tparam Var Type of the variables (expected to be an integral type).
  */
 template <typename Counter, typename Var>
-class DataQuery {
+class DiscreteData {
 public:
-  DataQuery();
+  DiscreteData();
 
-  DataQuery(const Counter&, const std::vector<std::string>&, const double = 0.05);
+  DiscreteData(const Counter&, const std::vector<std::string>&, const double = 0.05);
 
   Var
   numVars() const;
@@ -82,7 +82,7 @@ public:
   bool
   isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
 
-  ~DataQuery();
+  ~DiscreteData();
 
 private:
   Counter m_counter;
@@ -92,6 +92,6 @@ private:
 };
 
 #include "detail/GSquare.hpp"
-#include "detail/DataQuery.hpp"
+#include "detail/DiscreteData.hpp"
 
-#endif // DATAQUERY_HPP_
+#endif // DISCRETEDATA_HPP_

@@ -1,9 +1,9 @@
 /**
- * @file DataQuery.hpp
+ * @file DiscreteData.hpp
  * @brief Implementation of the the functions used for querying the data.
  */
-#ifndef DETAIL_DATAQUERY_HPP_
-#define DETAIL_DATAQUERY_HPP_
+#ifndef DETAIL_DISCRETEDATA_HPP_
+#define DETAIL_DISCRETEDATA_HPP_
 
 #include "../SetUtils.hpp"
 #include "../UintSet.hpp"
@@ -17,7 +17,7 @@ template <typename Counter, typename Var>
 /**
  * @brief Default constructor.
  */
-DataQuery<Counter, Var>::DataQuery(
+DiscreteData<Counter, Var>::DiscreteData(
 ) : m_counter(),
     m_varNames(),
     m_threshold()
@@ -33,7 +33,7 @@ template <typename Counter, typename Var>
  * @param varNames Names of all the variables.
  * @param threshold Target nominal type I error rate.
  */
-DataQuery<Counter, Var>::DataQuery(
+DiscreteData<Counter, Var>::DiscreteData(
   const Counter& counter,
   const std::vector<std::string>& varNames,
   const double threshold
@@ -50,7 +50,7 @@ template <typename Counter, typename Var>
  * @return Number of variables in the given dataset.
  */
 Var
-DataQuery<Counter, Var>::numVars(
+DiscreteData<Counter, Var>::numVars(
 ) const
 {
   return static_cast<Var>(m_counter.n());
@@ -61,7 +61,7 @@ template <typename Counter, typename Var>
  * @return Number of rows (observations) in the given dataset.
  */
 uint32_t
-DataQuery<Counter, Var>::numRows(
+DiscreteData<Counter, Var>::numRows(
 ) const
 {
   return static_cast<uint32_t>(m_counter.m());
@@ -76,7 +76,7 @@ template <typename Counter, typename Var>
  * @return The name of the query variable.
  */
 const std::string&
-DataQuery<Counter, Var>::varName(
+DiscreteData<Counter, Var>::varName(
   const Var x
 ) const
 {
@@ -95,7 +95,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 std::vector<std::string>
-DataQuery<Counter, Var>::varNames(
+DiscreteData<Counter, Var>::varNames(
   const Set& vars
 ) const
 {
@@ -117,7 +117,7 @@ template <typename Counter, typename Var>
  * @return The index of the query variable.
  */
 Var
-DataQuery<Counter, Var>::varIndex(
+DiscreteData<Counter, Var>::varIndex(
   const std::string& name
 ) const
 {
@@ -143,7 +143,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 Set
-DataQuery<Counter, Var>::varIndices(
+DiscreteData<Counter, Var>::varIndices(
   const std::vector<std::string>& names
 ) const
 {
@@ -165,7 +165,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 double
-DataQuery<Counter, Var>::pValue(
+DiscreteData<Counter, Var>::pValue(
   const Var x,
   const Var y,
   const Set& given
@@ -197,7 +197,7 @@ template <typename Set>
  *         the strength of association between the given variables.
  */
 double
-DataQuery<Counter, Var>::assocScore(
+DiscreteData<Counter, Var>::assocScore(
   const Var x,
   const Var y,
   const Set& given
@@ -217,7 +217,7 @@ template <typename Set>
  * @param given The indices of the variables to be conditioned on.
  */
 bool
-DataQuery<Counter, Var>::isIndependent(
+DiscreteData<Counter, Var>::isIndependent(
   const Var x,
   const Var y,
   const Set& given
@@ -233,7 +233,7 @@ template <typename Counter, typename Var>
  * @param assocScore The association score, expected to be in the range [0.0, 1.0].
  */
 bool
-DataQuery<Counter, Var>::isIndependent(
+DiscreteData<Counter, Var>::isIndependent(
   const double assocScore
 ) const
 {
@@ -255,7 +255,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 double
-DataQuery<Counter, Var>::minAssocScore(
+DiscreteData<Counter, Var>::minAssocScore(
   const Var x,
   const Var y,
   const Set& given,
@@ -292,7 +292,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 double
-DataQuery<Counter, Var>::minAssocScore(
+DiscreteData<Counter, Var>::minAssocScore(
   const Var x,
   const Var y,
   const Set& given,
@@ -333,7 +333,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 std::pair<double, Set>
-DataQuery<Counter, Var>::minAssocScoreSubset(
+DiscreteData<Counter, Var>::minAssocScoreSubset(
   const Var x,
   const Var y,
   const Set& given,
@@ -372,7 +372,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 bool
-DataQuery<Counter, Var>::isIndependentAnySubset(
+DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var x,
   const Var y,
   const Set& given,
@@ -397,7 +397,7 @@ template <typename Counter, typename Var>
  */
 template <typename Set>
 bool
-DataQuery<Counter, Var>::isIndependentAnySubset(
+DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var x,
   const Var y,
   const Set& given,
@@ -413,10 +413,10 @@ template <typename Counter, typename Var>
 /**
  * @brief Default destructor.
  */
-DataQuery<Counter, Var>::~DataQuery(
+DiscreteData<Counter, Var>::~DiscreteData(
 )
 {
   TIMER_ELAPSED_NONZERO("Time taken in G-square computations: ", m_timer);
 }
 
-#endif // DETAIL_DATAQUERY_HPP_
+#endif // DETAIL_DISCRETEDATA_HPP_

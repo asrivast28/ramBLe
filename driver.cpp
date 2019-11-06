@@ -3,7 +3,7 @@
  * @brief The implementation of the main function, and other
  *        functions that drive the program execution.
  */
-#include "DataQuery.hpp"
+#include "DiscreteData.hpp"
 #include "DataReader.hpp"
 #include "DirectDiscovery.hpp"
 #include "ProgramOptions.hpp"
@@ -94,7 +94,7 @@ getNeighborhood(
   const ProgramOptions& options
 )
 {
-  DataQuery<Counter, Var> data(counter, varNames);
+  DiscreteData<Counter, Var> data(counter, varNames);
   auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {

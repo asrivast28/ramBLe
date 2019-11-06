@@ -7,16 +7,16 @@
 
 #include "Environment.hpp"
 #include "CTCounter.hpp"
-#include "DataQuery.hpp"
+#include "DiscreteData.hpp"
 #include "DirectDiscovery.hpp"
 #include "UintSet.hpp"
 
 
 using Counter = CTCounter<1>;
 // All the different direct discovery algorithms
-using DirectDiscoveryAlgorithms = testing::Types<GSMB<DataQuery<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
-                                                 IAMB<DataQuery<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
-                                                 InterIAMB<DataQuery<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
+using DirectDiscoveryAlgorithms = testing::Types<GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
+                                                 IAMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
+                                                 InterIAMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
 
 template <typename Algorithm>
 class CoronaryDirectDiscovery : public testing::Test {
@@ -27,7 +27,7 @@ protected:
     auto m = CoronaryEnvironment::m;
     auto reader = CoronaryEnvironment::reader;
     auto counter = Counter::create(n, m, std::begin(reader->data()));
-    data = new DataQuery<Counter, uint8_t>(counter, reader->varNames());
+    data = new DiscreteData<Counter, uint8_t>(counter, reader->varNames());
     algo = new Algorithm(*data);
   }
 
@@ -37,7 +37,7 @@ protected:
     delete data;
   }
 
-  DataQuery<Counter, uint8_t>* data;
+  DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
 };
 
@@ -117,7 +117,7 @@ protected:
     auto m = AsiaEnvironment::m;
     auto reader = AsiaEnvironment::reader;
     auto counter = Counter::create(n, m, std::begin(reader->data()));
-    data = new DataQuery<Counter, uint8_t>(counter, reader->varNames());
+    data = new DiscreteData<Counter, uint8_t>(counter, reader->varNames());
     algo = new Algorithm(*data);
   }
 
@@ -127,7 +127,7 @@ protected:
     delete data;
   }
 
-  DataQuery<Counter, uint8_t>* data;
+  DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
 };
 

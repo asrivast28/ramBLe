@@ -7,7 +7,7 @@
 
 #include "Environment.hpp"
 #include "CTCounter.hpp"
-#include "DataQuery.hpp"
+#include "DiscreteData.hpp"
 #include "UintSet.hpp"
 
 #include "BVCounter.hpp"
@@ -30,7 +30,7 @@ protected:
     data.resize(reader.size());
     for (auto i = 0u; i < data.size(); ++i) {
       auto counter = Counter::create(n, m, std::begin(reader[i]->data()));
-      data[i] = new DataQuery<Counter, uint8_t>(counter, reader[i]->varNames());
+      data[i] = new DiscreteData<Counter, uint8_t>(counter, reader[i]->varNames());
     }
   }
 
@@ -41,7 +41,7 @@ protected:
     }
   }
 
-  std::vector<DataQuery<Counter, uint8_t>*> data;
+  std::vector<DiscreteData<Counter, uint8_t>*> data;
 }; // class NeapolitanData
 
 
@@ -68,7 +68,7 @@ protected:
     auto m = LizardsEnvironment::m;
     auto reader = LizardsEnvironment::reader;
     auto counter = Counter::create(n, m, std::begin(reader->data()));
-    data = new DataQuery<Counter, uint8_t>(counter, reader->varNames());
+    data = new DiscreteData<Counter, uint8_t>(counter, reader->varNames());
   }
 
   void
@@ -76,7 +76,7 @@ protected:
     delete data;
   }
 
-  DataQuery<Counter, uint8_t>* data;
+  DiscreteData<Counter, uint8_t>* data;
 }; // class LizardsData
 
 TYPED_TEST_CASE(LizardsData, AllCounters);
@@ -116,7 +116,7 @@ protected:
     auto m = CoronaryEnvironment::m;
     auto reader = CoronaryEnvironment::reader;
     auto counter = Counter::create(n, m, std::begin(reader->data()));
-    data = new DataQuery<Counter, uint8_t>(counter, reader->varNames());
+    data = new DiscreteData<Counter, uint8_t>(counter, reader->varNames());
   }
 
   void
@@ -124,7 +124,7 @@ protected:
     delete data;
   }
 
-  DataQuery<Counter, uint8_t>* data;
+  DiscreteData<Counter, uint8_t>* data;
 }; // class CoronaryData
 
 TYPED_TEST_CASE(CoronaryData, AllCounters);
