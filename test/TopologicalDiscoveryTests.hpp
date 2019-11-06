@@ -42,34 +42,34 @@ protected:
 TYPED_TEST_CASE(CoronaryTopologicalDiscovery, TopologicalDiscoveryAlgorithms);
 
 TYPED_TEST(CoronaryTopologicalDiscovery, ParentsChildren) {
-  uint8_t target = this->data->varIndex("Smoking");
-  UintSet<uint8_t> trueSmokingPC = this->data->template varIndices<UintSet<uint8_t>>({"M. Work", "P. Work", "Pressure", "Proteins"});
-  UintSet<uint8_t> computedSmokingPC = this->algo->getPC(target);
+  auto target = this->data->varIndex("Smoking");
+  auto trueSmokingPC = this->data->template varIndices<UintSet<uint8_t>>({"M. Work", "P. Work", "Pressure", "Proteins"});
+  auto computedSmokingPC = this->algo->getPC(target);
   EXPECT_EQ(computedSmokingPC, trueSmokingPC);
 
   target = this->data->varIndex("M. Work");
-  UintSet<uint8_t> trueMWorkPC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "P. Work", "Pressure", "Proteins", "Family"});
-  UintSet<uint8_t> computedMWorkPC = this->algo->getPC(target);
+  auto trueMWorkPC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "P. Work", "Pressure", "Proteins", "Family"});
+  auto computedMWorkPC = this->algo->getPC(target);
   EXPECT_EQ(computedMWorkPC, trueMWorkPC);
 
   target = this->data->varIndex("P. Work");
-  UintSet<uint8_t> truePWorkPC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "M. Work"});
-  UintSet<uint8_t> computedPWorkPC = this->algo->getPC(target);
+  auto truePWorkPC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "M. Work"});
+  auto computedPWorkPC = this->algo->getPC(target);
   EXPECT_EQ(computedPWorkPC, truePWorkPC);
 
   target = this->data->varIndex("Pressure");
-  UintSet<uint8_t> truePressurePC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "M. Work", "Proteins"});
-  UintSet<uint8_t> computedPressurePC = this->algo->getPC(target);
+  auto truePressurePC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "M. Work", "Proteins"});
+  auto computedPressurePC = this->algo->getPC(target);
   EXPECT_EQ(computedPressurePC, truePressurePC);
 
   target = this->data->varIndex("Proteins");
-  UintSet<uint8_t> trueProteinsPC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "M. Work", "Pressure"});
-  UintSet<uint8_t> computedProteinsPC = this->algo->getPC(target);
+  auto trueProteinsPC = this->data->template varIndices<UintSet<uint8_t>>({"Smoking", "M. Work", "Pressure"});
+  auto computedProteinsPC = this->algo->getPC(target);
   EXPECT_EQ(computedProteinsPC, trueProteinsPC);
 
   target = this->data->varIndex("Family");
-  UintSet<uint8_t> trueFamilyPC = this->data->template varIndices<UintSet<uint8_t>>({"M. Work"});
-  UintSet<uint8_t> computedFamilyPC = this->algo->getPC(target);
+  auto trueFamilyPC = this->data->template varIndices<UintSet<uint8_t>>({"M. Work"});
+  auto computedFamilyPC = this->algo->getPC(target);
   EXPECT_EQ(computedFamilyPC, trueFamilyPC);
 }
 
@@ -100,44 +100,44 @@ protected:
 TYPED_TEST_CASE(AsiaTopologicalDiscovery, TopologicalDiscoveryAlgorithms);
 
 TYPED_TEST(AsiaTopologicalDiscovery, ParentsChildren) {
-  uint8_t target = this->data->varIndex("asia");
-  UintSet<uint8_t> trueAsiaPC = this->data->template varIndices<UintSet<uint8_t>>({});
-  UintSet<uint8_t> computedAsiaPC = this->algo->getPC(target);
+  auto target = this->data->varIndex("asia");
+  auto trueAsiaPC = this->data->template varIndices<UintSet<uint8_t>>({});
+  auto computedAsiaPC = this->algo->getPC(target);
   EXPECT_EQ(computedAsiaPC, trueAsiaPC);
 
   target = this->data->varIndex("smoke");
-  UintSet<uint8_t> trueSmokePC = this->data->template varIndices<UintSet<uint8_t>>({"bronc", "lung"});
-  UintSet<uint8_t> computedSmokePC = this->algo->getPC(target);
+  auto trueSmokePC = this->data->template varIndices<UintSet<uint8_t>>({"bronc", "lung"});
+  auto computedSmokePC = this->algo->getPC(target);
   EXPECT_EQ(computedSmokePC, trueSmokePC);
 
   target = this->data->varIndex("tub");
-  UintSet<uint8_t> trueTubPC = this->data->template varIndices<UintSet<uint8_t>>({"either"});
-  UintSet<uint8_t> computedTubPC = this->algo->getPC(target);
+  auto trueTubPC = this->data->template varIndices<UintSet<uint8_t>>({"either"});
+  auto computedTubPC = this->algo->getPC(target);
   EXPECT_EQ(computedTubPC, trueTubPC);
 
   target = this->data->varIndex("lung");
-  UintSet<uint8_t> trueLungPC = this->data->template varIndices<UintSet<uint8_t>>({"either", "smoke"});
-  UintSet<uint8_t> computedLungPC = this->algo->getPC(target);
+  auto trueLungPC = this->data->template varIndices<UintSet<uint8_t>>({"either", "smoke"});
+  auto computedLungPC = this->algo->getPC(target);
   EXPECT_EQ(computedLungPC, trueLungPC);
 
   target = this->data->varIndex("bronc");
-  UintSet<uint8_t> trueBroncPC = this->data->template varIndices<UintSet<uint8_t>>({"dysp", "smoke"});
-  UintSet<uint8_t> computedBroncPC = this->algo->getPC(target);
+  auto trueBroncPC = this->data->template varIndices<UintSet<uint8_t>>({"dysp", "smoke"});
+  auto computedBroncPC = this->algo->getPC(target);
   EXPECT_EQ(computedBroncPC, trueBroncPC);
 
   target = this->data->varIndex("either");
-  UintSet<uint8_t> trueEitherPC = this->data->template varIndices<UintSet<uint8_t>>({"lung", "tub"});
-  UintSet<uint8_t> computedEitherPC = this->algo->getPC(target);
+  auto trueEitherPC = this->data->template varIndices<UintSet<uint8_t>>({"lung", "tub"});
+  auto computedEitherPC = this->algo->getPC(target);
   EXPECT_EQ(computedEitherPC, trueEitherPC);
 
   target = this->data->varIndex("xray");
-  UintSet<uint8_t> trueXrayPC = this->data->template varIndices<UintSet<uint8_t>>({});
-  UintSet<uint8_t> computedXrayPC = this->algo->getPC(target);
+  auto trueXrayPC = this->data->template varIndices<UintSet<uint8_t>>({});
+  auto computedXrayPC = this->algo->getPC(target);
   EXPECT_EQ(computedXrayPC, trueXrayPC);
 
   target = this->data->varIndex("dysp");
-  UintSet<uint8_t> trueDyspPC = this->data->template varIndices<UintSet<uint8_t>>({"bronc"});
-  UintSet<uint8_t> computedDyspPC = this->algo->getPC(target);
+  auto trueDyspPC = this->data->template varIndices<UintSet<uint8_t>>({"bronc"});
+  auto computedDyspPC = this->algo->getPC(target);
   EXPECT_EQ(computedDyspPC, trueDyspPC);
 }
 
