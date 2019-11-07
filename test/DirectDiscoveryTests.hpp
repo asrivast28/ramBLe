@@ -263,7 +263,7 @@ TYPED_TEST(AsiaDirectDiscovery, DirectedNetwork) {
 
 
 template <typename Algorithm>
-class AlarmDirectDiscovery : public testing::Test {
+class DISABLED_AlarmDirectDiscovery : public testing::Test {
 protected:
   void
   SetUp() override {
@@ -286,9 +286,9 @@ protected:
 };
 
 using GSMBAlgorithm = GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>;
-TYPED_TEST_CASE(AlarmDirectDiscovery, GSMBAlgorithm);
+TYPED_TEST_CASE(DISABLED_AlarmDirectDiscovery, GSMBAlgorithm);
 
-TYPED_TEST(AlarmDirectDiscovery, DirectedNetwork) {
+TYPED_TEST(DISABLED_AlarmDirectDiscovery, DirectedNetwork) {
   auto computedBN = this->algo->getNetwork(true);
 
   auto CVP = this->data->varIndex("CVP");

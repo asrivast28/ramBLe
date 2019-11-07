@@ -262,8 +262,12 @@ ConstraintBasedDiscovery<Data, Var, Set>::addVarNeighbors(
         if (this->isCollider(y, x, z)) {
           isChild = true;
           LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
-          g.addEdge(y, x);
-          g.addEdge(z, x);
+          if (!g.edgeExists(y, x)) {
+            g.addEdge(y, x);
+          }
+          if (!g.edgeExists(z, x)) {
+            g.addEdge(z, x);
+          }
           paX.insert(z);
           paX.insert(y);
           break;
