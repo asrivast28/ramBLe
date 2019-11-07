@@ -105,7 +105,7 @@ uint32_t CoronaryEnvironment::m = 0;
 
 
 /**
- * @brief Environment for running unit tests on the coronary dataset.
+ * @brief Environment for running unit tests on the asia dataset.
  */
 class AsiaEnvironment: public testing::Environment {
 public:
@@ -130,5 +130,32 @@ public:
 RowObservationReader<uint8_t>* AsiaEnvironment::reader;
 uint32_t AsiaEnvironment::n = 0;
 uint32_t AsiaEnvironment::m = 0;
+
+/**
+ * @brief Environment for running unit tests on the alarm dataset.
+ */
+class AlarmEnvironment: public testing::Environment {
+public:
+  void
+  SetUp() override {
+    n = 37;
+    m = 20000;
+    reader = new RowObservationReader<uint8_t>("alarm.csv", n, m, ',', true, false, true);
+  }
+
+  void
+  TearDown() override {
+    delete reader;
+  }
+
+  static RowObservationReader<uint8_t>* reader;
+  static uint32_t n;
+  static uint32_t m;
+}; // class AlarmEnvironment
+
+// Static member initializations
+RowObservationReader<uint8_t>* AlarmEnvironment::reader;
+uint32_t AlarmEnvironment::n = 0;
+uint32_t AlarmEnvironment::m = 0;
 
 #endif // TEST_ENVIRONMENT_HPP_

@@ -42,6 +42,7 @@ main(
   testing::AddGlobalTestEnvironment(new LizardsEnvironment);
   testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
   testing::AddGlobalTestEnvironment(new AsiaEnvironment);
+  testing::AddGlobalTestEnvironment(new AlarmEnvironment);
   auto result = RUN_ALL_TESTS();
   MPI_Finalize();
 
