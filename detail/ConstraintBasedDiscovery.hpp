@@ -225,60 +225,32 @@ ConstraintBasedDiscovery<Data, Var, Set>::isCollider(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Adds the neighbors for the given var to the given network.
- *
- * @tparam Network The type of graph used for representing the network.
- * @param x The variable for which edges are added for the graph.
- * @param g The causal network.
- * @param directEdges Specifies if the edges should be directed.
+ * @brief Finds all the potential v-structures in the network.
  */
-template <typename Network>
-void
-ConstraintBasedDiscovery<Data, Var, Set>::addVarNeighbors(
-  const Var x,
-  Network& g,
-  const bool directEdges
+std::multimap<Var, std::pair<Var, Var>>
+ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
 ) const
 {
-  auto pcX = this->getPC(x);
-  Set paX;
-  for (const auto y: pcX) {
-    if (!directEdges) {
-      LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
-      g.addEdge(x, y);
-    }
-    else {
-      if (set_contains(paX, y) || g.edgeExists(x, y)) {
-        // y must have been determined to be a parent or child of x
-        continue;
-      }
-      // Orient the edge
+  std::multimap<Var, std::pair<Var, Var>> vStructures;
+  for (const auto x: m_allVars) {
+    auto pcX = this->getPC(x);
+    Set paX;
+    for (const auto y: pcX) {
+      // Candidate parents of x, which are not connected to y
       auto pcY = this->getPC(y);
-      // Candidate parents of x, other than y
       auto cpaX = set_difference(pcX, pcY);
       cpaX.erase(y);
-      bool isChild = false;
       for (const auto z: cpaX) {
-        if (this->isCollider(y, x, z)) {
-          isChild = true;
-          LOG_MESSAGE(info, "+ Adding the edges %s -> %s <- %s (collider)", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
-          if (!g.edgeExists(y, x)) {
-            g.addEdge(y, x);
-          }
-          if (!g.edgeExists(z, x)) {
-            g.addEdge(z, x);
-          }
-          paX.insert(z);
+        if (!(set_contains(paX, y) && set_contains(paX, z)) && this->isCollider(y, x, z)) {
+          LOG_MESSAGE(info, "* Found new v-structure %s -> %s <- %s", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
+          vStructures.insert(std::make_pair(x, std::make_pair(y, z)));
           paX.insert(y);
-          break;
+          paX.insert(z);
         }
-      }
-      if (!isChild) {
-        LOG_MESSAGE(info, "+ Adding the edge %s -> %s", this->m_data.varName(x), this->m_data.varName(y));
-        g.addEdge(x, y);
       }
     }
   }
+  return vStructures;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -295,9 +267,15 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
   auto varNames = this->m_data.varNames(m_allVars);
   BayesianNetwork<Var> bn(varNames);
   for (const auto x: m_allVars) {
-    this->addVarNeighbors(x, bn, directEdges);
+    auto pcX = this->getPC(x);
+    for (const auto y: pcX) {
+      LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
+      bn.addEdge(x, y);
+    }
   }
   if (directEdges) {
+    auto vStructures = this->findVStructures();
+    bn.applyVStructures(vStructures);
     // First, break any directed cycles in the network
     LOG_MESSAGE_IF(bn.hasDirectedCycles(), info, "* The initial network contains directed cycles");
     while (bn.hasDirectedCycles()) {

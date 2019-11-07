@@ -7,6 +7,7 @@
 
 #include "BayesianNetwork.hpp"
 
+#include <map>
 #include <unordered_map>
 
 
@@ -62,9 +63,8 @@ private:
   bool
   isCollider(const Var, const Var, const Var) const;
 
-  template <typename Network>
-  void
-  addVarNeighbors(const Var, Network&, const bool) const;
+  std::multimap<Var, std::pair<Var, Var>>
+  findVStructures() const;
 
 protected:
   const Data m_data;

@@ -32,6 +32,9 @@ private:
 public:
   BayesianNetwork(const std::vector<std::string>&);
 
+  void
+  applyVStructures(const std::multimap<Var, std::pair<Var, Var>>&);
+
   bool
   hasDirectedCycles() const;
 

@@ -117,6 +117,34 @@ BayesianNetwork<Var>::filterAntiParallelEdges(
 
 template <typename Var>
 /**
+ * @brief Orients the edges of the network in accordance with v-structures.
+ *
+ * @param vStructures A multimap with all the discovered v-structures.
+ */
+void
+BayesianNetwork<Var>::applyVStructures(
+  const std::multimap<Var, std::pair<Var, Var>>& vStructures
+)
+{
+  for (const auto& vs: vStructures) {
+    auto x = this->wrap(this->m_idVertexMap.at(vs.first));
+    auto y = this->wrap(this->m_idVertexMap.at(vs.second.first));
+    auto z = this->wrap(this->m_idVertexMap.at(vs.second.second));
+    // First check if the reverse edges still exist
+    if (!this->edgeExists(y, x) || !this->edgeExists(z, x)) {
+      LOG_MESSAGE(warning, "* Could not apply v-structure %s -> %s <- %s", y.property().label, x.property().label, z.property().label);
+      LOG_MESSAGE_IF(!this->edgeExists(y, x), info, "* %s - %s has already been oriented in the opposite direction", y.property().label, x.property().label);
+      LOG_MESSAGE_IF(!this->edgeExists(z, x), info, "* %s - %s has already been oriented in the opposite direction", x.property().label, z.property().label);
+      continue;
+    }
+    LOG_MESSAGE(info, "+ Applying the v-structure %s -> %s <- %s", y.property().label, x.property().label, z.property().label);
+    this->removeEdge(x, y);
+    this->removeEdge(x, z);
+  }
+}
+
+template <typename Var>
+/**
  * @brief Function which checks if the network has directed cycles.
  */
 bool
