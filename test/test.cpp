@@ -8,6 +8,7 @@
 #include "DataTests.hpp"
 #include "DirectDiscoveryTests.hpp"
 #include "TopologicalDiscoveryTests.hpp"
+#include "DirectedNetworkTests.hpp"
 
 #include "utils/Logging.hpp"
 
@@ -42,7 +43,6 @@ main(
   testing::AddGlobalTestEnvironment(new LizardsEnvironment);
   testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
   testing::AddGlobalTestEnvironment(new AsiaEnvironment);
-  testing::AddGlobalTestEnvironment(new AlarmEnvironment);
   auto result = RUN_ALL_TESTS();
   MPI_Finalize();
 
