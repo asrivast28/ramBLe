@@ -127,8 +127,10 @@ TYPED_TEST(CoronaryDirectDiscovery, DirectedNetwork) {
   expectedBN.addEdge(pressure, mWork);
   expectedBN.addEdge(proteins, smoking);
   expectedBN.addEdge(proteins, mWork);
-  expectedBN.addEdge(proteins, pressure);
+  // Check for false positives
+  EXPECT_NE(expectedBN, computedBN);
 
+  expectedBN.addEdge(proteins, pressure);
   EXPECT_EQ(expectedBN, computedBN);
 }
 
@@ -256,8 +258,10 @@ TYPED_TEST(AsiaDirectDiscovery, DirectedNetwork) {
   expectedBN.addEdge(smoke, bronc);
   expectedBN.addEdge(tub, either);
   expectedBN.addEdge(lung, either);
-  expectedBN.addEdge(dysp, bronc);
+  // Check for false positives
+  EXPECT_NE(expectedBN, computedBN);
 
+  expectedBN.addEdge(dysp, bronc);
   EXPECT_EQ(expectedBN, computedBN);
 }
 
@@ -346,8 +350,10 @@ TYPED_TEST(DISABLED_AlarmDirectDiscovery, DirectedNetwork) {
   expectedBN.addEdge(PMB, PAP);
   expectedBN.addEdge(LVV, CVP);
   expectedBN.addEdge(LVV, PCWP);
-  expectedBN.addEdge(VMCH, MVS);
+  // Check for false positives
+  EXPECT_NE(expectedBN, computedBN);
 
+  expectedBN.addEdge(VMCH, MVS);
   EXPECT_EQ(expectedBN, computedBN);
 }
 
