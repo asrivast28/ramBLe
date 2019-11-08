@@ -198,6 +198,26 @@ ConstraintBasedDiscovery<Data, Var, Set>::getMB(
 
 template <typename Data, typename Var, typename Set>
 /**
+ * @brief Function for getting the undirected skeleton network.
+ */
+BayesianNetwork<Var>
+ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton(
+) const
+{
+  auto varNames = this->m_data.varNames(m_allVars);
+  BayesianNetwork<Var> bn(varNames);
+  for (const auto x: m_allVars) {
+    auto pcX = this->getPC(x);
+    for (const auto y: pcX) {
+      LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
+      bn.addEdge(x, y);
+    }
+  }
+  return bn;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
  * @brief Checks if y-x-z forms a v-structure.
  */
 bool
@@ -264,24 +284,17 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
   const bool directEdges
 ) const
 {
-  auto varNames = this->m_data.varNames(m_allVars);
-  BayesianNetwork<Var> bn(varNames);
-  for (const auto x: m_allVars) {
-    auto pcX = this->getPC(x);
-    for (const auto y: pcX) {
-      LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
-      bn.addEdge(x, y);
-    }
-  }
+  auto bn = this->getSkeleton();
   if (directEdges) {
+    // First, orient the v-structures
     auto vStructures = this->findVStructures();
     bn.applyVStructures(vStructures);
-    // First, break any directed cycles in the network
+    // Then, break any directed cycles in the network
     LOG_MESSAGE_IF(bn.hasDirectedCycles(), info, "* The initial network contains directed cycles");
     while (bn.hasDirectedCycles()) {
       bn.breakDirectedCycles();
     }
-    // Then, orient edges by applying Meek's rules
+    // Finally, orient edges by applying Meek's rules
     bool changed = true;
     while (changed) {
       changed = bn.applyMeekRules();

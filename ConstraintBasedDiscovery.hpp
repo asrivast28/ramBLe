@@ -60,6 +60,9 @@ private:
   void
   symmetryCorrectMB(const Var, Set&) const;
 
+  BayesianNetwork<Var>
+  getSkeleton() const;
+
   bool
   isCollider(const Var, const Var, const Var) const;
 
