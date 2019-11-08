@@ -62,6 +62,39 @@ DirectDiscovery<Data, Var, Set>::shrinkMB(
 
 template <typename Data, typename Var, typename Set>
 /**
+ * @brief Evaluate if the second variable is in the PC of the first variable.
+ *
+ * @param x The first variable.
+ * @param y The second variable.
+ * @param mbX The Markov blanket of the first variable.
+ * @param mbY The Markov blanket of the second variable.
+ *
+ * @return true if the second variable is in the PC of the first variable,
+ *         otherwise return false.
+ */
+bool
+DirectDiscovery<Data, Var, Set>::evaluateCandidatePC(
+  const Var x,
+  const Var y,
+  const Set& mbX,
+  const Set& mbY
+) const
+{
+  LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC of %s", this->m_data.varName(y), this->m_data.varName(x));
+  auto mbTest = mbX;
+  // Pick the smaller of the two MBs
+  if (mbY.size() > mbX.size()) {
+    mbTest.erase(y);
+  }
+  else {
+    mbTest = mbY;
+    mbTest.erase(x);
+  }
+  return !this->m_data.isIndependentAnySubset(x, y, mbTest);
+}
+
+template <typename Data, typename Var, typename Set>
+/**
  * @brief The top level function for getting the candidate PC for the given
  *        target variable, using the MB of the variable.
  *
@@ -81,18 +114,7 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
   auto cpc = set_init(Set(), this->m_data.numVars());
   auto mb = this->getMB(target);
   for (const Var y: mb) {
-    LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC", this->m_data.varName(y));
-    auto mbTest = mb;
-    auto mbY = this->getMB(y);
-    // Pick the smaller of the two MBs
-    if (mbY.size() > mb.size()) {
-      mbTest.erase(y);
-    }
-    else {
-      mbTest = mbY;
-      mbTest.erase(target);
-    }
-    if (!this->m_data.isIndependentAnySubset(target, y, mbTest)) {
+    if (this->evaluateCandidatePC(target, y, mb, this->getMB(y))) {
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(y), this->m_data.varName(target));
       cpc.insert(y);
     }

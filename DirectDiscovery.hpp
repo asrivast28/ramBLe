@@ -29,6 +29,10 @@ public:
 
   virtual
   ~DirectDiscovery() { }
+
+private:
+  bool
+  evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
 }; // class DirectDiscovery
 
 /**

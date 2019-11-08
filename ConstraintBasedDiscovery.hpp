@@ -47,6 +47,10 @@ protected:
   Set
   getCandidateMB(const Var, Set) const = 0;
 
+  virtual
+  BayesianNetwork<Var>
+  getSkeleton() const;
+
 private:
   std::pair<Set, bool>
   getCandidatePC_cache(const Var, Set) const;
@@ -59,9 +63,6 @@ private:
 
   void
   symmetryCorrectMB(const Var, Set&) const;
-
-  BayesianNetwork<Var>
-  getSkeleton() const;
 
   bool
   isCollider(const Var, const Var, const Var) const;
