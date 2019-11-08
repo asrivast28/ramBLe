@@ -111,9 +111,9 @@ RowObservationReader<DataType>::RowObservationReader(
       }
     }
     else {
-      // Create default variable names [0, ..., numCols-1]
+      // Create default variable names [V1, ..., V<numCols>]
       for (auto i = 0u; i < numCols; ++i) {
-        this->m_varNames[i] = std::to_string(i);
+        this->m_varNames[i] = "V" + std::to_string(i + 1);
       }
     }
     auto t = 0u;
@@ -222,9 +222,9 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
       throw std::runtime_error("Read file did not match the expected dimensions.");
     }
     if (!varNames) {
-      // Create default variable names [0, ..., numCols-1]
+      // Create default variable names [V1, ..., V<numCols>]
       for (auto i = 0u; i < numRows; ++i) {
-        this->m_varNames[i] = std::to_string(i);
+        this->m_varNames[i] = "V" + std::to_string(i + 1);
       }
     }
   }
