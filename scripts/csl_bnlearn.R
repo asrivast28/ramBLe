@@ -14,17 +14,28 @@ parser <- add_option(parser, c('--file', '-f'), type='character', help='Name of 
 parser <- add_option(parser, c('--colobs', '-c'), action='store_true', default=FALSE, help='The file contains observations in columns.')
 parser <- add_option(parser, c('--separator', '-s'), type='character', default=',', help='Delimiting character in the file.')
 parser <- add_option(parser, c('--varnames', '-v'), action='store_true', default=FALSE, help='The file contains variable names.')
+parser <- add_option(parser, c('--indices', '-i'), action='store_true', default=FALSE, help='The file contains observation indices.')
 parser <- add_option(parser, c('--algorithm', '-a'), type='character', default='gs', help='Name of the algorithm to be used.')
 parser <- add_option(parser, c('--target', '-t'), type='character', help='Name of the target variable.')
-parser <- add_option(parser, c('--blanket', '-b'), action='store_true', help='Find MB instead of PC for the target var.')
-parser <- add_option(parser, c('--learn', '-l'), action='store_true', help='Force learn the network.')
+parser <- add_option(parser, c('--blanket', '-b'), action='store_true', default=FALSE, help='Find MB instead of PC for the target var.')
+parser <- add_option(parser, c('--learn', '-l'), action='store_true', default=FALSE, help='Force learn the network.')
 parser <- add_option(parser, c('--output', '-o'), type='character', help='Name of the file to which the learned network should be written.')
 parser <- add_option(parser, c('--directed', '-d'), action='store_true', default=FALSE, help='Orient the edges in the learned network.')
 parser <- add_option(parser, c('--log', '-g'), type='character', help='Level of logging.')
 args <- parse_args(parser, args=commandArgs(trailing=TRUE))
 
+if (!args$learn && is.null(args$target) && is.null(args$output)) {
+        cat("At least one of --target, --learn, or --output should be specified.\n")
+        quit(status=1)
+}
+
 tRead <- proc.time()
-data <- read.table(file=args$file, sep=args$separator, header=args$varnames)
+data <- NULL
+if (args$indices) {
+        data <- read.table(file=args$file, sep=args$separator, header=args$varnames, row.names=1)
+} else {
+        data <- read.table(file=args$file, sep=args$separator, header=args$varnames)
+}
 if (args$colobs) {
         data <- as.data.frame(t(data))
 }
@@ -34,7 +45,7 @@ if (!((ncol(data) == args$nvars) && (nrow(data) == args$nobs))) {
         cat('Read dimensions:', nrow(data), 'x', ncol(data), '\n')
         stop('Read file did not match the expected dimensions.')
 }
-cat('Time taken in reading the file:', tRead['elapsed'], 'sec\n')
+cat('Time taken in reading the file:', tRead['elapsed'], '\n')
 
 library('bnlearn')
 network <- NULL
@@ -50,15 +61,16 @@ if (!is.null(args$target)) {
         neighbors <- c()
         if (args$blanket) {
                 neighbors <- mb(network, args$target)
-        }
-        else {
+        } else {
                 neighbors <- pc(network, args$target)
         }
         tNeighborhood <- proc.time() - tNeighborhood
-        cat("Time taken in getting the neighborhod:", tNeighborhood['elapsed'], 'sec\n')
+        cat("Time taken in getting the neighborhod:", tNeighborhood['elapsed'], '\n')
 }
 
-cat('Time taken in getting the network:', tNetwork['elapsed'], 'sec\n')
+if (!is.null(tNetwork)) {
+        cat('Time taken in getting the network:', tNetwork['elapsed'], '\n')
+}
 
 if (!is.null(args$output)) {
         tWrite <- proc.time()
