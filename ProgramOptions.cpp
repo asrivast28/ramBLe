@@ -26,7 +26,7 @@ ProgramOptions::ProgramOptions(
     m_learnNetwork(),
     m_directEdges()
 {
-  po::options_description visible("Visible options");
+  po::options_description visible("User options");
   visible.add_options()
     ("help,h", "Print this message.")
     ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
