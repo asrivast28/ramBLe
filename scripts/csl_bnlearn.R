@@ -21,7 +21,9 @@ parser <- add_option(parser, c('--blanket', '-b'), action='store_true', default=
 parser <- add_option(parser, c('--learn', '-l'), action='store_true', default=FALSE, help='Force learn the network.')
 parser <- add_option(parser, c('--output', '-o'), type='character', help='Name of the file to which the learned network should be written.')
 parser <- add_option(parser, c('--directed', '-d'), action='store_true', default=FALSE, help='Orient the edges in the learned network.')
-parser <- add_option(parser, c('--log', '-g'), type='character', help='Level of logging.')
+parser <- add_option(parser, c('--alpha', '-p'), type='double', default=0.05, help='Threshold p-value.')
+parser <- add_option(parser, c('--conditioning', '-g'), type='integer', help='Maximum size of conditioning sets.')
+parser <- add_option(parser, c('--log'), type='character', help='Level of logging.')
 args <- parse_args(parser, args=commandArgs(trailing=TRUE))
 
 if (!args$learn && is.null(args$target) && is.null(args$output)) {
@@ -52,7 +54,7 @@ network <- NULL
 tNetwork <- NULL
 if (args$learn || !is.null(args$target) || !is.null(args$output)) {
         tNetwork <- proc.time()
-        network <- eval(parse(text=args$algorithm))(data, undirected=!args$directed, debug=!is.null(args$log))
+        network <- eval(parse(text=args$algorithm))(data, alpha=args$alpha, max.sx=args$conditioning, debug=!is.null(args$log), undirected=!args$directed)
         tNetwork <- proc.time() - tNetwork
 }
 

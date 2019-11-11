@@ -16,8 +16,10 @@ ProgramOptions::ProgramOptions(
     m_targetVar(),
     m_outputFile(),
     m_counterType(),
+    m_alpha(),
     m_numVars(),
     m_numObs(),
+    m_maxConditioning(),
     m_separator(),
     m_colObs(),
     m_varNames(),
@@ -44,15 +46,21 @@ ProgramOptions::ProgramOptions(
     ("directed,d", po::bool_switch(&m_directEdges)->default_value(false), "Orient the edges in the learned network.")
     ;
 
+  po::options_description advanced("Advanced options");
+  advanced.add_options()
+    ("alpha,p", po::value<double>(&m_alpha)->default_value(0.05), "Threshold p-value.")
+    ("conditioning,g", po::value<uint32_t>(&m_maxConditioning)->default_value(std::numeric_limits<uint32_t>::max()), "Maximum size of conditioning sets.")
+    ;
+
   po::options_description developer("Developer options");
   developer.add_options()
     ("counter", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
 #ifdef LOGGING
-    ("log,g", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
+    ("log", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
     ;
 
-  m_desc.add(visible).add(developer);
+  m_desc.add(visible).add(advanced).add(developer);
 }
 
 void
@@ -167,6 +175,20 @@ ProgramOptions::directEdges(
 ) const
 {
   return m_directEdges;
+}
+
+double
+ProgramOptions::alpha(
+) const
+{
+  return m_alpha;
+}
+
+uint32_t
+ProgramOptions::maxConditioning(
+) const
+{
+  return m_maxConditioning;
 }
 
 const std::string&

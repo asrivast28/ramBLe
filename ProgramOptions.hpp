@@ -60,6 +60,12 @@ public:
   bool
   directEdges() const;
 
+  double
+  alpha() const;
+
+  uint32_t
+  maxConditioning() const;
+
   const std::string&
   counterType() const;
 
@@ -76,8 +82,10 @@ private:
   std::string m_targetVar;
   std::string m_outputFile;
   std::string m_counterType;
+  double m_alpha;
   uint32_t m_numVars;
   uint32_t m_numObs;
+  uint32_t m_maxConditioning;
   char m_separator;
   bool m_colObs;
   bool m_varNames;

@@ -96,7 +96,7 @@ getNeighborhood(
 )
 {
   mxx::comm mc;
-  DiscreteData<Counter, Var> data(counter, varNames);
+  DiscreteData<Counter, Var> data(counter, varNames, options.alpha());
   auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
