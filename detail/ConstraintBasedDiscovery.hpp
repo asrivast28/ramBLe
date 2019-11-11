@@ -213,8 +213,11 @@ ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton(
   for (const auto x: m_allVars) {
     auto pcX = this->getPC(x);
     for (const auto y: pcX) {
-      LOG_MESSAGE_IF(x < y, info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
-      bn.addEdge(x, y);
+      if (x < y) {
+        LOG_MESSAGE(info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
+        bn.addEdge(x, y);
+        bn.addEdge(y, x);
+      }
     }
   }
   return bn;
@@ -289,7 +292,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
 ) const
 {
   auto bn = this->getSkeleton();
-  if (directEdges) {
+  if (this->m_comm.is_first() && directEdges) {
     // First, orient the v-structures
     auto vStructures = this->findVStructures();
     bn.applyVStructures(vStructures);

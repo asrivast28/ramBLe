@@ -8,7 +8,7 @@
 #include "../SetUtils.hpp"
 #include "../UintSet.hpp"
 
-#include "mxx/comm.hpp"
+#include "mxx/reduction.hpp"
 #include "utils/Logging.hpp"
 
 #include <boost/math/distributions/chi_squared.hpp>
@@ -383,6 +383,86 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
 ) const
 {
   auto minScore = this->minAssocScore(x, y, given, maxSize);
+  return this->isIndependent(minScore);
+}
+
+template <typename Counter, typename Var>
+/**
+ * @return Returns the value of environment variable CSL_TESTS_THRESHOLD
+ *         or the default value, if the environment was not set.
+ */
+uint32_t
+DiscreteData<Counter, Var>::testThreshold(
+  const uint32_t defaultThreshold
+) const
+{
+  static const char* val = std::getenv("CSL_TESTS_THRESHOLD");
+  static uint32_t threshold = (val != nullptr) ? static_cast<uint32_t>(atoi(val)) : defaultThreshold;
+  return threshold;
+}
+
+template <typename Counter, typename Var>
+/**
+ * @brief Checks if the given variables are independent, given any
+ *        subset of the given conditioning subset. The tests are conducted
+ *        in a distributed manner over all the processors in the communicator.
+ *
+ * @tparam SetType The type of the container used for storing indices of the given variables.
+ * @tparam Args The trailing args, after the element type, to the container template.
+ * @param x The index of the first variable.
+ * @param y The index of the second variable.
+ * @param given The indices of the variables to be conditioned on.
+ * @param maxSize The maximum size of the subset to be tested.
+ * @param comm The communicator over which the tests are distributed.
+ */
+template <template <typename...> class SetType, typename... Args>
+bool
+DiscreteData<Counter, Var>::isIndependentAnySubset(
+  const Var x,
+  const Var y,
+  const SetType<Var, Args...>& given,
+  const Var maxSize,
+  const mxx::comm& comm
+) const
+{
+  static auto findMin = [] (const double& x, const double& y) { return std::islessequal(x, y) ? x : y; };
+  static uint32_t threshold = this->testThreshold();
+  uint32_t mine = 0u;
+  uint32_t others = 0u;
+  int r = 0;
+  auto minScore = std::numeric_limits<double>::max();
+  auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
+  for (auto i = 0u; i <= subsetSize; ++i) {
+    auto subsets = Subsets<SetType, Var, Args...>(given, i);
+    for (auto sit = subsets.begin(); sit != subsets.end(); ++sit) {
+      if (comm.rank() != r) {
+        // This test must be conducted by some other process
+        ++others;
+      }
+      else {
+        // I am going to conduct this test
+        ++mine;
+        // Only conduct more tests if the previous tests did not
+        // return independence
+        if (!this->isIndependent(minScore)) {
+          auto thisScore = this->assocScore(x, y, *sit);
+          minScore = std::min(minScore, thisScore);
+        }
+      }
+      // Sync if all the processes have conducted the same number of tests
+      if ((mine + others) == (threshold * comm.size())) {
+        minScore = mxx::allreduce(minScore, findMin, comm);
+        if (!this->isIndependent(minScore)) {
+          mine = 0u;
+          others = 0u;
+        }
+        else {
+          return true;
+        }
+      }
+      r = (r + 1) % comm.size();
+    }
+  }
   return this->isIndependent(minScore);
 }
 

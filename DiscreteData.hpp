@@ -5,6 +5,7 @@
 #ifndef DISCRETEDATA_HPP_
 #define DISCRETEDATA_HPP_
 
+#include "mxx/comm.hpp"
 #include "utils/Timer.hpp"
 
 #include <cstdint>
@@ -81,11 +82,19 @@ public:
   bool
   isIndependentAnySubset(const Var, const Var, const Set&, const Var) const;
 
+  template <template <typename...> class SetType, typename... Args>
+  bool
+  isIndependentAnySubset(const Var, const Var, const SetType<Var, Args...>&, const Var, const mxx::comm&) const;
+
   template <typename Set>
   bool
   isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const Var) const;
 
   ~DiscreteData();
+
+private:
+  uint32_t
+  testThreshold(const uint32_t = 1u) const;
 
 private:
   Counter m_counter;

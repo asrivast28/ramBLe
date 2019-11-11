@@ -221,13 +221,6 @@ main(
   MPI_Errhandler_set(MPI_COMM_WORLD, errhandler);
 
   mxx::comm comm;
-  if (comm.size() > 1) {
-    if (comm.is_first()) {
-      std::cerr << "ERROR: Multi-processor execution is not supported yet." << std::endl;
-    }
-    return 1;
-  }
-
   ProgramOptions options;
   try {
     options.parse(argc, argv);

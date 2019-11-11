@@ -24,13 +24,27 @@ public:
   Set
   getCandidatePC(const Var, Set) const override;
 
-  Set
-  shrinkMB(const Var, Set&) const;
-
   virtual
   ~DirectDiscovery() { }
 
 protected:
+  std::set<std::tuple<Var, Var, double>>
+  growAll(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
+  Set
+  shrinkMB(const Var, Set&) const;
+
+  std::set<std::pair<Var, Var>>
+  shrinkAll(std::unordered_map<Var, Set>&) const;
+
+  virtual
+  void
+  growShrink(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const;
+
+  virtual
+  void
+  updateScores(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const;
+
   virtual
   std::pair<Var, double>
   pickBestCandidate(const Var, const Set&, const Set&) const;
@@ -38,6 +52,12 @@ protected:
 private:
   bool
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
+
+  std::vector<std::pair<Var, Var>>
+  symmetryCorrect(const std::unordered_map<Var, Set>&, const std::set<std::pair<Var, Var>>&) const;
+
+  BayesianNetwork<Var>
+  getSkeleton() const override;
 }; // class DirectDiscovery
 
 /**
@@ -57,6 +77,9 @@ public:
   getCandidateMB(const Var, Set) const override;
 
 private:
+  void
+  updateScores(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const override;
+
   std::pair<Var, double>
   pickBestCandidate(const Var, const Set&, const Set&) const override;
 }; // class GSMB
@@ -93,6 +116,10 @@ public:
 
   Set
   getCandidateMB(const Var, Set) const override;
+
+private:
+  void
+  growShrink(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const override;
 }; // class InterIAMB
 
 #include "detail/DirectDiscovery.hpp"
