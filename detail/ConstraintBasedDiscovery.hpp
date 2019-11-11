@@ -17,11 +17,13 @@ template <typename Data, typename Var, typename Set>
  * @param data Reference to an object of the Data.
  */
 ConstraintBasedDiscovery<Data, Var, Set>::ConstraintBasedDiscovery(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : m_data(data),
-    m_comm(comm),
-    m_allVars(set_init(Set(), data.numVars()))
+  const Var maxConditioning
+) : m_comm(comm),
+    m_data(data),
+    m_allVars(set_init(Set(), data.numVars())),
+    m_maxConditioning(maxConditioning)
 {
   for (auto i = 0u; i < data.numVars(); ++i) {
     m_allVars.insert(m_allVars.end(), i);
@@ -242,7 +244,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::isCollider(
     mbZ.erase(y);
   }
   const auto& u = smallerSet(mbY, mbZ);
-  return !this->m_data.isIndependentAnySubset(y, z, u, setX);
+  return !this->m_data.isIndependentAnySubset(y, z, u, setX, this->m_maxConditioning);
 }
 
 template <typename Data, typename Var, typename Set>

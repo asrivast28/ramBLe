@@ -67,23 +67,23 @@ public:
 
   template <typename Set>
   double
-  minAssocScore(const Var, const Var, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  minAssocScore(const Var, const Var, const Set&, const Var) const;
 
   template <typename Set>
   double
-  minAssocScore(const Var, const Var, const Set&, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  minAssocScore(const Var, const Var, const Set&, const Set&, const Var) const;
 
   template <typename Set>
   std::pair<double, Set>
-  minAssocScoreSubset(const Var, const Var, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  minAssocScoreSubset(const Var, const Var, const Set&, const Var) const;
 
   template <typename Set>
   bool
-  isIndependentAnySubset(const Var, const Var, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  isIndependentAnySubset(const Var, const Var, const Set&, const Var) const;
 
   template <typename Set>
   bool
-  isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const uint32_t = std::numeric_limits<uint32_t>::max()) const;
+  isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const Var) const;
 
   ~DiscreteData();
 

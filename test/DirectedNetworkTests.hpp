@@ -23,7 +23,7 @@ protected:
     ColumnObservationReader<uint8_t> reader("child.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(*data, comm);
+    algo = new Algorithm(comm, *data);
   }
 
   void
@@ -76,7 +76,7 @@ protected:
     ColumnObservationReader<uint8_t> reader("insurance.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(*data, comm);
+    algo = new Algorithm(comm, *data);
   }
 
   void
@@ -133,7 +133,7 @@ protected:
     ColumnObservationReader<uint8_t> reader("mildew.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(*data, comm);
+    algo = new Algorithm(comm, *data);
   }
 
   void
@@ -179,7 +179,7 @@ protected:
     ColumnObservationReader<uint8_t> reader("alarm.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(*data, comm);
+    algo = new Algorithm(comm, *data);
   }
 
   void

@@ -20,9 +20,10 @@ template <typename Data, typename Var, typename Set>
  * @param data Reference to an object of the Data.
  */
 TopologicalDiscovery<Data, Var, Set>::TopologicalDiscovery(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : ConstraintBasedDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : ConstraintBasedDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -49,7 +50,7 @@ TopologicalDiscovery<Data, Var, Set>::removeFalsePC(
   for (const Var x: initial) {
     cpc.erase(x);
     LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
-    if (this->m_data.isIndependentAnySubset(target, x, cpc)) {
+    if (this->m_data.isIndependentAnySubset(target, x, cpc, this->m_maxConditioning)) {
       LOG_MESSAGE(info, "- Removing %s from the PC of %s (FP)", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
     }
@@ -89,7 +90,7 @@ TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
       if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
-        auto ret = this->m_data.minAssocScoreSubset(target, x, candidates);
+        auto ret = this->m_data.minAssocScoreSubset(target, x, candidates, this->m_maxConditioning);
         if (this->m_data.isIndependent(ret.first)) {
           LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
           auto& z = ret.second;
@@ -108,9 +109,10 @@ TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 MMPC<Data, Var, Set>::MMPC(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : TopologicalDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -133,7 +135,7 @@ MMPC<Data, Var, Set>::getCandidatePC(
     double scoreX = std::numeric_limits<double>::lowest();
     for (const Var y: candidates) {
       LOG_MESSAGE(debug, "MMPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      auto scoreY = this->m_data.minAssocScore(target, y, cpc);
+      auto scoreY = this->m_data.minAssocScore(target, y, cpc, this->m_maxConditioning);
       if (std::isless(scoreX, scoreY)) {
         x = y;
         scoreX = scoreY;
@@ -157,9 +159,10 @@ MMPC<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 HITON<Data, Var, Set>::HITON(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : TopologicalDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -199,9 +202,10 @@ HITON<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : TopologicalDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -255,9 +259,10 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 GetPC<Data, Var, Set>::GetPC(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : TopologicalDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -281,7 +286,7 @@ GetPC<Data, Var, Set>::getCandidatePC(
     auto remove = set_init(Set(), this->m_data.numVars());
     for (const Var y: candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      auto scoreY = this->m_data.minAssocScore(target, y, cpc);
+      auto scoreY = this->m_data.minAssocScore(target, y, cpc, this->m_maxConditioning);
       if (this->m_data.isIndependent(scoreY)) {
         LOG_MESSAGE(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
         // Can not be added to the candidate PC, mark for removal

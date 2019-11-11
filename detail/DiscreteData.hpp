@@ -270,10 +270,10 @@ DiscreteData<Counter, Var>::minAssocScore(
   const Var x,
   const Var y,
   const Set& given,
-  const uint32_t maxSize
+  const Var maxSize
 ) const
 {
-  auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
+  auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   double minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<Set, Var> sit(given, i);
@@ -308,10 +308,10 @@ DiscreteData<Counter, Var>::minAssocScore(
   const Var y,
   const Set& given,
   const Set& seed,
-  const uint32_t maxSize
+  const Var maxSize
 ) const
 {
-  auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
+  auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
     SubsetIterator<Set, Var> sit(given, i);
@@ -348,10 +348,10 @@ DiscreteData<Counter, Var>::minAssocScoreSubset(
   const Var x,
   const Var y,
   const Set& given,
-  const uint32_t maxSize
+  const Var maxSize
 ) const
 {
-  auto subsetSize = std::min(static_cast<uint32_t>(given.size()), maxSize);
+  auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
   auto z = set_init(Set(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
@@ -387,7 +387,7 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var x,
   const Var y,
   const Set& given,
-  const uint32_t maxSize
+  const Var maxSize
 ) const
 {
   auto minScore = this->minAssocScore(x, y, given, maxSize);
@@ -413,7 +413,7 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var y,
   const Set& given,
   const Set& seed,
-  const uint32_t maxSize
+  const Var maxSize
 ) const
 {
   auto minScore = this->minAssocScore(x, y, given, seed, maxSize);

@@ -23,7 +23,7 @@
 template <typename Data, typename Var, typename Set>
 class ConstraintBasedDiscovery {
 public:
-  ConstraintBasedDiscovery(const Data&, const mxx::comm&);
+  ConstraintBasedDiscovery(const mxx::comm&, const Data&, const Var);
 
   Set
   getPC(const Var) const;
@@ -73,9 +73,10 @@ private:
   findVStructures() const;
 
 protected:
-  const Data m_data;
   const mxx::comm& m_comm;
+  const Data m_data;
   Set m_allVars;
+  const Var m_maxConditioning;
 
 private:
   mutable std::unordered_map<Var, std::pair<Set, bool>> m_cachedPC;

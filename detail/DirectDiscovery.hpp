@@ -20,9 +20,10 @@ template <typename Data, typename Var, typename Set>
  * @param data Reference to an object of the Data.
  */
 DirectDiscovery<Data, Var, Set>::DirectDiscovery(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : ConstraintBasedDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : ConstraintBasedDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -91,7 +92,7 @@ DirectDiscovery<Data, Var, Set>::evaluateCandidatePC(
     mbTest = mbY;
     mbTest.erase(x);
   }
-  return !this->m_data.isIndependentAnySubset(x, y, mbTest);
+  return !this->m_data.isIndependentAnySubset(x, y, mbTest, this->m_maxConditioning);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -125,9 +126,10 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 GSMB<Data, Var, Set>::GSMB(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : DirectDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : DirectDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -165,9 +167,10 @@ GSMB<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 IAMB<Data, Var, Set>::IAMB(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : DirectDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : DirectDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -213,9 +216,10 @@ IAMB<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 InterIAMB<Data, Var, Set>::InterIAMB(
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
-) : DirectDiscovery<Data, Var, Set>(data, comm)
+  const Var maxConditioning
+) : DirectDiscovery<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 

@@ -40,37 +40,38 @@ template <typename Var, typename Set, typename Data>
 std::unique_ptr<ConstraintBasedDiscovery<Data, Var, Set>>
 getAlgorithm(
   const std::string& algoName,
+  const mxx::comm& comm,
   const Data& data,
-  const mxx::comm& comm
+  const Var maxConditioning
 )
 {
   std::stringstream ss;
   if (algoName.compare("gs") == 0) {
-    return std::make_unique<GSMB<Data, Var, Set>>(data, comm);
+    return std::make_unique<GSMB<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "gs,";
   if (algoName.compare("iamb") == 0) {
-    return std::make_unique<IAMB<Data, Var, Set>>(data, comm);
+    return std::make_unique<IAMB<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "iamb,";
   if (algoName.compare("inter.iamb") == 0) {
-    return std::make_unique<InterIAMB<Data, Var, Set>>(data, comm);
+    return std::make_unique<InterIAMB<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "inter.iamb,";
   if (algoName.compare("mmpc") == 0) {
-    return std::make_unique<MMPC<Data, Var, Set>>(data, comm);
+    return std::make_unique<MMPC<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "mmpc,";
   if (algoName.compare("hiton") == 0) {
-    return std::make_unique<HITON<Data, Var, Set>>(data, comm);
+    return std::make_unique<HITON<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "hiton,";
   if (algoName.compare("si.hiton.pc") == 0) {
-    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(data, comm);
+    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "si.hiton.pc,";
   if (algoName.compare("getpc") == 0) {
-    return std::make_unique<GetPC<Data, Var, Set>>(data, comm);
+    return std::make_unique<GetPC<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
@@ -98,7 +99,8 @@ getNeighborhood(
 {
   mxx::comm comm;
   DiscreteData<Counter, Var> data(counter, varNames, options.alpha());
-  auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), data, comm);
+  Var maxConditioning = static_cast<Var>(std::min(options.numVars(), options.maxConditioning()));
+  auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), comm, data, maxConditioning);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
     TIMER_DECLARE(tNeighborhood);

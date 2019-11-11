@@ -19,7 +19,7 @@
 template <typename Data, typename Var, typename Set>
 class TopologicalDiscovery : public ConstraintBasedDiscovery<Data, Var, Set> {
 public:
-  TopologicalDiscovery(const Data&, const mxx::comm&);
+  TopologicalDiscovery(const mxx::comm&, const Data&, const Var);
 
   Set
   removeFalsePC(const Var, Set&) const;
@@ -43,7 +43,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class MMPC: public TopologicalDiscovery<Data, Var, Set> {
 public:
-  MMPC(const Data&, const mxx::comm&);
+  MMPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
   Set
   getCandidatePC(const Var, Set) const override;
@@ -60,7 +60,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class HITON: public TopologicalDiscovery<Data, Var, Set> {
 public:
-  HITON(const Data&, const mxx::comm&);
+  HITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
   Set
   getCandidatePC(const Var, Set) const override;
@@ -77,7 +77,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class SemiInterleavedHITON: public TopologicalDiscovery<Data, Var, Set> {
 public:
-  SemiInterleavedHITON(const Data&, const mxx::comm&);
+  SemiInterleavedHITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
   Set
   getCandidatePC(const Var, Set) const override;
@@ -94,7 +94,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class GetPC: public TopologicalDiscovery<Data, Var, Set> {
 public:
-  GetPC(const Data&, const mxx::comm&);
+  GetPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
   Set
   getCandidatePC(const Var, Set) const override;
