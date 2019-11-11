@@ -91,6 +91,27 @@ template <typename Set>
 Set
 set_difference(const Set&, const Set&);
 
+/**
+ * @brief Function for broadcasting a set.
+ */
+template <typename Set>
+void
+set_bcast(Set&, const int, const mxx::comm&);
+
+/**
+ * @brief Function for set union across processes.
+ */
+template <typename Set>
+void
+set_allunion(Set&, const mxx::comm&);
+
+/**
+ * @brief Function for set intersection across processes.
+ */
+template <typename Set>
+void
+set_allintersect(Set&, const mxx::comm&);
+
 #include "detail/StdSetUtils.hpp"
 #include "detail/UintSetUtils.hpp"
 

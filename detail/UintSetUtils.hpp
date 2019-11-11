@@ -7,7 +7,10 @@
 
 #include "../UintSet.hpp"
 
+#include "mxx/reduction.hpp"
+
 #include <algorithm>
+#include <type_traits>
 
 
 /**
@@ -156,6 +159,48 @@ set_difference<UintSet<Element, std::integral_constant<int, N>>>( \
   UintSet<Element, std::integral_constant<int, N>> result; \
   *result = set_diff(*first, *second); \
   return result; \
+} \
+ \
+template <> \
+void \
+set_bcast<UintSet<Element, std::integral_constant<int, N>>>( \
+  UintSet<Element, std::integral_constant<int, N>>& set, \
+  const int source, \
+  const mxx::comm& comm \
+) \
+{ \
+  auto size = (set.max() + 63) / 64; \
+  mxx::bcast(&set.m_set.b[0], size, source, comm); \
+} \
+ \
+template <> \
+void \
+set_allunion<UintSet<Element, std::integral_constant<int, N>>>( \
+  UintSet<Element, std::integral_constant<int, N>>& set, \
+  const mxx::comm& comm \
+) \
+{ \
+  auto size = (set.max() + 63) / 64; \
+  using ReduceType = std::remove_reference<decltype(set.m_set.b[0])>::type; \
+  auto b = new ReduceType[size]; \
+  mxx::allreduce(set.m_set.b, size, b, std::bit_or<ReduceType>(), comm); \
+  memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
+  delete b; \
+} \
+ \
+template <> \
+void \
+set_allintersect<UintSet<Element, std::integral_constant<int, N>>>( \
+  UintSet<Element, std::integral_constant<int, N>>& set, \
+  const mxx::comm& comm \
+) \
+{ \
+  auto size = (set.max() + 63) / 64; \
+  using ReduceType = std::remove_reference<decltype(set.m_set.b[0])>::type; \
+  auto b = new ReduceType[size]; \
+  mxx::allreduce(set.m_set.b, size, b, std::bit_and<ReduceType>(), comm); \
+  memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
+  delete b; \
 }
 
 DEFINE_UINT_SET_OPERATIONS(uint8_t, (maxSize<uint8_t>() >> 2))

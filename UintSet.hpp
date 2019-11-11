@@ -5,6 +5,8 @@
 #ifndef UINTSET_HPP_
 #define UINTSET_HPP_
 
+#include "mxx/comm.hpp"
+
 #include <cstdint>
 #include <initializer_list>
 #include <type_traits>
@@ -110,6 +112,21 @@ public:
   friend
   Set
   set_init(Set&&, const Var);
+
+  template <typename Set>
+  friend
+  void
+  set_bcast(Set&, const int, const mxx::comm&);
+
+  template <typename Set>
+  friend
+  void
+  set_allunion(Set&, const mxx::comm&);
+
+  template <typename Set>
+  friend
+  void
+  set_allintersect(Set&, const mxx::comm&);
 
 private:
   Set m_set;
