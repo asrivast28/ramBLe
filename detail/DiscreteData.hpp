@@ -8,6 +8,7 @@
 #include "../SetUtils.hpp"
 #include "../UintSet.hpp"
 
+#include "mxx/comm.hpp"
 #include "utils/Logging.hpp"
 
 #include <boost/math/distributions/chi_squared.hpp>
@@ -427,7 +428,9 @@ template <typename Counter, typename Var>
 DiscreteData<Counter, Var>::~DiscreteData(
 )
 {
-  TIMER_ELAPSED_NONZERO("Time taken in G-square computations: ", m_timer);
+  if (mxx::comm().is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in G-square computations: ", m_timer);
+  }
 }
 
 #endif // DETAIL_DISCRETEDATA_HPP_
