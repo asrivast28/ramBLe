@@ -83,13 +83,13 @@ def discretize(dataset):
     return discretized
 
 
-def write(dataset, name, sep, colobs):
+def write(dataset, name, sep, colobs, varnames, indices):
     '''
     Write the dataset as a CSV file.
     '''
     if colobs:
         dataset = dataset.T
-    dataset.to_csv(name, sep=sep)
+    dataset.to_csv(name, sep=sep, header=varnames, index=indices)
 
 
 def main():
@@ -100,7 +100,7 @@ def main():
 
     dataset = read(args.file, args.separator, args.colobs, args.varnames, args.indices)
     discretized = discretize(dataset)
-    write(discretized, args.out, args.separator, args.colobs)
+    write(discretized, args.out, args.separator, args.colobs, args.varnames, args.indices)
 
 
 if __name__ == '__main__':
