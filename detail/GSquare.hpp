@@ -219,31 +219,28 @@ marginalGSquare(
  * @brief Computes the configurations of the conditioning set.
  */
 template <int N, typename Set>
-std::pair<uint64_t, std::vector<uint32_t>>
+std::pair<uint32_t, std::vector<uint32_t>>
 indexGiven(
   const CTCounter<N>& counter,
   const Set& given
 )
 {
-  std::vector<uint32_t> indices(counter.m(), 0);
-  uint64_t levels = 1u;
-  if (given.size() > 0) {
-    std::vector<uint64_t> cumulative(given.size());
-    cumulative[0] = 1u;
-    auto xk = given.begin();
-    for (auto k = 1u; k < given.size(); ++k, ++xk) {
-      cumulative[k] = cumulative[k-1] * counter.r(*xk);
-    }
-    const auto& data = counter.data();
-    const auto nobs = counter.m();
-    levels = cumulative.back() * counter.r(*xk);
-    auto k = 0u;
-    for (const auto xk: given) {
-      const auto* datak = &data[xk * nobs];
-      for (auto i = 0u; i < nobs; ++i) {
-        indices[i] += (datak[i] * cumulative[k]);
-      }
-      ++k;
+  std::vector<uint32_t> cumulative(given.size());
+  cumulative[0] = 1u;
+  auto xk = given.begin();
+  for (auto k = 1u; k < given.size(); ++k, ++xk) {
+    cumulative[k] = cumulative[k-1] * counter.r(*xk);
+  }
+  uint32_t levels = cumulative.back() * counter.r(*xk);
+  const auto& data = counter.data();
+  const auto nobs = counter.m();
+  xk = given.begin();
+  std::vector<uint32_t> indices(&data[*xk * nobs], &data[(*xk + 1) * nobs]);
+  ++xk;
+  for (auto k = cumulative.begin() + 1; xk != given.end(); ++k, ++xk) {
+    const auto* datak = &data[*xk * nobs];
+    for (auto i = 0u; i < nobs; ++i) {
+      indices[i] += (datak[i] * (*k));
     }
   }
   return std::make_pair(levels, indices);
@@ -279,7 +276,7 @@ conditionalGSquare(
   // Storage for marginal counts for the states of the given variables
   uint32_t* mcz = new uint32_t[result.first]();
 
-  auto zz = result.second;
+  const auto& zz = result.second;
   auto xx = &counter.data()[x * counter.m()];
   auto yy = &counter.data()[y * counter.m()];
   for (auto k = 0u; k < counter.m(); ++k) {
