@@ -126,7 +126,7 @@ getNeighborhood(
     }
     if ((comm.rank() == 0) && !options.outputFile().empty()) {
       TIMER_DECLARE(tWrite);
-      g.writeGraphviz(options.outputFile());
+      g.writeGraphviz(options.outputFile(), options.directEdges());
       TIMER_ELAPSED("Time taken in writing the network: ", tWrite);
     }
   }

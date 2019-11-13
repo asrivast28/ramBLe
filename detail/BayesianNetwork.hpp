@@ -353,4 +353,45 @@ BayesianNetwork<Var>::applyMeekRules(
   return changed;
 }
 
+template <typename Var>
+/**
+ * @brief Top level function for writing the network in graphviz format.
+ *
+ * @param fileName Name of the file to which the network should be written.
+ * @param directed Specify if the network should be written as a directed network.
+ */
+void
+BayesianNetwork<Var>::writeGraphviz(
+  const std::string& fileName,
+  const bool directed
+) const
+{
+  std::ofstream out(fileName);
+  out << (directed ? "digraph" : "graph") << " {" << std::endl;
+  for (const auto v: this->vertices()) {
+    out << "  ";
+    out << boost::escape_dot_string(v.property().label);
+    out << " ;" << std::endl;
+  }
+  auto delimiter = directed ? " -> " : " -- ";
+  for (const auto e: this->edges()) {
+    bool write = false;
+    if (directed && !this->edgeExists(e.target(), e.source())) {
+      out << "  edge [dir=forward] ";
+      write = true;
+    }
+    else if (e.source() < e.target()) {
+      out << "  edge [dir=none] ";
+      write = true;
+    }
+    if (write) {
+      out << boost::escape_dot_string(e.source().property().label);
+      out << delimiter;
+      out << boost::escape_dot_string(e.target().property().label);
+      out << std::endl;
+    }
+  }
+  out << "}" << std::endl;
+}
+
 #endif // DETAIL_BAYESIANNETWORK_HPP_

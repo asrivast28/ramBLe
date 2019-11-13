@@ -44,6 +44,9 @@ public:
   bool
   applyMeekRules();
 
+  void
+  writeGraphviz(const std::string&, const bool) const;
+
   ~BayesianNetwork() { }
 
 private:
