@@ -77,6 +77,6 @@ if (!is.null(tNetwork)) {
 if (!is.null(args$output)) {
         tWrite <- proc.time()
         write.dot(args$output, network)
-        tNetwork <- proc.time() - tWrite
+        tWrite <- proc.time() - tWrite
         cat('Time taken in writing the network:', tWrite['elapsed'], 'sec\n')
 }
