@@ -389,7 +389,6 @@ BayesianNetwork<Var>::writeGraphviz(
       out << delimiter;
       out << boost::escape_dot_string(e.target().property().label);
       out << " ;" << std::endl;
-      out << std::endl;
     }
   }
   out << "}" << std::endl;
