@@ -6,6 +6,7 @@
 # @author Ankit Srivastava <asrivast@gatech.edu>
 
 import pydot
+import warnings
 
 
 def parse_args():
@@ -29,7 +30,10 @@ def read(name, file_format):
     '''
     graph = None
     if file_format == 'dot':
-        graph = pydot.graph_from_dot_file(name)
+        with open(name, 'rt') as f:
+            s = f.read()
+        s = s.replace('"', '')
+        graph = pydot.graph_from_dot_data(s)
         if graph is not None:
             graph = graph[0]
     elif file_format == 'el':
@@ -38,7 +42,7 @@ def read(name, file_format):
         graph = pydot.graph_from_edges(edges)
     else:
         raise RuntimeError('Unknown file format', file_format)
-    print('Graph type of %s is %s' % (name, graph.get_graph_type()))
+    print('Type of %s is %s' % (name, graph.get_graph_type()))
     return graph
 
 
@@ -66,6 +70,8 @@ def main():
     args = parse_args()
     first = read(args.first, args.first_format)
     second = read(args.second, args.second_format)
+    if first.get_graph_type() != second.get_graph_type():
+        warnings.warn('Comparing graphs of different types', RuntimeWarning, stacklevel=2)
     tp, fp, fn = compare(first, second)
     print('\nComparison results')
     print('# of edges found only in %s: %d' % (args.first, fn))
