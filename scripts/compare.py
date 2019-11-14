@@ -15,7 +15,7 @@ def parse_args():
     '''
     import argparse
 
-    parser = argparse.ArgumentParser(description='Discretize continuous data')
+    parser = argparse.ArgumentParser(description='Compare two networks')
     parser.add_argument('-f', '--first', type=str, required=True, metavar='NAME', help='Name of the file which contains the first network.')
     parser.add_argument('--first_format', type=str, default='dot', metavar='FORMAT', help='Format of the file which contains the first network.')
     parser.add_argument('-s', '--second', type=str, required=True, metavar='NAME', help='Name of the file which contains the second network.')
