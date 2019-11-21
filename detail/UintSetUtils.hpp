@@ -16,58 +16,99 @@
  * @tparam Element Type of the variable (expected to be an integral type).
  */
 template <typename Element>
-class SubsetIterator<UintSet<Element>, Element> {
+class Subsets<UintSet<Element>, Element> {
 public:
-  SubsetIterator(const UintSet<Element>& given, const uint32_t k)
+  class Iterator : public std::iterator<std::forward_iterator_tag, UintSet<Element>> {
+  public:
+    Iterator(
+      const UintSet<Element>& given,
+      const std::vector<bool>& candidates,
+      const bool valid = true
+    ) : m_given(given),
+        m_candidates(candidates),
+        m_curr(0),
+        m_valid(valid)
+    {
+    }
+
+    Iterator&
+    operator++()
+    {
+      if (m_valid) {
+        m_valid = std::prev_permutation(m_candidates.begin(), m_candidates.end());
+        ++m_curr;
+      }
+      return *this;
+    }
+
+    bool
+    operator==(const Iterator& other) const
+    {
+      if (m_valid && other.m_valid) {
+        // If both the iterators are valid then
+        // check the permutation count
+        // XXX: This is done in order to avoid relatively
+        // expensive vector comparisons
+        return m_curr == other.m_curr;
+      }
+      else {
+        // Otherwise, the iterators are equal if
+        // both of the are invalidated
+        return !(m_valid || other.m_valid);
+      }
+    }
+
+    bool
+    operator!=(const Iterator& other) const
+    {
+      return !(*this == other);
+    }
+
+    UintSet<Element>
+    operator*() const
+    {
+      return m_given.subset(m_candidates);
+    }
+
+  private:
+    const UintSet<Element>& m_given;
+    std::vector<bool> m_candidates;
+    size_t m_curr;
+    bool m_valid;
+  };
+
+public:
+  // Required typedefs
+  using value_type = Element;
+  using iterator = Iterator;
+
+public:
+  Subsets(const UintSet<Element>& given, const uint32_t k)
     : m_given(given),
-      m_subset(),
-      m_candidates(given.max(), false),
-      m_valid(!((given.size() == 0) || (given.size() == k)))
+      m_candidates(given.size(), false)
   {
     auto i = 0u;
     for (auto it = m_candidates.begin(); i < k; ++it, ++i) {
       *it = true;
     }
-    m_subset = UintSet<Element>(m_candidates, m_subset.max());
-    if (!is_subset(m_subset, m_given)) {
-      next();
-    }
   }
 
-  void
-  next()
+  Iterator
+  begin() const
   {
-    if (!m_valid) {
-      return;
-    }
-    m_valid = false;
-    while (std::prev_permutation(m_candidates.begin(), m_candidates.end())) {
-      m_subset = UintSet<Element>(m_candidates, m_subset.max());
-      if (is_subset(m_subset, m_given)) {
-        m_valid = true;
-        break;
-      }
-    }
+    return Iterator(m_given, m_candidates);
   }
 
-  bool
-  valid()
+  Iterator
+  end() const
   {
-    return m_valid;
-  }
-
-  const UintSet<Element>&
-  get() const
-  {
-    return (!m_valid) ? m_given: m_subset;
+    return Iterator(m_given, m_candidates, false);
   }
 
 private:
   const UintSet<Element>& m_given;
-  UintSet<Element> m_subset;
   std::vector<bool> m_candidates;
-  bool m_valid;
-}; // class SubsetIterator
+}; // class Subsets
 
 
 // Definition of all the operations on UintSet

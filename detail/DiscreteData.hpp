@@ -275,14 +275,12 @@ DiscreteData<Counter, Var>::minAssocScore(
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
-  double minScore = std::numeric_limits<double>::max();
+  auto minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    SubsetIterator<Set, Var> sit(given, i);
-    do {
-      double thisScore = this->assocScore(x, y, sit.get());
+    for (auto condition: Subsets<Set, Var>(given, i)) {
+      auto thisScore = this->assocScore(x, y, condition);
       minScore = std::min(thisScore, minScore);
-      sit.next();
-    } while (sit.valid() && std::isgreater(minScore, m_threshold));
+    }
   }
   LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
   return minScore;
@@ -315,16 +313,12 @@ DiscreteData<Counter, Var>::minAssocScore(
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    SubsetIterator<Set, Var> sit(given, i);
-    do {
-      auto subset = sit.get();
-      auto condition = Set(subset.begin(), subset.end());
+    for (auto condition: Subsets<Set, Var>(given, i)) {
       // Always include the seed set in the conditioning set
       condition = set_union(condition, seed);
       auto thisScore = this->assocScore(x, y, condition);
       minScore = std::min(thisScore, minScore);
-      sit.next();
-    } while (sit.valid() && std::isgreater(minScore, m_threshold));
+    }
   }
   LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
   return minScore;
@@ -356,16 +350,13 @@ DiscreteData<Counter, Var>::minAssocScoreSubset(
   auto minScore = std::numeric_limits<double>::max();
   auto z = set_init(Set(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    SubsetIterator<Set, Var> sit(given, i);
-    do {
-      auto thisScore = this->assocScore(x, y, sit.get());
+    for (auto condition: Subsets<Set, Var>(given, i)) {
+      auto thisScore = this->assocScore(x, y, condition);
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;
-        auto subset = sit.get();
-        z = set_init(Set(subset.begin(), subset.end()), numVars());
+        z = condition;
       }
-      sit.next();
-    } while (sit.valid() && std::isgreater(minScore, m_threshold));
+    }
   }
   LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
   return std::make_pair(minScore, z);

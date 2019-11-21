@@ -144,22 +144,6 @@ UintSet<Element, N>::UintSet(
 }
 
 template <typename Element, int N>
-UintSet<Element, N>::UintSet(
-  const std::vector<bool>& bitset,
-  const Element max
-) : m_set(set_empty<Set>()),
-    m_max(max)
-{
-  auto i = 0u;
-  for (auto elem: bitset) {
-    if (elem) {
-      insert(i);
-    }
-    ++i;
-  }
-}
-
-template <typename Element, int N>
 const typename UintSet<Element, N>::Set&
 UintSet<Element, N>::operator*(
 ) const
@@ -282,6 +266,22 @@ UintSet<Element, N>::find(
 ) const
 {
   return contains(x) ? Iterator(&m_set, m_max, x): end();
+}
+
+template <typename Element, int N>
+UintSet<Element, N>
+UintSet<Element, N>::subset(
+  const std::vector<bool>& bitset
+) const
+{
+  UintSet subset(m_max);
+  auto it = this->begin();
+  for (auto i = 0u; i < bitset.size(); ++i, ++it) {
+    if (bitset[i]) {
+      subset.insert(*it);
+    }
+  }
+  return subset;
 }
 
 #endif // DETAIL_UINTSET_HPP_

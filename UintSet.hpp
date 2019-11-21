@@ -64,8 +64,6 @@ public:
 
   UintSet(const typename std::vector<Element>::iterator&, const typename std::vector<Element>::iterator&, const Element = capacity());
 
-  UintSet(const std::vector<bool>&, const Element = capacity());
-
   const Set&
   operator*() const;
 
@@ -107,6 +105,9 @@ public:
 
   Iterator
   find(const Element) const;
+
+  UintSet
+  subset(const std::vector<bool>&) const;
 
 public:
   template <typename Set, typename Var>

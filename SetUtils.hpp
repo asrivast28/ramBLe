@@ -61,69 +61,7 @@ private:
  * @tparam Element Type of the variable (expected to be an integral type).
  */
 template <typename Set, typename Element>
-class SubsetIterator {
-public:
-  SubsetIterator(const Set& given, const uint32_t k)
-    : m_given(given.begin(), given.end()),
-      m_first(m_given.begin()),
-      m_current(m_given.begin()+k),
-      m_last(m_given.end()),
-      m_k(k),
-      m_valid(!((given.size() < 2) || (k == 0) || (k == given.size())))
-  {
-  }
-
-  void
-  next()
-  {
-    if (!m_valid) {
-      return;
-    }
-    m_valid = false;
-    auto it2 = (m_last-1);
-    for (auto it1 = (m_current-1); (it1+1) != m_first; --it1) {
-      if (*it1 < *it2) {
-        auto j = m_current;
-        while (*j <= *it1) {
-          ++j;
-        }
-        std::iter_swap(it1, j);
-        ++it1;
-        ++j;
-        std::rotate(it1, j, m_last);
-        it2 = m_current;
-        while (j != m_last) {
-          ++j;
-          ++it2;
-        }
-        std::rotate(m_current, it2, m_last);
-        m_valid = true;
-        break;
-      }
-    }
-  }
-
-  bool
-  valid()
-  {
-    return m_valid;
-  }
-
-  SubsetWrapper<typename std::vector<Element>::iterator>
-  get() const
-  {
-    return SubsetWrapper<typename std::vector<Element>::iterator>(m_first, m_current, m_k);
-  }
-
-private:
-  std::vector<Element> m_given;
-  const typename std::vector<Element>::iterator m_first;
-  const typename std::vector<Element>::iterator m_current;
-  const typename std::vector<Element>::iterator m_last;
-  const uint32_t m_k;
-  bool m_valid;
-}; // class SubsetIterator
-
+class Subsets;
 
 /**
  * @brief Function for initializing a given set.
