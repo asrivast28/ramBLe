@@ -28,6 +28,28 @@ DirectDiscovery<Data, Var, Set>::DirectDiscovery(
 }
 
 template <typename Data, typename Var, typename Set>
+std::pair<Var, double>
+DirectDiscovery<Data, Var, Set>::pickBestCandidate(
+  const Var target,
+  const Set& candidates,
+  const Set& cmb
+) const
+{
+  Var x = this->m_data.numVars();
+  double scoreX = 0.0;
+  for (const Var y: candidates) {
+    LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
+    double scoreY = this->m_data.assocScore(target, y, cmb);
+    if (std::isless(scoreX, scoreY)) {
+      x = y;
+      scoreX = scoreY;
+    }
+  }
+  LOG_MESSAGE(debug, "Grow: %s chosen as the best candidate", this->m_data.varName(x));
+  return std::make_pair(x, scoreX);
+}
+
+template <typename Data, typename Var, typename Set>
 /**
  * @brief Function that shrinks the given candidate MB.
  *
@@ -50,7 +72,7 @@ DirectDiscovery<Data, Var, Set>::shrinkMB(
   auto initial = cmb;
   for (const Var x: initial) {
     cmb.erase(x);
-    LOG_MESSAGE(debug, "Shrink Phase: Evaluating %s for removal from the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
+    LOG_MESSAGE(debug, "Shrink: Evaluating %s for removal from the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
     if (this->m_data.isIndependent(target, x, cmb)) {
       LOG_MESSAGE(info, "- Removing %s from the MB of %s (shrink)", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
@@ -82,7 +104,7 @@ DirectDiscovery<Data, Var, Set>::evaluateCandidatePC(
   const Set& mbY
 ) const
 {
-  LOG_MESSAGE(debug, "Direct Discovery: Evaluating %s for addition to the PC of %s", this->m_data.varName(y), this->m_data.varName(x));
+  LOG_MESSAGE(debug, "Neighbors: Evaluating %s for addition to the PC of %s", this->m_data.varName(y), this->m_data.varName(x));
   auto mbTest = mbX;
   // Pick the smaller of the two MBs
   if (mbY.size() > mbX.size()) {
@@ -112,7 +134,7 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
   Set candidates
 ) const
 {
-  LOG_MESSAGE(info, "Direct Discovery: Getting PC from MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "Neighbors: Getting PC from MB for %s", this->m_data.varName(target));
   auto cpc = set_init(Set(), this->m_data.numVars());
   auto mb = this->getMB(target);
   for (const Var y: mb) {
@@ -134,6 +156,25 @@ GSMB<Data, Var, Set>::GSMB(
 }
 
 template <typename Data, typename Var, typename Set>
+std::pair<Var, double>
+GSMB<Data, Var, Set>::pickBestCandidate(
+  const Var target,
+  const Set& candidates,
+  const Set& cmb
+) const
+{
+  for (const Var y: candidates) {
+    LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
+    double score = this->m_data.assocScore(target, y, cmb);
+    if (!this->m_data.isIndependent(score)) {
+      LOG_MESSAGE(debug, "Grow: %s chosen as the best candidate", this->m_data.varName(y));
+      return std::make_pair(y, score);
+    }
+  }
+  return std::make_pair(this->m_data.numVars(), 0.0);
+}
+
+template <typename Data, typename Var, typename Set>
 Set
 GSMB<Data, Var, Set>::getCandidateMB(
   const Var target,
@@ -144,20 +185,16 @@ GSMB<Data, Var, Set>::getCandidateMB(
   LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
+  Var x = this->m_data.numVars();
+  double scoreX = 0.0;
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    auto curr = candidates.begin();
-    while (!changed && (curr != candidates.end())) {
-      auto x = *curr;
-      LOG_MESSAGE(debug, "GSMB: Evaluating %s for addition to the MB", this->m_data.varName(x));
-      auto score = this->m_data.assocScore(target, x, cmb);
-      if (!this->m_data.isIndependent(score)) {
-        LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), score);
-        cmb.insert(x);
-        candidates.erase(x);
-        changed = true;
-      }
-      ++curr;
+    std::tie(x, scoreX) = this->pickBestCandidate(target, candidates, cmb);
+    if (!this->m_data.isIndependent(scoreX)) {
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)", this->m_data.varName(x), this->m_data.varName(target), scoreX);
+      cmb.insert(x);
+      candidates.erase(x);
+      changed = true;
     }
   }
   this->shrinkMB(target, cmb);
@@ -185,21 +222,11 @@ IAMB<Data, Var, Set>::getCandidateMB(
   LOG_MESSAGE(info, "IAMB: Getting MB for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
+  Var x = this->m_data.numVars();
+  double scoreX = 0.0;
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    // Find the variable with the maximum association score with target,
-    // given the current candidate MB
-    Var x = this->m_data.numVars();
-    double scoreX = 0.0;
-    for (const Var y: candidates) {
-      LOG_MESSAGE(debug, "IAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
-      double scoreY = this->m_data.assocScore(target, y, cmb);
-      if (std::isless(scoreX, scoreY)) {
-        x = y;
-        scoreX = scoreY;
-      }
-    }
-    LOG_MESSAGE(debug, "IAMB: %s chosen as the best candidate", this->m_data.varName(x));
+    std::tie(x, scoreX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {
@@ -234,21 +261,11 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
   LOG_MESSAGE(info, "InterIAMB: Getting MB for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
+  Var x = this->m_data.numVars();
+  double scoreX = 0.0;
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    // Find the variable with the maximum association score with target,
-    // given the current candidate MB
-    Var x = this->m_data.numVars();
-    double scoreX = 0.0;
-    for (const Var y: candidates) {
-      LOG_MESSAGE(debug, "InterIAMB: Evaluating %s for addition to the MB", this->m_data.varName(y));
-      double scoreY = this->m_data.assocScore(target, y, cmb);
-      if (std::isless(scoreX, scoreY)) {
-        x = y;
-        scoreX = scoreY;
-      }
-    }
-    LOG_MESSAGE(debug, "InterIAMB: %s chosen as the best candidate", this->m_data.varName(x));
+    std::tie(x, scoreX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
     // independedent of the target
     if (!this->m_data.isIndependent(scoreX)) {

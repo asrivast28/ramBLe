@@ -30,6 +30,11 @@ public:
   virtual
   ~DirectDiscovery() { }
 
+protected:
+  virtual
+  std::pair<Var, double>
+  pickBestCandidate(const Var, const Set&, const Set&) const;
+
 private:
   bool
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
@@ -50,6 +55,10 @@ public:
 
   Set
   getCandidateMB(const Var, Set) const override;
+
+private:
+  std::pair<Var, double>
+  pickBestCandidate(const Var, const Set&, const Set&) const override;
 }; // class GSMB
 
 /**
