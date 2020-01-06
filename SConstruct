@@ -48,6 +48,7 @@ if os.path.exists(sabnatkDir):
 mxxDir = ARGUMENTS.get('MXX', os.path.join(topDir, 'mxx'))
 if os.path.exists(mxxDir):
   cppPaths.append(os.path.join(mxxDir, 'include'))
+  cppPaths.append(os.path.join(mxxDir, 'ext'))
 
 
 if platform.system() in ['Darwin', 'Linux']:
