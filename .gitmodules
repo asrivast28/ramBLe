@@ -6,7 +6,7 @@
 	url = git@github.com:asrivast28/graph-api.git
 [submodule "mxx"]
 	path = mxx
-	url = git@github.com:patflick/mxx.git
+	url = git@github.com:asrivast28/mxx.git
 [submodule "SABNAtk"]
 	path = SABNAtk
 	url = git@github.com:asrivast28/SABNAtk.git
