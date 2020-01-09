@@ -45,7 +45,7 @@ def create_submission_script(args):
     PROCS_PER_NODE = 24
     output = args.output if args.output is not None else args.name + '.out'
     preamble = preamble_format % (args.name, args.time, args.nodes, PROCS_PER_NODE, args.queue, output)
-    if args.depends:
+    if args.depend:
         preamble += \
 '#PBS -W depend=afterok:%s  # job ID of the job on which this job depends' % args.depend
     preamble += '\n'
