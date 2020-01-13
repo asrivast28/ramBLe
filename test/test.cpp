@@ -10,9 +10,8 @@
 #include "TopologicalDiscoveryTests.hpp"
 #include "DirectedNetworkTests.hpp"
 
+#include "mxx/comm.hpp"
 #include "utils/Logging.hpp"
-
-#include <mpi.h>
 
 
 int
@@ -27,13 +26,9 @@ main(
     logLevel = argv[1];
   }
   MPI_Init(&argc, &argv);
-  // Get communicator size and my rank
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int p = 0, rank = -1;
-  MPI_Comm_size(comm, &p);
-  MPI_Comm_rank(comm, &rank);
-  if (p > 1) {
-    if (rank == 0) {
+  mxx::comm comm;
+  if (comm.size() > 1) {
+    if (comm.is_first()) {
       std::cerr << "ERROR: Multi-processor testing is not supported yet." << std::endl;
     }
     return 1;

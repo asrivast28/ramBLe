@@ -114,17 +114,17 @@ getNeighborhood(
     else {
       neighborhoodVars = data.varNames(algo->getPC(target));
     }
-    if (comm.rank() == 0) {
+    if (comm.is_first()) {
       TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);
     }
   }
   if (options.learnNetwork() || !options.outputFile().empty()) {
     TIMER_DECLARE(tNetwork);
     auto g = algo->getNetwork(options.directEdges());
-    if (comm.rank() == 0) {
+    if (comm.is_first()) {
       TIMER_ELAPSED("Time taken in getting the network: ", tNetwork);
     }
-    if ((comm.rank() == 0) && !options.outputFile().empty()) {
+    if ((comm.is_first()) && !options.outputFile().empty()) {
       TIMER_DECLARE(tWrite);
       g.writeGraphviz(options.outputFile(), options.directEdges());
       TIMER_ELAPSED("Time taken in writing the network: ", tWrite);
@@ -194,29 +194,25 @@ main(
   // Set up MPI
   MPI_Init(&argc, &argv);
 
-  // Get communicator size and my rank
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int p = 0, rank = -1;
-  MPI_Comm_size(comm, &p);
-  MPI_Comm_rank(comm, &rank);
-  if (p > 1) {
-    if (rank == 0) {
+  // Set custom error handler (for debugging with working stack-trace on gdb)
+  MPI_Errhandler errhandler;
+  MPI_Errhandler_create(&my_mpi_errorhandler, &errhandler);
+  MPI_Errhandler_set(MPI_COMM_WORLD, errhandler);
+
+  mxx::comm comm;
+  if (comm.size() > 1) {
+    if (comm.is_first()) {
       std::cerr << "ERROR: Multi-processor execution is not supported yet." << std::endl;
     }
     return 1;
   }
-
-  // Set custom error handler (for debugging with working stack-trace on gdb)
-  MPI_Errhandler errhandler;
-  MPI_Errhandler_create(&my_mpi_errorhandler, &errhandler);
-  MPI_Errhandler_set(comm, errhandler);
 
   ProgramOptions options;
   try {
     options.parse(argc, argv);
   }
   catch (const po::error& pe) {
-    if (rank == 0) {
+    if (comm.is_first()) {
       std::cerr << pe.what() << std::endl;
     }
     return 1;
@@ -234,7 +230,7 @@ main(
     else {
       dataFile.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
     }
-    if (rank == 0) {
+    if (comm.is_first()) {
       TIMER_ELAPSED("Time taken in reading the file: ", tRead);
     }
 
@@ -260,7 +256,7 @@ main(
       throw std::runtime_error("Requested counter not found. Supported counter types are: {" + ss.str() + "}");
     }
 
-    if (rank == 0) {
+    if (comm.is_first()) {
       for (const auto var: nbrVars) {
         std::cout << var << ",";
       }

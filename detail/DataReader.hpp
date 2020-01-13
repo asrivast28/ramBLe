@@ -95,7 +95,7 @@ RowObservationReader<DataType>::RowObservationReader(
 {
   mxx::comm comm;
   // Read data in processor 0
-  if (comm.rank() == 0) {
+  if (comm.is_first()) {
     std::ifstream dataFile(fileName);
     std::string line;
     if (varNames) {
@@ -181,7 +181,7 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
 {
   mxx::comm comm;
   // Read data from file in processor 0
-  if (comm.rank() == 0) {
+  if (comm.is_first()) {
     std::ifstream dataFile(fileName);
     std::string line;
     auto t = 0u;
