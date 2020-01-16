@@ -15,17 +15,19 @@ srcFiles = [
             ]
 
 built = False
+# Do not modify the provided build environment
+buildEnv = env.Clone()
 # Check if the header and the library files can be located
-conf = Configure(env)
+conf = Configure(buildEnv)
 if not conf.CheckCXXHeader('gtest/gtest.h'):
   Return('built')
 for lib in gTestLibs:
   if not conf.CheckLib(lib, language='C++'):
     Return('built')
-env = conf.Finish()
+buildEnv = conf.Finish()
 
-env.Program(target=env.testName, source=srcFiles)
+buildEnv.Program(target=buildEnv.testName, source=srcFiles)
 
-env.Install(env.testDir, env.testName)
+buildEnv.Install(buildEnv.testDir, buildEnv.testName)
 built = True
 Return('built')

@@ -15,15 +15,17 @@ srcFiles = [
             ]
 
 built = False
+# Do not modify the provided build environment
+buildEnv = env.Clone()
 # Check if all the library files can be located
-conf = Configure(env)
+conf = Configure(buildEnv)
 for lib in boostLibs:
   if not conf.CheckLib(lib, language='C++'):
     Return('built')
-env = conf.Finish()
+buildEnv = conf.Finish()
 
-env.Program(target=env.targetName, source=srcFiles)
+buildEnv.Program(target=buildEnv.targetName, source=srcFiles)
 
-env.Install(env.topDir, env.targetName)
+buildEnv.Install(buildEnv.topDir, buildEnv.targetName)
 built = True
 Return('built')
