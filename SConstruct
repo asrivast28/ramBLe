@@ -113,6 +113,11 @@ if profiler is not None:
   else:
     print('WARNING: Profiling is not supported on', platform.system())
 
+suffix = ARGUMENTS.get('SUFFIX')
+if suffix is not None:
+  targetName += suffix
+  testName += suffix
+
 env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LINKFLAGS=linkFlags)
 conf = Configure(env)
 # Check if the initial build environment works
