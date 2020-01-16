@@ -96,15 +96,22 @@ if enableTimer:
   cppDefs.append('TIMER')
 
 # Flag for enabling profiling
-enableProfile = ARGUMENTS.get('PROFILE', 0) not in [0, '0']
-if enableProfile:
+profiler = ARGUMENTS.get('PROFILER')
+if profiler is not None:
   if platform.system() == 'Linux':
-    cppFlags.append('-pg')
-    linkFlags.append('-pg')
-    targetName += '_profile'
-    testName += '_profile'
+    if profiler == 'gprof':
+      cppFlags.append('-pg')
+      linkFlags.append('-pg')
+    elif profiler == 'hpctoolkit':
+      # generate debug symbols
+      cppFlags.insert(0, '-g')
+    else:
+      print('ERROR: Profiler "%s" is not supported' % profiler)
+      Exit(1)
+    targetName += '_%s' % profiler
+    testName += '_%s' % profiler
   else:
-    print("WARNING: Profiling is not supported on", platform.system())
+    print('WARNING: Profiling is not supported on', platform.system())
 
 env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LINKFLAGS=linkFlags)
 conf = Configure(env)
@@ -116,7 +123,7 @@ if not conf.CheckCXX():
 sabnatkBuiltins = ['clzll', 'ffsll', 'popcountll']
 for builtin in sabnatkBuiltins:
   if not conf.CheckDeclaration('__builtin_%s' % builtin):
-    print('ERROR: __builtin_%s is required by SABNAtk')
+    print('ERROR: __builtin_%s is required by SABNAtk' % builtin)
     Exit(1)
 # Check for aligned malloc declaration
 if conf.CheckCHeader('mm_malloc.h'):
