@@ -17,12 +17,15 @@ template <typename DataType>
  *
  * @param n The number of variables in the file.
  * @param m The number of observations in the file.
+ * @param varMajor If the data for variables is stored contiguously.
  */
 DataReader<DataType>::DataReader(
   const uint32_t n,
-  const uint32_t m
+  const uint32_t m,
+  const bool varMajor
 ) : m_data(n*m),
-    m_varNames(n)
+    m_varNames(n),
+    m_varMajor(varMajor)
 {
 }
 
@@ -73,6 +76,17 @@ DataReader<DataType>::varNames(
 
 template <typename DataType>
 /**
+ * @brief Returns if the data for variables is stored contiguously.
+ */
+bool
+DataReader<DataType>::varMajor(
+) const
+{
+  return m_varMajor;
+}
+
+template <typename DataType>
+/**
  * @brief Constructor that reads data from the file.
  *
  * @param fileName The name of the file to be read.
@@ -91,7 +105,7 @@ RowObservationReader<DataType>::RowObservationReader(
   const bool varNames,
   const bool obsIndices,
   const bool varMajor
-) : DataReader<DataType>(numCols, numRows)
+) : DataReader<DataType>(numCols, numRows, varMajor)
 {
   mxx::comm comm;
   // Read data in processor 0
@@ -177,7 +191,7 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
   const bool varNames,
   const bool obsIndices,
   const bool varMajor
-) : DataReader<DataType>(numRows, numCols)
+) : DataReader<DataType>(numRows, numCols, varMajor)
 {
   mxx::comm comm;
   // Read data from file in processor 0

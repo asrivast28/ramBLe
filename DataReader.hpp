@@ -16,13 +16,16 @@
 template <typename DataType>
 class DataReader {
 public:
-  DataReader(const uint32_t, const uint32_t);
+  DataReader(const uint32_t, const uint32_t, const bool);
 
   const std::vector<DataType>&
   data() const;
 
   const std::vector<std::string>&
   varNames() const;
+
+  bool
+  varMajor() const;
 
 protected:
   void
@@ -31,6 +34,7 @@ protected:
 protected:
   std::vector<DataType> m_data;
   std::vector<std::string> m_varNames;
+  const bool m_varMajor;
 }; // class DataReader
 
 /**
