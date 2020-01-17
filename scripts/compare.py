@@ -30,13 +30,16 @@ def read(name, file_format, verbose):
     '''
     Read the network from the given file.
     '''
-    p = re.compile(r'(\w)-(\w)')
+    hyphens = re.compile(r'(\w)-(\w)')
+    numeric = re.compile(r'"(\d)')
     graph = None
     if file_format == 'dot':
         with open(name, 'rt') as f:
             s = f.read()
         # Replace hyphens in names by dots
-        s = p.sub(r'\1.\2', s)
+        s = hyphens.sub(r'\1.\2', s)
+        # Insert X at the start of names with leading numeric characters
+        s = numeric.sub(r'"X\1', s)
         # Now, remove all the quotes
         s = s.replace('"', '')
         graph = pydot.graph_from_dot_data(s)
