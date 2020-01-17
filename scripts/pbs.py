@@ -31,6 +31,7 @@ def create_submission_script(args):
     '''
     Create preamble for the script.
     '''
+    import os.path
     from shutil import copymode
     from tempfile import NamedTemporaryFile
 
@@ -44,6 +45,8 @@ def create_submission_script(args):
 #PBS -o %s                 # output file name
 '''
     output = args.output if args.output is not None else args.name + '.out'
+    if os.path.exists(output):
+        raise RuntimeError('Output file %s already exists' % output)
     preamble = preamble_format % (args.name, args.time, args.nodes, args.procs, args.queue, output)
     if args.depend:
         preamble += \
