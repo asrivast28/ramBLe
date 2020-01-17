@@ -81,7 +81,7 @@ template <typename DataType>
  * @param sep The character used for delimiting data points.
  * @param varNames If the file contains variable names in the top row.
  * @param obsIndices If the file contains observation indices in the first column.
- * @param columnMajor If the data should be stored in column-major format.
+ * @param varMajor If the data for variables should be stored contiguously.
  */
 RowObservationReader<DataType>::RowObservationReader(
   const std::string& fileName,
@@ -90,7 +90,7 @@ RowObservationReader<DataType>::RowObservationReader(
   const char sep,
   const bool varNames,
   const bool obsIndices,
-  const bool columnMajor
+  const bool varMajor
 ) : DataReader<DataType>(numCols, numRows)
 {
   mxx::comm comm;
@@ -128,13 +128,13 @@ RowObservationReader<DataType>::RowObservationReader(
       auto i = 0u;
       while (std::getline(ss, item, sep)) {
         std::istringstream is(item);
-        if (columnMajor) {
-          // Store the data in column major format
+        if (varMajor) {
+          // Store the data for this variable together
           this->data(i*numRows + j, is);
           ++t;
         }
         else {
-          // Store the data in row major format
+          // Store the variables for this observation together
           this->data(j*numCols + i, is);
           ++t;
         }
@@ -167,7 +167,7 @@ template <typename DataType>
  * @param sep The character used for delimiting data points.
  * @param varNames If the file contains variable names in the first column.
  * @param obsIndices If the file contains observation indices in the first row.
- * @param columnMajor If the data should be stored in column-major format.
+ * @param varMajor If the data for variables should be stored contiguously.
  */
 ColumnObservationReader<DataType>::ColumnObservationReader(
   const std::string& fileName,
@@ -176,7 +176,7 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
   const char sep,
   const bool varNames,
   const bool obsIndices,
-  const bool columnMajor
+  const bool varMajor
 ) : DataReader<DataType>(numRows, numCols)
 {
   mxx::comm comm;
@@ -202,13 +202,13 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
       std::string item;
       while (std::getline(ss, item, sep)) {
         std::istringstream is(item);
-        if (columnMajor) {
-          // Store the data in column major format
+        if (varMajor) {
+          // Store the data for this variable together
           this->data(i*numCols + j, is);
           ++t;
         }
         else {
-          // Store the data in row major format
+          // Store the variables for this observation together
           this->data(j*numRows + i, is);
           ++t;
         }

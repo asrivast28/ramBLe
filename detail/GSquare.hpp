@@ -280,7 +280,7 @@ conditionalGSquare(
   auto xx = &counter.data()[x * counter.m()];
   auto yy = &counter.data()[y * counter.m()];
   for (auto k = 0u; k < counter.m(); ++k) {
-    cc[zz[k] * r_x * r_y + xx[k] * r_y + yy[k]]++;
+    ++cc[zz[k] * r_x * r_y + xx[k] * r_y + yy[k]];
   }
 
   for (auto c = 0u, idx = 0u; c < result.first; ++c) {

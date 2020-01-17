@@ -140,7 +140,7 @@ getNeighborhood(
  * @tparam FileType Type of the file to be read.
  * @param n The total number of variables.
  * @param m The total number of observations.
- * @param dataFile File data provider.
+ * @param reader File data reader.
  * @param options Program options provider.
  *
  * @return The list of labels of the variables in the neighborhood.
@@ -150,22 +150,22 @@ std::vector<std::string>
 getNeighborhood(
   const uint32_t n,
   const uint32_t m,
-  std::unique_ptr<FileType>&& dataFile,
+  std::unique_ptr<FileType>&& reader,
   const ProgramOptions& options
 )
 {
-  std::vector<std::string> varNames(dataFile->varNames());
+  std::vector<std::string> varNames(reader->varNames());
   std::vector<std::string> nbrVars;
   if ((n - 1) <= UintSet<uint8_t>::capacity()) {
     constexpr int N = maxN<uint8_t>();
-    auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
-    dataFile.reset();
+    auto counter = CounterType<N>::create(n, m, std::begin(reader->data()));
+    reader.reset();
     nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
   }
   else if ((n - 1) <= UintSet<uint16_t>::capacity()) {
     constexpr int N = maxN<uint16_t>();
-    auto counter = CounterType<N>::create(n, m, std::begin(dataFile->data()));
-    dataFile.reset();
+    auto counter = CounterType<N>::create(n, m, std::begin(reader->data()));
+    reader.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
   else {
@@ -223,12 +223,13 @@ main(
     uint32_t n = options.numVars();
     uint32_t m = options.numObs();
     TIMER_DECLARE(tRead);
-    std::unique_ptr<DataReader<uint8_t>> dataFile;
+    std::unique_ptr<DataReader<uint8_t>> reader;
+    auto varMajor = true;
     if (options.colObs()) {
-      dataFile.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
+      reader.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), varMajor));
     }
     else {
-      dataFile.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), true));
+      reader.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), varMajor));
     }
     if (comm.is_first()) {
       TIMER_ELAPSED("Time taken in reading the file: ", tRead);
@@ -238,17 +239,17 @@ main(
     std::stringstream ss;
     std::vector<std::string> nbrVars;
     if (options.counterType().compare("ct") == 0) {
-      nbrVars = getNeighborhood<CTCounter>(n, m, std::move(dataFile), options);
+      nbrVars = getNeighborhood<CTCounter>(n, m, std::move(reader), options);
       counterFound = true;
     }
     ss << "ct,";
     if (options.counterType().compare("bv") == 0) {
-      nbrVars = getNeighborhood<BVCounter>(n, m, std::move(dataFile), options);
+      nbrVars = getNeighborhood<BVCounter>(n, m, std::move(reader), options);
       counterFound = true;
     }
     ss << "bv,";
     if (options.counterType().compare("rad") == 0) {
-      nbrVars = getNeighborhood<RadCounter>(n, m, std::move(dataFile), options);
+      nbrVars = getNeighborhood<RadCounter>(n, m, std::move(reader), options);
       counterFound = true;
     }
     ss << "rad";
