@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('-n', '--name', type=str, default='benchmark-csl', metavar='JOB', help='Name of the job.')
     parser.add_argument('-l', '--time', type=str, default='12:00:00', metavar='HH:MM:SS', help='Duration of the job.')
     parser.add_argument('-N', '--nodes', type=int, default=1, metavar='NODES', help='Number of required nodes.')
+    parser.add_argument('-p', '--procs', type=int, default=24, metavar='PROCS', help='Number of processes per node.')
     parser.add_argument('-q', '--queue', type=str, default='hive', metavar='NAME', help='Name of the queue.')
     parser.add_argument('-o', '--output', type=str, metavar='FILE', help='Name of the output file.')
     parser.add_argument('-d', '--depend', type=str, metavar='JOBID', help='ID of the job on which this job depends.')
@@ -42,9 +43,8 @@ def create_submission_script(args):
 #PBS -j oe                 # combine output and error messages into a single file
 #PBS -o %s                 # output file name
 '''
-    PROCS_PER_NODE = 24
     output = args.output if args.output is not None else args.name + '.out'
-    preamble = preamble_format % (args.name, args.time, args.nodes, PROCS_PER_NODE, args.queue, output)
+    preamble = preamble_format % (args.name, args.time, args.nodes, args.procs, args.queue, output)
     if args.depend:
         preamble += \
 '#PBS -W depend=afterok:%s  # job ID of the job on which this job depends' % args.depend
