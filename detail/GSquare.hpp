@@ -225,25 +225,20 @@ indexGiven(
   const Set& given
 )
 {
-  std::vector<uint32_t> cumulative(given.size());
-  cumulative[0] = 1u;
-  auto xk = given.begin();
-  for (auto k = 1u; k < given.size(); ++k, ++xk) {
-    cumulative[k] = cumulative[k-1] * counter.r(*xk);
-  }
-  uint32_t levels = cumulative.back() * counter.r(*xk);
   const auto& data = counter.data();
   const auto nobs = counter.m();
-  xk = given.begin();
+  auto xk = given.begin();
   std::vector<uint32_t> indices(&data[*xk * nobs], &data[(*xk + 1) * nobs]);
+  uint32_t cumulative = counter.r(*xk);
   ++xk;
-  for (auto k = cumulative.begin() + 1; xk != given.end(); ++k, ++xk) {
+  for (; xk != given.end(); ++xk) {
     const auto* datak = &data[*xk * nobs];
     for (auto i = 0u; i < nobs; ++i) {
-      indices[i] += (datak[i] * (*k));
+      indices[i] += (datak[i] * cumulative);
     }
+    cumulative *= counter.r(*xk);
   }
-  return std::make_pair(levels, indices);
+  return std::make_pair(cumulative, indices);
 }
 
 /**
