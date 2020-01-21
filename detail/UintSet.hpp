@@ -44,18 +44,43 @@ public:
   using Set = typename UintTypeTrait<N>::Set;
 
 public:
-  Iterator(const Set* set, const Element max, const Element curr = UintSet<Element, N>::capacity())
-    : m_set(set),
+  Iterator(const Set& set, const Element max)
+    : m_state(set),
+      m_maxN(max >> 6),
+      m_currN(0),
       m_max(max),
-      m_curr((curr > max)? max: curr)
+      m_curr(0)
   {
     next();
+  }
+
+  Iterator(const Set& set, const Element max, const Element curr)
+    : m_state((curr < max) ? set : set_empty<Set>()),
+      m_maxN(max >> 6),
+      m_currN(curr >> 6),
+      m_max(max),
+      m_curr((curr < max) ? 0 : max)
+  {
+    if (curr < max) {
+      // Empty out all the bitsets smaller than the index of
+      // the current element
+      for (auto i = 0; i < m_currN; ++i) {
+        m_state.b[i] = 0;
+      }
+      // Now, unset the bits smaller than or equal to the one
+      // corresponding to the current element
+      m_curr = (m_currN << 6);
+      while (m_curr <= curr) {
+        auto x = lsb(m_state.b[m_currN]);
+        m_curr = static_cast<Element>((m_currN << 6) + x);
+        m_state.b[m_currN] = set_remove(m_state.b[m_currN], x);
+      }
+    }
   }
 
   Iterator&
   operator++()
   {
-    ++m_curr;
     next();
     return *this;
   }
@@ -82,13 +107,32 @@ private:
   void
   next()
   {
-    while ((m_curr < m_max) && !in_set(*m_set, static_cast<int>(m_curr))) {
-      ++m_curr;
+    if (m_curr < m_max) {
+      // Find the first index with a non-empty bitset
+      while ((m_currN <= m_maxN) && is_emptyset(m_state.b[m_currN])) {
+        ++m_currN;
+      }
+      if (m_currN <= m_maxN) {
+        // There must be at least one set bit in the current index
+        // Get the index of the lowest such bit
+        auto x = lsb(m_state.b[m_currN]);
+        // Multiply the current bitset index by 64 and then add the
+        // index of the set bit to get the current element
+        m_curr = static_cast<Element>((m_currN << 6) + x);
+        // Set the bit to zero so that the next bit can be found
+        m_state.b[m_currN] = set_remove(m_state.b[m_currN], x);
+      }
+      else {
+        // No new elements were found
+        m_curr = m_max;
+      }
     }
   }
 
 private:
-  const Set* m_set;
+  Set m_state;
+  int m_maxN;
+  int m_currN;
   Element m_max;
   Element m_curr;
 };
@@ -248,7 +292,7 @@ typename UintSet<Element, N>::Iterator
 UintSet<Element, N>::begin(
 ) const
 {
-  return Iterator(&m_set, m_max, 0);
+  return Iterator(m_set, m_max);
 }
 
 template <typename Element, int N>
@@ -256,7 +300,7 @@ typename UintSet<Element, N>::Iterator
 UintSet<Element, N>::end(
 ) const
 {
-  return Iterator(&m_set, m_max);
+  return Iterator(m_set, m_max, m_max);
 }
 
 template <typename Element, int N>
@@ -265,7 +309,7 @@ UintSet<Element, N>::find(
   const Element x
 ) const
 {
-  return contains(x) ? Iterator(&m_set, m_max, x): end();
+  return contains(x) ? Iterator(m_set, m_max, x): end();
 }
 
 template <typename Element, int N>

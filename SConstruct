@@ -125,7 +125,7 @@ if not conf.CheckCXX():
   Exit(1)
 
 # Check for SABNAtk specific functions and build options
-sabnatkBuiltins = ['clzll', 'ffsll', 'popcountll']
+sabnatkBuiltins = ['clzll', 'ctzll', 'ffsll', 'popcountll']
 for builtin in sabnatkBuiltins:
   if not conf.CheckDeclaration('__builtin_%s' % builtin):
     print('ERROR: __builtin_%s is required by SABNAtk' % builtin)
