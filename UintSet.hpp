@@ -7,42 +7,40 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <type_traits>
 #include <vector>
 
 
 /**
  * @brief Type trait class for uint_type sets.
- *        Specialized for all the supported values of N.
- *
- * @tparam N Number of 64-bit elements used for storage by the set.
  */
-template <int N>
+template <typename Size>
 class UintTypeTrait;
 
 /**
- * @brief Computes the N that is required for safely
- *        storing the given datatype.
+ * @brief Computes the number of 64-bit elements that are required
+ *        for safely storing the given datatype.
  */
 template <typename Element>
 constexpr
 int
-maxN();
+maxSize();
 
 /**
  * @brief STL style interface for the uint_type sets from the SABNAtk library.
  *
  * @tparam Element Datatype of the value contained by the set.
- * @tparam N Number of 64-bit elements used for storage by the set.
+ * @tparam Size Number of 64-bit elements used for storage by the set.
  */
-template <typename Element, int N = maxN<Element>()>
+template <typename Element, typename Size = std::integral_constant<int, maxSize<Element>()>>
 class UintSet {
-  static_assert(N <= maxN<Element>(), "Provided N is bigger than the maximum required");
+  static_assert(Size::value <= maxSize<Element>(), "Provided size is bigger than the maximum required");
 
 public:
   class Enumerator;
 
 public:
-  using Set = typename UintTypeTrait<N>::Set;
+  using Set = typename UintTypeTrait<Size>::Set;
   // Required typedefs
   using value_type = Element;
   using iterator = Enumerator;

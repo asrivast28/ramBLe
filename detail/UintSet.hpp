@@ -12,10 +12,10 @@
 #include <iterator>
 
 
-template <int N>
+template <typename Size>
 class UintTypeTrait {
 public:
-  using Set = uint_type<N>;
+  using Set = uint_type<Size::value>;
 
 public:
   static
@@ -31,17 +31,17 @@ public:
 template <typename Element>
 constexpr
 int
-maxN() {
+maxSize() {
   return static_cast<int>(std::numeric_limits<Element>::max() / 64) + 1;
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 /**
  * @brief Enumerates the elements of the UintSet.
  */
-class UintSet<Element, N>::Enumerator : public std::iterator<std::forward_iterator_tag, Element> {
+class UintSet<Element, Size>::Enumerator : public std::iterator<std::forward_iterator_tag, Element> {
 public:
-  using Set = typename UintTypeTrait<N>::Set;
+  using Set = typename UintTypeTrait<Size>::Set;
 
 public:
   Enumerator(const Set& set, const Element max)
@@ -138,20 +138,20 @@ private:
 };
 
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 /**
- * @brief The capacity of a set of type UintSet<Element, N>.
+ * @brief The capacity of a set of type UintSet<Element, Size>.
  */
 constexpr
 Element
-UintSet<Element, N>::capacity(
+UintSet<Element, Size>::capacity(
 )
 {
-  return static_cast<Element>(UintTypeTrait<N>::max());
+  return static_cast<Element>(UintTypeTrait<Size>::max());
 }
 
-template <typename Element, int N>
-UintSet<Element, N>::UintSet(
+template <typename Element, typename Size>
+UintSet<Element, Size>::UintSet(
   const Element max
 ) : m_set(set_empty<Set>()),
     m_max(max),
@@ -159,8 +159,8 @@ UintSet<Element, N>::UintSet(
 {
 }
 
-template <typename Element, int N>
-UintSet<Element, N>::UintSet(
+template <typename Element, typename Size>
+UintSet<Element, Size>::UintSet(
   const std::initializer_list<Element>& s,
   const Element max
 ) : m_set(as_set<Set>(s.begin(), s.end())),
@@ -170,10 +170,10 @@ UintSet<Element, N>::UintSet(
   m_size = set_size(m_set);
 }
 
-template <typename Element, int N>
-UintSet<Element, N>::UintSet(
-  const typename UintSet<Element, N>::iterator& first,
-  const typename UintSet<Element, N>::iterator& last,
+template <typename Element, typename Size>
+UintSet<Element, Size>::UintSet(
+  const typename UintSet<Element, Size>::iterator& first,
+  const typename UintSet<Element, Size>::iterator& last,
   const Element max
 ) : m_set(as_set<Set>(first, last)),
     m_max(max),
@@ -182,8 +182,8 @@ UintSet<Element, N>::UintSet(
   m_size = set_size(m_set);
 }
 
-template <typename Element, int N>
-UintSet<Element, N>::UintSet(
+template <typename Element, typename Size>
+UintSet<Element, Size>::UintSet(
   const typename std::vector<Element>::iterator& first,
   const typename std::vector<Element>::iterator& last,
   const Element max
@@ -194,43 +194,43 @@ UintSet<Element, N>::UintSet(
   m_size = set_size(m_set);
 }
 
-template <typename Element, int N>
-const typename UintSet<Element, N>::Set&
-UintSet<Element, N>::operator*(
+template <typename Element, typename Size>
+const typename UintSet<Element, Size>::Set&
+UintSet<Element, Size>::operator*(
 ) const
 {
   return m_set;
 }
 
-template <typename Element, int N>
-typename UintSet<Element, N>::Set&
-UintSet<Element, N>::operator*(
+template <typename Element, typename Size>
+typename UintSet<Element, Size>::Set&
+UintSet<Element, Size>::operator*(
 )
 {
   return m_set;
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 bool
-UintSet<Element, N>::operator==(
-  const UintSet<Element, N>& other
+UintSet<Element, Size>::operator==(
+  const UintSet<Element, Size>& other
 ) const
 {
   return (m_set == other.m_set);
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 bool
-UintSet<Element, N>::operator!=(
-  const UintSet<Element, N>& other
+UintSet<Element, Size>::operator!=(
+  const UintSet<Element, Size>& other
 ) const
 {
   return (m_set != other.m_set);
 }
 
-template <typename Element, int N>
-typename UintSet<Element, N>::iterator
-UintSet<Element, N>::insert(
+template <typename Element, typename Size>
+typename UintSet<Element, Size>::iterator
+UintSet<Element, Size>::insert(
   const Element x
 )
 {
@@ -242,9 +242,9 @@ UintSet<Element, N>::insert(
   return end();
 }
 
-template <typename Element, int N>
-typename UintSet<Element, N>::iterator
-UintSet<Element, N>::insert(
+template <typename Element, typename Size>
+typename UintSet<Element, Size>::iterator
+UintSet<Element, Size>::insert(
   const iterator&,
   const Element x
 )
@@ -257,9 +257,9 @@ UintSet<Element, N>::insert(
   return end();
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 void
-UintSet<Element, N>::erase(
+UintSet<Element, Size>::erase(
   const Element x
 )
 {
@@ -270,17 +270,17 @@ UintSet<Element, N>::erase(
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 Element
-UintSet<Element, N>::max(
+UintSet<Element, Size>::max(
 ) const
 {
   return m_max;
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 uint32_t
-UintSet<Element, N>::size(
+UintSet<Element, Size>::size(
 ) const
 {
   if (m_size == 0) {
@@ -289,51 +289,51 @@ UintSet<Element, N>::size(
   return m_size;
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 bool
-UintSet<Element, N>::empty(
+UintSet<Element, Size>::empty(
 ) const
 {
   return is_emptyset(m_set);
 }
 
-template <typename Element, int N>
+template <typename Element, typename Size>
 bool
-UintSet<Element, N>::contains(
+UintSet<Element, Size>::contains(
   const Element x
 ) const
 {
   return in_set(m_set, static_cast<int>(x));
 }
 
-template <typename Element, int N>
-typename UintSet<Element, N>::iterator
-UintSet<Element, N>::begin(
+template <typename Element, typename Size>
+typename UintSet<Element, Size>::iterator
+UintSet<Element, Size>::begin(
 ) const
 {
   return Enumerator(m_set, m_max);
 }
 
-template <typename Element, int N>
-typename UintSet<Element, N>::iterator
-UintSet<Element, N>::end(
+template <typename Element, typename Size>
+typename UintSet<Element, Size>::iterator
+UintSet<Element, Size>::end(
 ) const
 {
   return Enumerator(m_set, m_max, m_max);
 }
 
-template <typename Element, int N>
-typename UintSet<Element, N>::iterator
-UintSet<Element, N>::find(
+template <typename Element, typename Size>
+typename UintSet<Element, Size>::iterator
+UintSet<Element, Size>::find(
   const Element x
 ) const
 {
   return contains(x) ? Enumerator(m_set, m_max, x): end();
 }
 
-template <typename Element, int N>
-UintSet<Element, N>
-UintSet<Element, N>::subset(
+template <typename Element, typename Size>
+UintSet<Element, Size>
+UintSet<Element, Size>::subset(
   const std::vector<bool>& bitset
 ) const
 {

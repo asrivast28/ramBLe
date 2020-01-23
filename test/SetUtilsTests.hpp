@@ -62,17 +62,4 @@ TYPED_TEST(SetUtilsTests, SetDifference) {
   EXPECT_EQ(expectedDifference, computedDifference);
 }
 
-TYPED_TEST(SetUtilsTests, IsSubset) {
-  std::vector<typename TypeParam::value_type> v(3);
-  std::iota(v.begin(), v.end(), this->max - 4);
-  TypeParam first(v.begin(), v.end());
-
-  v.resize(2);
-  std::iota(v.begin(), v.end(), this->max - 4);
-  TypeParam second(v.begin(), v.end());
-
-  EXPECT_FALSE(is_subset(first, second));
-  EXPECT_TRUE(is_subset(second, first));
-}
-
 #endif // TEST_SETUTILS_HPP_

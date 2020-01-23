@@ -15,13 +15,13 @@
  *
  * @tparam Element Type of the variable (expected to be an integral type).
  */
-template <typename Element>
-class Subsets<UintSet<Element>, Element> {
+template <typename Element, typename... Args>
+class Subsets<UintSet, Element, Args...> {
 public:
-  class Iterator : public std::iterator<std::forward_iterator_tag, UintSet<Element>> {
+  class Iterator : public std::iterator<std::forward_iterator_tag, UintSet<Element, Args...>> {
   public:
     Iterator(
-      const UintSet<Element>& given,
+      const UintSet<Element, Args...>& given,
       const std::vector<bool>& candidates,
       const bool valid = true
     ) : m_given(given),
@@ -64,14 +64,14 @@ public:
       return !(*this == other);
     }
 
-    UintSet<Element>
+    UintSet<Element, Args...>
     operator*() const
     {
       return m_given.subset(m_candidates);
     }
 
   private:
-    const UintSet<Element>& m_given;
+    const UintSet<Element, Args...>& m_given;
     std::vector<bool> m_candidates;
     size_t m_curr;
     bool m_valid;
@@ -83,7 +83,7 @@ public:
   using iterator = Iterator;
 
 public:
-  Subsets(const UintSet<Element>& given, const uint32_t k)
+  Subsets(const UintSet<Element, Args...>& given, const uint32_t k)
     : m_given(given),
       m_candidates(given.size(), false)
   {
@@ -106,18 +106,18 @@ public:
   }
 
 private:
-  const UintSet<Element>& m_given;
+  const UintSet<Element, Args...>& m_given;
   std::vector<bool> m_candidates;
 }; // class Subsets
 
 
 // Definition of all the operations on UintSet
-#define DEFINE_UINT_SET_OPERATIONS(type) \
+#define DEFINE_UINT_SET_OPERATIONS(Element, N) \
 template <> \
-UintSet<type> \
-set_init<UintSet<type>, type>( \
-  UintSet<type>&& set, \
-  const type max \
+UintSet<Element, std::integral_constant<int, N>> \
+set_init<UintSet<Element, std::integral_constant<int, N>>, Element>( \
+  UintSet<Element, std::integral_constant<int, N>>&& set, \
+  const Element max \
 ) \
 { \
   set.m_max = max; \
@@ -126,59 +126,58 @@ set_init<UintSet<type>, type>( \
  \
 template <> \
 bool \
-set_contains<UintSet<type>, type>( \
-  const UintSet<type>& set, \
-  const type value \
+set_contains<UintSet<Element, std::integral_constant<int, N>>, Element>( \
+  const UintSet<Element, std::integral_constant<int, N>>& set, \
+  const Element value \
 ) \
 { \
   return set.contains(value); \
 } \
  \
 template <> \
-UintSet<type> \
-set_union<UintSet<type>>( \
-  const UintSet<type>& first, \
-  const UintSet<type>& second \
+UintSet<Element, std::integral_constant<int, N>> \
+set_union<UintSet<Element, std::integral_constant<int, N>>>( \
+  const UintSet<Element, std::integral_constant<int, N>>& first, \
+  const UintSet<Element, std::integral_constant<int, N>>& second \
 ) \
 { \
-  UintSet<type> result; \
+  UintSet<Element, std::integral_constant<int, N>> result; \
   *result = *first | *second; \
   return result; \
 } \
  \
 template <> \
-UintSet<type> \
-set_difference<UintSet<type>>( \
-  const UintSet<type>& first, \
-  const UintSet<type>& second \
+UintSet<Element, std::integral_constant<int, N>> \
+set_difference<UintSet<Element, std::integral_constant<int, N>>>( \
+  const UintSet<Element, std::integral_constant<int, N>>& first, \
+  const UintSet<Element, std::integral_constant<int, N>>& second \
 ) \
 { \
-  UintSet<type> result; \
+  UintSet<Element, std::integral_constant<int, N>> result; \
   *result = set_diff(*first, *second); \
   return result; \
-} \
- \
-template <> \
-bool \
-is_subset<UintSet<type>>( \
-  const UintSet<type>& first, \
-  const UintSet<type>& second \
-) \
-{ \
-  return is_superset(*second, *first); \
 }
 
-DEFINE_UINT_SET_OPERATIONS(uint8_t)
-DEFINE_UINT_SET_OPERATIONS(uint16_t)
+DEFINE_UINT_SET_OPERATIONS(uint8_t, (maxSize<uint8_t>() >> 2))
+DEFINE_UINT_SET_OPERATIONS(uint8_t, (maxSize<uint8_t>() >> 1))
+DEFINE_UINT_SET_OPERATIONS(uint8_t, maxSize<uint8_t>())
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 7))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 6))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 5))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 4))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 3))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 2))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, (maxSize<uint16_t>() >> 1))
+DEFINE_UINT_SET_OPERATIONS(uint16_t, maxSize<uint16_t>())
 
 /**
  * @brief Function for getting the output represention of a set.
  */
-template <typename Element>
+template <typename Element, typename Size>
 std::ostream&
 operator<<(
   std::ostream& stream,
-  const UintSet<Element>& set
+  const UintSet<Element, Size>& set
 )
 {
   stream << "{";

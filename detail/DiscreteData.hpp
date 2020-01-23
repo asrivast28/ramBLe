@@ -265,19 +265,19 @@ template <typename Counter, typename Var>
  *
  * @return The computed minimum association score.
  */
-template <typename Set>
+template <template <typename...> class SetType, typename... Args>
 double
 DiscreteData<Counter, Var>::minAssocScore(
   const Var x,
   const Var y,
-  const Set& given,
+  const SetType<Var, Args...>& given,
   const Var maxSize
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    for (auto condition: Subsets<Set, Var>(given, i)) {
+    for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
       auto thisScore = this->assocScore(x, y, condition);
       minScore = std::min(thisScore, minScore);
     }
@@ -300,20 +300,20 @@ template <typename Counter, typename Var>
  *
  * @return The computed minimum association score.
  */
-template <typename Set>
+template <template <typename...> class SetType, typename... Args>
 double
 DiscreteData<Counter, Var>::minAssocScore(
   const Var x,
   const Var y,
-  const Set& given,
-  const Set& seed,
+  const SetType<Var, Args...>& given,
+  const SetType<Var, Args...>& seed,
   const Var maxSize
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    for (auto condition: Subsets<Set, Var>(given, i)) {
+    for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
       // Always include the seed set in the conditioning set
       condition = set_union(condition, seed);
       auto thisScore = this->assocScore(x, y, condition);
@@ -337,20 +337,20 @@ template <typename Counter, typename Var>
  *
  * @return A pair with the computed minimum score and the corresponding subset.
  */
-template <typename Set>
-std::pair<double, Set>
+template <template <typename...> class SetType, typename... Args>
+std::pair<double, SetType<Var, Args...>>
 DiscreteData<Counter, Var>::minAssocScoreSubset(
   const Var x,
   const Var y,
-  const Set& given,
+  const SetType<Var, Args...>& given,
   const Var maxSize
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto minScore = std::numeric_limits<double>::max();
-  auto z = set_init(Set(), numVars());
+  auto z = set_init(SetType<Var, Args...>(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
-    for (auto condition: Subsets<Set, Var>(given, i)) {
+    for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
       auto thisScore = this->assocScore(x, y, condition);
       if (std::isless(thisScore, minScore)) {
         minScore = thisScore;

@@ -87,7 +87,7 @@ getAlgorithm(
  *
  * @return The list of labels of the variables in the neighborhood.
  */
-template <typename Var, typename Counter>
+template <typename Var, typename Size, typename Counter>
 std::vector<std::string>
 getNeighborhood(
   const Counter& counter,
@@ -98,7 +98,7 @@ getNeighborhood(
   mxx::comm comm;
   DiscreteData<Counter, Var> data(counter, varNames, options.alpha());
   Var maxConditioning = static_cast<Var>(std::min(options.numVars(), options.maxConditioning()));
-  auto algo = getAlgorithm<Var, UintSet<Var>>(options.algoName(), comm, data, maxConditioning);
+  auto algo = getAlgorithm<Var, UintSet<Var, Size>>(options.algoName(), comm, data, maxConditioning);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
     TIMER_DECLARE(tNeighborhood);
@@ -156,11 +156,38 @@ getNeighborhood(
   auto counter = CounterType<>::create(n, m, std::begin(reader->data()));
   reader.reset();
   std::vector<std::string> nbrVars;
-  if ((n - 1) <= UintSet<uint8_t>::capacity()) {
-    nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
+  if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>::capacity()) {
+    nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(counter, varNames, options);
   }
-  else if ((n - 1) <= UintSet<uint16_t>::capacity()) {
-    nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
+  else if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>::capacity()) {
+    nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint8_t>::capacity()) {
+    nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, maxSize<uint8_t>()>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(counter, varNames, options);
+  }
+  else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>::capacity()) {
+    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>(counter, varNames, options);
   }
   else {
     throw std::runtime_error("The given number of variables is not supported.");

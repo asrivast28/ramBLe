@@ -60,7 +60,7 @@ private:
  * @tparam Set Type of the set container.
  * @tparam Element Type of the variable (expected to be an integral type).
  */
-template <typename Set, typename Element>
+template <template <typename...> class SetType, typename Element, typename... Args>
 class Subsets;
 
 /**
@@ -90,20 +90,6 @@ set_union(const Set&, const Set&);
 template <typename Set>
 Set
 set_difference(const Set&, const Set&);
-
-/**
- * @brief Function for checking if the first set is a subset of the second.
- */
-template <typename Set>
-bool
-is_subset(
-  const Set& first,
-  const Set& second
-)
-{
-  auto diff = set_difference(first, second);
-  return diff.empty();
-}
 
 #include "detail/StdSetUtils.hpp"
 #include "detail/UintSetUtils.hpp"

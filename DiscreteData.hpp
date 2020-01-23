@@ -65,17 +65,17 @@ public:
   bool
   isIndependent(const double) const;
 
-  template <typename Set>
+  template <template <typename...> class SetType, typename... Args>
   double
-  minAssocScore(const Var, const Var, const Set&, const Var) const;
+  minAssocScore(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
 
-  template <typename Set>
+  template <template <typename...> class SetType, typename... Args>
   double
-  minAssocScore(const Var, const Var, const Set&, const Set&, const Var) const;
+  minAssocScore(const Var, const Var, const SetType<Var, Args...>&, const SetType<Var, Args...>&, const Var) const;
 
-  template <typename Set>
-  std::pair<double, Set>
-  minAssocScoreSubset(const Var, const Var, const Set&, const Var) const;
+  template <template <typename...> class SetType, typename... Args>
+  std::pair<double, SetType<Var, Args...>>
+  minAssocScoreSubset(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
 
   template <typename Set>
   bool
