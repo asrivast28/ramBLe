@@ -5,8 +5,6 @@
 #ifndef UINTSET_HPP_
 #define UINTSET_HPP_
 
-#include "bit_util.hpp"
-
 #include <cstdint>
 #include <initializer_list>
 #include <vector>
@@ -41,13 +39,13 @@ class UintSet {
   static_assert(N <= maxN<Element>(), "Provided N is bigger than the maximum required");
 
 public:
-  class Iterator;
+  class Enumerator;
 
 public:
   using Set = typename UintTypeTrait<N>::Set;
   // Required typedefs
   using value_type = Element;
-  using iterator = Iterator;
+  using iterator = Enumerator;
 
 public:
   static
@@ -60,7 +58,7 @@ public:
 
   UintSet(const std::initializer_list<Element>&, const Element = capacity());
 
-  UintSet(const Iterator&, const Iterator&, const Element = capacity());
+  UintSet(const iterator&, const iterator&, const Element = capacity());
 
   UintSet(const typename std::vector<Element>::iterator&, const typename std::vector<Element>::iterator&, const Element = capacity());
 
@@ -76,11 +74,11 @@ public:
   bool
   operator!=(const UintSet&) const;
 
-  Iterator
+  iterator
   insert(const Element);
 
-  Iterator
-  insert(const Iterator&, const Element);
+  iterator
+  insert(const iterator&, const Element);
 
   void
   erase(const Element);
@@ -97,13 +95,13 @@ public:
   bool
   contains(const Element) const;
 
-  Iterator
+  iterator
   begin() const;
 
-  Iterator
+  iterator
   end() const;
 
-  Iterator
+  iterator
   find(const Element) const;
 
   UintSet

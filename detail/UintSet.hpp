@@ -37,14 +37,14 @@ maxN() {
 
 template <typename Element, int N>
 /**
- * @brief Iterator for UintSet.
+ * @brief Enumerates the elements of the UintSet.
  */
-class UintSet<Element, N>::Iterator : public std::iterator<std::forward_iterator_tag, Element> {
+class UintSet<Element, N>::Enumerator : public std::iterator<std::forward_iterator_tag, Element> {
 public:
   using Set = typename UintTypeTrait<N>::Set;
 
 public:
-  Iterator(const Set& set, const Element max)
+  Enumerator(const Set& set, const Element max)
     : m_state(set),
       m_maxN(max >> 6),
       m_currN(0),
@@ -54,7 +54,7 @@ public:
     next();
   }
 
-  Iterator(const Set& set, const Element max, const Element curr)
+  Enumerator(const Set& set, const Element max, const Element curr)
     : m_state((curr < max) ? set : set_empty<Set>()),
       m_maxN(max >> 6),
       m_currN(curr >> 6),
@@ -78,7 +78,7 @@ public:
     }
   }
 
-  Iterator&
+  Enumerator&
   operator++()
   {
     next();
@@ -86,13 +86,13 @@ public:
   }
 
   bool
-  operator==(const Iterator& other) const
+  operator==(const Enumerator& other) const
   {
     return m_curr == *other;
   }
 
   bool
-  operator!=(const Iterator& other) const
+  operator!=(const Enumerator& other) const
   {
     return m_curr != *other;
   }
@@ -169,8 +169,8 @@ UintSet<Element, N>::UintSet(
 
 template <typename Element, int N>
 UintSet<Element, N>::UintSet(
-  const typename UintSet<Element, N>::Iterator& first,
-  const typename UintSet<Element, N>::Iterator& last,
+  const typename UintSet<Element, N>::iterator& first,
+  const typename UintSet<Element, N>::iterator& last,
   const Element max
 ) : m_set(as_set<Set>(first, last)),
     m_max(max)
@@ -222,7 +222,7 @@ UintSet<Element, N>::operator!=(
 }
 
 template <typename Element, int N>
-typename UintSet<Element, N>::Iterator
+typename UintSet<Element, N>::iterator
 UintSet<Element, N>::insert(
   const Element x
 )
@@ -233,9 +233,9 @@ UintSet<Element, N>::insert(
 }
 
 template <typename Element, int N>
-typename UintSet<Element, N>::Iterator
+typename UintSet<Element, N>::iterator
 UintSet<Element, N>::insert(
-  const Iterator&,
+  const iterator&,
   const Element x
 )
 {
@@ -288,28 +288,28 @@ UintSet<Element, N>::contains(
 }
 
 template <typename Element, int N>
-typename UintSet<Element, N>::Iterator
+typename UintSet<Element, N>::iterator
 UintSet<Element, N>::begin(
 ) const
 {
-  return Iterator(m_set, m_max);
+  return Enumerator(m_set, m_max);
 }
 
 template <typename Element, int N>
-typename UintSet<Element, N>::Iterator
+typename UintSet<Element, N>::iterator
 UintSet<Element, N>::end(
 ) const
 {
-  return Iterator(m_set, m_max, m_max);
+  return Enumerator(m_set, m_max, m_max);
 }
 
 template <typename Element, int N>
-typename UintSet<Element, N>::Iterator
+typename UintSet<Element, N>::iterator
 UintSet<Element, N>::find(
   const Element x
 ) const
 {
-  return contains(x) ? Iterator(m_set, m_max, x): end();
+  return contains(x) ? Enumerator(m_set, m_max, x): end();
 }
 
 template <typename Element, int N>
