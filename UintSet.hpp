@@ -116,6 +116,7 @@ public:
 private:
   Set m_set;
   Element m_max;
+  mutable Element m_size;
 }; // class UintSet
 
 #include "detail/UintSet.hpp"

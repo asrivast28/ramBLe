@@ -154,7 +154,8 @@ template <typename Element, int N>
 UintSet<Element, N>::UintSet(
   const Element max
 ) : m_set(set_empty<Set>()),
-    m_max(max)
+    m_max(max),
+    m_size()
 {
 }
 
@@ -163,8 +164,10 @@ UintSet<Element, N>::UintSet(
   const std::initializer_list<Element>& s,
   const Element max
 ) : m_set(as_set<Set>(s.begin(), s.end())),
-    m_max(max)
+    m_max(max),
+    m_size()
 {
+  m_size = set_size(m_set);
 }
 
 template <typename Element, int N>
@@ -173,8 +176,10 @@ UintSet<Element, N>::UintSet(
   const typename UintSet<Element, N>::iterator& last,
   const Element max
 ) : m_set(as_set<Set>(first, last)),
-    m_max(max)
+    m_max(max),
+    m_size()
 {
+  m_size = set_size(m_set);
 }
 
 template <typename Element, int N>
@@ -183,8 +188,10 @@ UintSet<Element, N>::UintSet(
   const typename std::vector<Element>::iterator& last,
   const Element max
 ) : m_set(as_set<Set>(first, last)),
-    m_max(max)
+    m_max(max),
+    m_size()
 {
+  m_size = set_size(m_set);
 }
 
 template <typename Element, int N>
@@ -228,6 +235,9 @@ UintSet<Element, N>::insert(
 )
 {
   LOG_MESSAGE_IF(x > m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
+  if (!contains(x)) {
+    ++m_size;
+  }
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -240,6 +250,9 @@ UintSet<Element, N>::insert(
 )
 {
   LOG_MESSAGE_IF(x > m_max, error, "Inserting a value (%d) which is greater than the max (%d)", static_cast<int>(x), static_cast<int>(m_max));
+  if (!contains(x)) {
+    ++m_size;
+  }
   m_set = set_add(std::move(m_set), static_cast<int>(x));
   return end();
 }
@@ -251,6 +264,9 @@ UintSet<Element, N>::erase(
 )
 {
   LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%d) which does not exist in the set", static_cast<int>(x));
+  if (contains(x)) {
+    --m_size;
+  }
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
 }
 
@@ -267,7 +283,10 @@ uint32_t
 UintSet<Element, N>::size(
 ) const
 {
-  return static_cast<Element>(set_size(m_set));
+  if (m_size == 0) {
+    m_size = set_size(m_set);
+  }
+  return m_size;
 }
 
 template <typename Element, int N>
