@@ -12,7 +12,7 @@
 #include "UintSet.hpp"
 
 
-using Counter = CTCounter<1>;
+using Counter = CTCounter<>;
 // All the different direct discovery algorithms
 using DirectDiscoveryAlgorithms = testing::Types<GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
                                                  IAMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,

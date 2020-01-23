@@ -13,9 +13,7 @@
 #include "mxx/comm.hpp"
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
-#include "BVCounter.hpp"
 #include "CTCounter.hpp"
-#include "RadCounter.hpp"
 
 #include <mpi.h>
 
@@ -145,7 +143,7 @@ getNeighborhood(
  *
  * @return The list of labels of the variables in the neighborhood.
  */
-template <template <int, typename...> class CounterType, typename FileType>
+template <template <typename...> class CounterType, typename FileType>
 std::vector<std::string>
 getNeighborhood(
   const uint32_t n,
@@ -155,17 +153,13 @@ getNeighborhood(
 )
 {
   std::vector<std::string> varNames(reader->varNames());
+  auto counter = CounterType<>::create(n, m, std::begin(reader->data()));
+  reader.reset();
   std::vector<std::string> nbrVars;
   if ((n - 1) <= UintSet<uint8_t>::capacity()) {
-    constexpr int N = maxN<uint8_t>();
-    auto counter = CounterType<N>::create(n, m, std::begin(reader->data()));
-    reader.reset();
     nbrVars = getNeighborhood<uint8_t>(counter, varNames, options);
   }
   else if ((n - 1) <= UintSet<uint16_t>::capacity()) {
-    constexpr int N = maxN<uint16_t>();
-    auto counter = CounterType<N>::create(n, m, std::begin(reader->data()));
-    reader.reset();
     nbrVars = getNeighborhood<uint16_t>(counter, varNames, options);
   }
   else {
@@ -242,17 +236,7 @@ main(
       nbrVars = getNeighborhood<CTCounter>(n, m, std::move(reader), options);
       counterFound = true;
     }
-    ss << "ct,";
-    if (options.counterType().compare("bv") == 0) {
-      nbrVars = getNeighborhood<BVCounter>(n, m, std::move(reader), options);
-      counterFound = true;
-    }
-    ss << "bv,";
-    if (options.counterType().compare("rad") == 0) {
-      nbrVars = getNeighborhood<RadCounter>(n, m, std::move(reader), options);
-      counterFound = true;
-    }
-    ss << "rad";
+    ss << "ct";
     if (!counterFound) {
       throw std::runtime_error("Requested counter not found. Supported counter types are: {" + ss.str() + "}");
     }

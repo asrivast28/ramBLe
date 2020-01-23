@@ -12,10 +12,9 @@
 /**
  * @brief Class that provides functionality for counting using contingency tables.
  *
- * @tparam N This is added for consistency with other counters.
  * @tparam Data The type of data to be stored.
  */
-template <int N, typename Data = uint8_t>
+template <typename Data = uint8_t>
 class CTCounter {
 public:
   using data_type = Data;
@@ -24,7 +23,7 @@ public:
   // declaration of the static method to create the counter
   template <typename Iter>
   static
-  CTCounter<N, Data> create(const uint32_t, const uint32_t, Iter);
+  CTCounter<Data> create(const uint32_t, const uint32_t, Iter);
 
 public:
   uint32_t n() const { return m_nvars; }
@@ -43,11 +42,11 @@ private:
 }; // class CTCounter
 
 
-template <int N, typename Data>
+template <typename Data>
 template <typename Iter>
-CTCounter<N, Data>
-CTCounter<N, Data>::create(const uint32_t n, const uint32_t m, Iter it) {
-  CTCounter<N, data_type> ct;
+CTCounter<Data>
+CTCounter<Data>::create(const uint32_t n, const uint32_t m, Iter it) {
+  CTCounter<data_type> ct;
   ct.m_nvars = n;
   ct.m_nobs = m;
   ct.m_data.resize(n * m);
@@ -64,6 +63,6 @@ CTCounter<N, Data>::create(const uint32_t n, const uint32_t m, Iter it) {
   }
 
   return ct;
-} // CTCounter<N, Data>::create
+} // CTCounter<Data>::create
 
 #endif // CT_COUNTER_HPP

@@ -10,14 +10,9 @@
 #include "DiscreteData.hpp"
 #include "UintSet.hpp"
 
-#include "BVCounter.hpp"
-#include "RadCounter.hpp"
-
 
 // All the different counter implementations
-using AllCounters = testing::Types<CTCounter<1>,
-                                   BVCounter<1>,
-                                   RadCounter<1>>;
+using AllCounters = testing::Types<CTCounter<>>;
 
 template <typename Counter>
 class NeapolitanData : public testing::Test {

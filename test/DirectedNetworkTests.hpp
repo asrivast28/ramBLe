@@ -11,7 +11,7 @@
 #include "UintSet.hpp"
 
 
-using Counter = CTCounter<1>;
+using Counter = CTCounter<>;
 using Algorithm = GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>;
 
 class ChildData : public testing::Test {
