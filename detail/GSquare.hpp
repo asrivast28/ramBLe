@@ -98,7 +98,7 @@ marginalGSquare(
   auto xx = &counter.data()[x * nobs];
   auto yy = &counter.data()[y * nobs];
   for (auto k = 0u; k < nobs; ++k) {
-    cc[xx[k] * r_y + yy[k]]++;
+    ++cc[xx[k] * r_y + yy[k]];
   }
 
   for (auto a = 0u, idx = 0u; a < r_x; ++a) {
@@ -140,16 +140,17 @@ marginalGSquare(
  * @brief Computes the configurations of the conditioning set.
  */
 template <typename Set>
-std::pair<uint32_t, std::vector<uint32_t>>
+uint32_t
 indexGiven(
   const CTCounter<>& counter,
-  const Set& given
+  const Set& given,
+  uint32_t* const indices
 )
 {
   const auto& data = counter.data();
   const auto nobs = counter.m();
   auto xk = given.begin();
-  std::vector<uint32_t> indices(&data[*xk * nobs], &data[(*xk + 1) * nobs]);
+  std::copy(&data[*xk * nobs], &data[(*xk + 1) * nobs], indices);
   uint32_t cumulative = counter.r(*xk);
   ++xk;
   for (; xk != given.end(); ++xk) {
@@ -159,7 +160,7 @@ indexGiven(
     }
     cumulative *= counter.r(*xk);
   }
-  return std::make_pair(cumulative, indices);
+  return cumulative;
 }
 
 /**
@@ -180,26 +181,27 @@ conditionalGSquare(
   uint32_t df = (r_x - 1) * (r_y - 1);
   LOG_MESSAGE(trace, "r_x = %d, r_y = %d", r_x, r_y);
 
-  auto result = indexGiven(counter, given);
-  df *= result.first;
+  // Storage for the computed indices for all the observations
+  uint32_t* zz = new uint32_t[counter.m()];
+  auto r_given = indexGiven(counter, given, zz);
+  df *= r_given;
 
   // Storage for row counts corresponding to every possible configuration
-  uint32_t* cc = new uint32_t[result.first * r_x * r_y]();
+  uint32_t* cc = new uint32_t[r_given * r_x * r_y]();
   // Storage for marginal counts for the states of x and the given variables
-  uint32_t* mcx = new uint32_t[result.first * r_x]();
+  uint32_t* mcx = new uint32_t[r_given * r_x]();
   // Storage for marginal counts for the states of y and the given variables
-  uint32_t* mcy = new uint32_t[result.first * r_y]();
+  uint32_t* mcy = new uint32_t[r_given * r_y]();
   // Storage for marginal counts for the states of the given variables
-  uint32_t* mcz = new uint32_t[result.first]();
+  uint32_t* mcz = new uint32_t[r_given]();
 
-  const auto& zz = result.second;
   auto xx = &counter.data()[x * counter.m()];
   auto yy = &counter.data()[y * counter.m()];
   for (auto k = 0u; k < counter.m(); ++k) {
     ++cc[zz[k] * r_x * r_y + xx[k] * r_y + yy[k]];
   }
 
-  for (auto c = 0u, idx = 0u; c < result.first; ++c) {
+  for (auto c = 0u, idx = 0u; c < r_given; ++c) {
     for (auto a = 0u, i = c * r_x; a < r_x; ++a, ++i) {
       for (auto b = 0u, j = c * r_y; b < r_y; ++b, ++j) {
         mcx[i] += cc[idx];
@@ -211,7 +213,7 @@ conditionalGSquare(
   }
 
   double gSquare = 0.0;
-  for (auto c = 0u, idx = 0u; c < result.first; ++c) {
+  for (auto c = 0u, idx = 0u; c < r_given; ++c) {
     if (mcz[c] == 0) {
       idx += r_x * r_y;
       continue;
@@ -236,6 +238,7 @@ conditionalGSquare(
   gSquare *= 2.0;
   LOG_MESSAGE(debug, "df = %d, G-square = %g", df, gSquare);
 
+  delete[] zz;
   delete[] cc;
   delete[] mcx;
   delete[] mcy;
