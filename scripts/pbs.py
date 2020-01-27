@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('-q', '--queue', type=str, default='hive', metavar='NAME', help='Name of the queue.')
     parser.add_argument('-o', '--output', type=str, metavar='FILE', help='Name of the output file.')
     parser.add_argument('-d', '--depend', type=str, metavar='JOBID', help='ID of the job on which this job depends.')
+    parser.add_argument('-a', '--after', type=str, metavar='[YYYY][MM][DD]HHMM', help='Schedule the job after the given time.')
     args = parser.parse_args()
     return args
 
@@ -37,12 +38,12 @@ def create_submission_script(args):
 
     preamble_format = \
 '''\
-#PBS -N %s                 # job name
-#PBS -l walltime=%s        # duration of the job
-#PBS -l nodes=%d:ppn=%d    # number of nodes and cores per node
-#PBS -q %s                 # queue name (where job is submitted)
-#PBS -j oe                 # combine output and error messages into a single file
-#PBS -o %s                 # output file name
+#PBS -N %s                  # job name
+#PBS -l walltime=%s         # duration of the job
+#PBS -l nodes=%d:ppn=%d     # number of nodes and cores per node
+#PBS -q %s                  # queue name (where job is submitted)
+#PBS -j oe                  # combine output and error messages into a single file
+#PBS -o %s                  # output file name
 '''
     output = args.output if args.output is not None else args.name + '.out'
     if os.path.exists(output):
@@ -51,6 +52,9 @@ def create_submission_script(args):
     if args.depend:
         preamble += \
 '#PBS -W depend=afterok:%s  # job ID of the job on which this job depends' % args.depend
+    if args.after:
+        preamble += \
+'#PBS -a %s                 # delay executing the job until the given time and date' % args.after
     preamble += '\n'
 
     with NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as pbs:
