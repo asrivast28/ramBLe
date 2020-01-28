@@ -34,14 +34,14 @@ if (!args$learn && is.null(args$target) && is.null(args$output)) {
 tRead <- proc.time()
 data <- NULL
 if (args$indices) {
-        data <- read.table(file=args$file, sep=args$separator, header=args$varnames, row.names=1)
+        data <- read.table(file=args$file, sep=args$separator, check.names=!args$varnames, header=args$varnames, row.names=1)
 } else {
-        data <- read.table(file=args$file, sep=args$separator, header=args$varnames)
+        data <- read.table(file=args$file, sep=args$separator, check.names=!args$varnames, header=args$varnames)
 }
 if (args$colobs) {
-        data <- as.data.frame(t(data))
+        data <- as.data.frame(t(data), optional=args$varnames)
 }
-data <- as.data.frame(lapply(data, as.factor))
+data <- as.data.frame(lapply(data, as.factor), optional=args$varnames)
 tRead <- proc.time() - tRead
 if (!((ncol(data) == args$nvars) && (nrow(data) == args$nobs))) {
         cat('Read dimensions:', nrow(data), 'x', ncol(data), '\n')
