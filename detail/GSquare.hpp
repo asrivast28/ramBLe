@@ -177,6 +177,7 @@ conditionalGSquare(
 {
   auto r_x = counter.r(x);
   auto r_y = counter.r(y);
+  auto r_xy = r_x * r_y;
 
   uint32_t df = (r_x - 1) * (r_y - 1);
   LOG_MESSAGE(trace, "r_x = %d, r_y = %d", r_x, r_y);
@@ -187,7 +188,7 @@ conditionalGSquare(
   df *= r_given;
 
   // Storage for row counts corresponding to every possible configuration
-  uint32_t* cc = new uint32_t[r_given * r_x * r_y]();
+  uint32_t* cc = new uint32_t[r_given * r_xy]();
   // Storage for marginal counts for the states of x and the given variables
   uint32_t* mcx = new uint32_t[r_given * r_x]();
   // Storage for marginal counts for the states of y and the given variables
@@ -198,7 +199,7 @@ conditionalGSquare(
   auto xx = &counter.data()[x * counter.m()];
   auto yy = &counter.data()[y * counter.m()];
   for (auto k = 0u; k < counter.m(); ++k) {
-    ++cc[zz[k] * r_x * r_y + xx[k] * r_y + yy[k]];
+    ++cc[zz[k] * r_xy + xx[k] * r_y + yy[k]];
   }
 
   for (auto c = 0u, idx = 0u; c < r_given; ++c) {
@@ -215,7 +216,7 @@ conditionalGSquare(
   double gSquare = 0.0;
   for (auto c = 0u, idx = 0u; c < r_given; ++c) {
     if (mcz[c] == 0) {
-      idx += r_x * r_y;
+      idx += r_xy;
       continue;
     }
     for (auto a = 0u, i = c * r_x; a < r_x; ++a, ++i) {
@@ -223,14 +224,13 @@ conditionalGSquare(
       for (auto b = 0u, j = c * r_y; b < r_y; ++b, ++j) {
         LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
         LOG_MESSAGE(trace, "sk = %d, sik = %d, sjk = %d, s = %d", mcz[c], mcx[i], mcy[j], cc[idx]);
-        if ((cc[idx] * mcz[c] != mcx[i] * mcy[j]) && (cc[idx] * mcx[i] * mcy[j] != 0)) {
+        if ((cc[idx] * mcx[i] * mcy[j] != 0) && (cc[idx] * mcz[c] != mcx[i] * mcy[j])) {
           auto component = cc[idx] * log((first * cc[idx]) / mcy[j]);
           gSquare += component;
           LOG_MESSAGE(trace, "component = %g", component);
         }
-        else {
-          LOG_MESSAGE(trace, "component = 0.0");
-        }
+        LOG_MESSAGE_IF((cc[idx] * mcx[i] * mcy[j] == 0) || (cc[idx] * mcz[c] == mcx[i] * mcy[j]),
+                       trace, "component = 0.0");
         ++idx;
       }
     }
