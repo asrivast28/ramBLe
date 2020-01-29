@@ -69,6 +69,9 @@ public:
   const std::string&
   counterType() const;
 
+  bool
+  forceParallel() const;
+
   const std::string&
   logLevel() const;
 
@@ -93,6 +96,7 @@ private:
   bool m_discoverMB;
   bool m_learnNetwork;
   bool m_directEdges;
+  bool m_forceParallel;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_

@@ -14,7 +14,7 @@
 using Counter = CTCounter<>;
 using Algorithm = GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>;
 
-class ChildData : public testing::Test {
+class ChildData : public testing::TestWithParam<bool> {
 protected:
   void
   SetUp() override {
@@ -37,8 +37,8 @@ protected:
   Algorithm* algo;
 };
 
-TEST_F(ChildData, DirectedNetwork) {
-  auto computedBN = this->algo->getNetwork(true);
+TEST_P(ChildData, DirectedNetwork) {
+  auto computedBN = this->algo->getNetwork(true, GetParam());
 
   auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
   expectedBN.addEdge(static_cast<uint8_t>(1), static_cast<uint8_t>(2));
@@ -66,8 +66,11 @@ TEST_F(ChildData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
+INSTANTIATE_TEST_CASE_P(Sequential, ChildData, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, ChildData, testing::Values(true));
 
-class InsuranceData : public testing::Test {
+
+class InsuranceData : public testing::TestWithParam<bool> {
 protected:
   void
   SetUp() override {
@@ -90,8 +93,8 @@ protected:
   Algorithm* algo;
 };
 
-TEST_F(InsuranceData, DirectedNetwork) {
-  auto computedBN = this->algo->getNetwork(true);
+TEST_P(InsuranceData, DirectedNetwork) {
+  auto computedBN = this->algo->getNetwork(true, GetParam());
 
   auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
   expectedBN.addEdge(static_cast<uint8_t>(0), static_cast<uint8_t>(1));
@@ -123,8 +126,11 @@ TEST_F(InsuranceData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
+INSTANTIATE_TEST_CASE_P(Sequential, InsuranceData, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, InsuranceData, testing::Values(true));
 
-class MildewData : public testing::Test {
+
+class MildewData : public testing::TestWithParam<bool> {
 protected:
   void
   SetUp() override {
@@ -147,8 +153,8 @@ protected:
   Algorithm* algo;
 };
 
-TEST_F(MildewData, DirectedNetwork) {
-  auto computedBN = this->algo->getNetwork(true);
+TEST_P(MildewData, DirectedNetwork) {
+  auto computedBN = this->algo->getNetwork(true, GetParam());
 
   auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
   expectedBN.addEdge(static_cast<uint8_t>(0), static_cast<uint8_t>(1));
@@ -169,8 +175,11 @@ TEST_F(MildewData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
+INSTANTIATE_TEST_CASE_P(Sequential, MildewData, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, MildewData, testing::Values(true));
 
-class AlarmData : public testing::Test {
+
+class AlarmData : public testing::TestWithParam<bool> {
 protected:
   void
   SetUp() override {
@@ -193,8 +202,8 @@ protected:
   Algorithm* algo;
 };
 
-TEST_F(AlarmData, DirectedNetwork) {
-  auto computedBN = this->algo->getNetwork(true);
+TEST_P(AlarmData, DirectedNetwork) {
+  auto computedBN = this->algo->getNetwork(true, GetParam());
 
   auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
   expectedBN.addEdge(static_cast<uint8_t>(0), static_cast<uint8_t>(5));
@@ -236,5 +245,8 @@ TEST_F(AlarmData, DirectedNetwork) {
   expectedBN.addEdge(static_cast<uint8_t>(36), static_cast<uint8_t>(14));
   EXPECT_EQ(expectedBN, computedBN);
 }
+
+INSTANTIATE_TEST_CASE_P(Sequential, AlarmData, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, AlarmData, testing::Values(true));
 
 #endif // TEST_DIRECTEDNETWORK_HPP_

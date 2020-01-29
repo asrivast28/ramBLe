@@ -57,7 +57,7 @@ private:
   symmetryCorrect(const std::unordered_map<Var, Set>&, const std::set<std::pair<Var, Var>>&) const;
 
   BayesianNetwork<Var>
-  getSkeleton() const override;
+  getSkeleton_parallel() const override;
 }; // class DirectDiscovery
 
 /**

@@ -202,14 +202,13 @@ ConstraintBasedDiscovery<Data, Var, Set>::getMB(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Function for getting the undirected skeleton network.
+ * @brief Function for getting the undirected skeleton network sequentially.
  */
 BayesianNetwork<Var>
-ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton(
+ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_sequential(
 ) const
 {
-  auto varNames = this->m_data.varNames(m_allVars);
-  BayesianNetwork<Var> bn(varNames);
+  BayesianNetwork<Var> bn(this->m_data.varNames(m_allVars));
   for (const auto x: m_allVars) {
     auto pcX = this->getPC(x);
     for (const auto y: pcX) {
@@ -221,6 +220,17 @@ ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton(
     }
   }
   return bn;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function for getting the undirected skeleton network in parallel.
+ */
+BayesianNetwork<Var>
+ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_parallel(
+) const
+{
+  throw std::runtime_error("Getting skeleton in parallel is not implemented for the given algorithm");
 }
 
 template <typename Data, typename Var, typename Set>
@@ -285,13 +295,15 @@ template <typename Data, typename Var, typename Set>
  * @brief Top level function for getting the complete causal network.
  *
  * @param directEdges Specifies if the edges of the network should be directed.
+ * @param isParallel Specifies if the skeleton should be constructed in parallel.
  */
 BayesianNetwork<Var>
 ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
-  const bool directEdges
+  const bool directEdges,
+  const bool isParallel
 ) const
 {
-  auto bn = this->getSkeleton();
+  auto bn = isParallel ? this->getSkeleton_parallel() : this->getSkeleton_sequential();
   if (this->m_comm.is_first() && directEdges) {
     // First, orient the v-structures
     auto vStructures = this->findVStructures();

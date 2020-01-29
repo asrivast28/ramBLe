@@ -26,7 +26,8 @@ ProgramOptions::ProgramOptions(
     m_obsIndices(),
     m_discoverMB(),
     m_learnNetwork(),
-    m_directEdges()
+    m_directEdges(),
+    m_forceParallel()
 {
   po::options_description visible("User options");
   visible.add_options()
@@ -55,6 +56,7 @@ ProgramOptions::ProgramOptions(
   po::options_description developer("Developer options");
   developer.add_options()
     ("counter", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
+    ("parallel", po::bool_switch(&m_forceParallel)->default_value(false), "Use the parallel implementation even for p=1.")
 #ifdef LOGGING
     ("log", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
@@ -196,6 +198,13 @@ ProgramOptions::counterType(
 ) const
 {
   return m_counterType;
+}
+
+bool
+ProgramOptions::forceParallel(
+) const
+{
+  return m_forceParallel;
 }
 
 const std::string&

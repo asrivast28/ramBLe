@@ -109,7 +109,7 @@ TYPED_TEST(CoronaryDirectDiscovery, ParentsChildren) {
 }
 
 TYPED_TEST(CoronaryDirectDiscovery, DirectedNetwork) {
-  auto computedBN = this->algo->getNetwork(true);
+  auto computedBN = this->algo->getNetwork(true, false);
 
   auto smoking = this->data->varIndex("Smoking");
   auto mWork = this->data->varIndex("M. Work");
@@ -247,7 +247,7 @@ TYPED_TEST(AsiaDirectDiscovery, ParentsChildren) {
 }
 
 TYPED_TEST(AsiaDirectDiscovery, DirectedNetwork) {
-  auto computedBN = this->algo->getNetwork(true);
+  auto computedBN = this->algo->getNetwork(true, false);
 
   auto smoke = this->data->varIndex("smoke");
   auto tub = this->data->varIndex("tub");

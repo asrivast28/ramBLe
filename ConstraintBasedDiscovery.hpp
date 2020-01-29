@@ -32,7 +32,7 @@ public:
   getMB(const Var) const;
 
   BayesianNetwork<Var>
-  getNetwork(const bool = false) const;
+  getNetwork(const bool, const bool) const;
 
   virtual
   ~ConstraintBasedDiscovery() { }
@@ -51,7 +51,11 @@ protected:
 
   virtual
   BayesianNetwork<Var>
-  getSkeleton() const;
+  getSkeleton_sequential() const;
+
+  virtual
+  BayesianNetwork<Var>
+  getSkeleton_parallel() const;
 
 private:
   std::pair<Set, bool>

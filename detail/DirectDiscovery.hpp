@@ -398,10 +398,10 @@ DirectDiscovery<Data, Var, Set>::symmetryCorrect(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Function for getting the undirected skeleton network.
+ * @brief Function for getting the undirected skeleton network in parallel.
  */
 BayesianNetwork<Var>
-DirectDiscovery<Data, Var, Set>::getSkeleton(
+DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
 ) const
 {
   // First, block decompose all the variable pairs on all the processors
