@@ -185,7 +185,7 @@ set_allunion<UintSet<Element, std::integral_constant<int, N>>>( \
   auto b = new ReduceType[size]; \
   mxx::allreduce(set.m_set.b, size, b, std::bit_or<ReduceType>(), comm); \
   memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
-  delete b; \
+  delete[] b; \
 } \
  \
 template <> \
@@ -200,7 +200,7 @@ set_allintersect<UintSet<Element, std::integral_constant<int, N>>>( \
   auto b = new ReduceType[size]; \
   mxx::allreduce(set.m_set.b, size, b, std::bit_and<ReduceType>(), comm); \
   memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
-  delete b; \
+  delete[] b; \
 }
 
 DEFINE_UINT_SET_OPERATIONS(uint8_t, (maxSize<uint8_t>() >> 2))
