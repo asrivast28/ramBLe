@@ -11,6 +11,7 @@ def parse_args():
     Parse command line arguments.
     '''
     import argparse
+    import multiprocessing
     import os
     from os.path import abspath, dirname
 
@@ -19,11 +20,11 @@ def parse_args():
     parser.add_argument('-n', '--name', type=str, default='benchmark-csl', metavar='JOB', help='Name of the job.')
     parser.add_argument('-l', '--time', type=str, default='12:00:00', metavar='HH:MM:SS', help='Duration of the job.')
     parser.add_argument('-N', '--nodes', type=int, default=1, metavar='NODES', help='Number of required nodes.')
-    parser.add_argument('-p', '--procs', type=int, default=24, metavar='PROCS', help='Number of processes per node.')
+    parser.add_argument('-p', '--procs', type=int, default=multiprocessing.cpu_count(), metavar='PROCS', help='Number of processes per node.')
     parser.add_argument('-q', '--queue', type=str, default='hive', metavar='NAME', help='Name of the queue.')
     parser.add_argument('-o', '--output', type=str, metavar='FILE', help='Name of the output file.')
     parser.add_argument('-d', '--depend', type=str, metavar='JOBID', help='ID of the job on which this job depends.')
-    parser.add_argument('-a', '--after', type=str, metavar='[YYYY][MM][DD]HHMM', help='Schedule the job after the given time.')
+    parser.add_argument('-a', '--after', type=str, metavar='HHMM', help='Schedule the job after the given time.')
     args = parser.parse_args()
     return args
 
