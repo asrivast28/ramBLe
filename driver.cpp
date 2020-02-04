@@ -236,6 +236,12 @@ main(
     INIT_LOGGING(options.logLevel());
     uint32_t n = options.numVars();
     uint32_t m = options.numObs();
+    if (static_cast<double>(m) >= std::sqrt(std::numeric_limits<uint32_t>::max())) {
+      // Warn the user if the number of observations is too big to be handled by uint32_t
+      // We use sqrt here because we never multiply more than two observation counts without handling the consequences
+      std::cerr << "WARNING: The given number of observations is possibly too big to be handled by 32-bit unsigned integer" << std::endl;
+      std::cerr << "         This may result in silent errors because of overflow" << std::endl;
+    }
     TIMER_DECLARE(tRead);
     std::unique_ptr<DataReader<uint8_t>> reader;
     auto varMajor = true;

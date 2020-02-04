@@ -166,6 +166,8 @@ DirectDiscovery<Data, Var, Set>::updateScores(
 ) const
 {
   for (auto& score : myScores) {
+    LOG_MESSAGE(debug, "Updating score for the pair (%s, %s)",
+                this->m_data.varName(std::get<0>(score)), this->m_data.varName(std::get<1>(score)));
     std::get<2>(score) = this->m_data.assocScore(std::get<0>(score),
                                                  std::get<1>(score),
                                                  myBlankets.at(std::get<0>(score)));

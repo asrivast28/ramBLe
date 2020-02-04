@@ -115,7 +115,10 @@ marginalGSquare(
     for (auto b = 0u; b < r_y; ++b) {
       LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
       LOG_MESSAGE(trace, "si = %d, sj = %d, sij = %d", mcx[a], mcy[b], cc[idx]);
-      if ((cc[idx] * nobs != mcx[a] * mcy[b]) && (cc[idx] * mcx[a] * mcy[b] != 0)) {
+      // XXX: This is one of the only two places where we multiply three observation counts
+      // It can lead to overflow for 32-bit unsigned int
+      // Use 64-bit unsigned int just for this for now
+      if ((static_cast<uint64_t>(cc[idx]) * mcx[a] * mcy[b] != 0) && (cc[idx] * nobs != mcx[a] * mcy[b])) {
         auto component = cc[idx] * log((first * cc[idx]) / mcy[b]);
         gSquare += component;
         LOG_MESSAGE(trace, "component = %g", component);
@@ -224,7 +227,10 @@ conditionalGSquare(
       for (auto b = 0u, j = c * r_y; b < r_y; ++b, ++j) {
         LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
         LOG_MESSAGE(trace, "sk = %d, sik = %d, sjk = %d, s = %d", mcz[c], mcx[i], mcy[j], cc[idx]);
-        if ((cc[idx] * mcx[i] * mcy[j] != 0) && (cc[idx] * mcz[c] != mcx[i] * mcy[j])) {
+        // XXX: This is one of the only two places where we multiply three observation counts
+        // It can lead to overflow for 32-bit unsigned int
+        // Use 64-bit unsigned int just for this for now
+        if ((static_cast<uint64_t>(cc[idx]) * mcx[i] * mcy[j] != 0) && (cc[idx] * mcz[c] != mcx[i] * mcy[j])) {
           auto component = cc[idx] * log((first * cc[idx]) / mcy[j]);
           gSquare += component;
           LOG_MESSAGE(trace, "component = %g", component);
