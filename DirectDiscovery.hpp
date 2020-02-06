@@ -43,7 +43,7 @@ protected:
 
   virtual
   void
-  updateScores(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const;
+  updatePValues(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const;
 
   virtual
   std::pair<Var, double>
@@ -78,7 +78,7 @@ public:
 
 private:
   void
-  updateScores(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const override;
+  updatePValues(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const override;
 
   std::pair<Var, double>
   pickBestCandidate(const Var, const Set&, const Set&) const override;

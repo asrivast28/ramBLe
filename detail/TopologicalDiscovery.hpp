@@ -90,7 +90,7 @@ TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
       if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
-        auto ret = this->m_data.minAssocScoreSubset(target, x, candidates, this->m_maxConditioning);
+        auto ret = this->m_data.maxPValueSubset(target, x, candidates, this->m_maxConditioning);
         if (this->m_data.isIndependent(ret.first)) {
           LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
           auto& z = ret.second;
@@ -129,22 +129,22 @@ MMPC<Data, Var, Set>::getCandidatePC(
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    // Find the variable which maximizes the minimum association score with the target,
+    // Find the variable which minimizes the maximum p-value with the target,
     // given any subset of the current candidate PC
     Var x = this->m_data.numVars();
-    double scoreX = std::numeric_limits<double>::lowest();
+    double pvX = std::numeric_limits<double>::max();
     for (const Var y: candidates) {
       LOG_MESSAGE(debug, "MMPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      auto scoreY = this->m_data.minAssocScore(target, y, cpc, this->m_maxConditioning);
-      if (std::isless(scoreX, scoreY)) {
+      auto pvY = this->m_data.maxPValue(target, y, cpc, this->m_maxConditioning);
+      if (std::isgreater(pvX, pvY)) {
         x = y;
-        scoreX = scoreY;
+        pvX = pvY;
       }
     }
     LOG_MESSAGE(debug, "MMPC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(scoreX)) {
+    if (!this->m_data.isIndependent(pvX)) {
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.insert(x);
       changed = true;
@@ -177,15 +177,15 @@ HITON<Data, Var, Set>::getCandidatePC(
   LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
   auto cpc = set_init(Set(), this->m_data.numVars());
   while (candidates.size() > 0) {
-    // Find the variable which maximizes the marginal association score with the target
+    // Find the variable which minimizes the marginal p-value with the target
     Var x = this->m_data.numVars();
-    double scoreX = std::numeric_limits<double>::lowest();
+    double pvX = std::numeric_limits<double>::max();
     for (const Var y: candidates) {
       LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      double scoreY = this->m_data.assocScore(target, y);
-      if (std::isless(scoreX, scoreY)) {
+      double pvY = this->m_data.pValue(target, y);
+      if (std::isgreater(pvX, pvY)) {
         x = y;
-        scoreX = scoreY;
+        pvX = pvY;
       }
     }
     LOG_MESSAGE(debug, "HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
@@ -220,22 +220,22 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
   LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
   auto cpc = set_init(Set(), this->m_data.numVars());
   while (candidates.size() > 0) {
-    // Find the variable which maximizes the marginal association score with the target
+    // Find the variable which minimizes the marginal p-value with the target
     Var x = this->m_data.numVars();
-    double scoreX = std::numeric_limits<double>::lowest();
+    double pvX = std::numeric_limits<double>::max();
     auto remove = set_init(Set(), this->m_data.numVars());
     for (const Var y: candidates) {
       LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      double scoreY = this->m_data.assocScore(target, y);
-      if (this->m_data.isIndependent(scoreY)) {
+      double pvY = this->m_data.pValue(target, y);
+      if (this->m_data.isIndependent(pvY)) {
         LOG_MESSAGE(debug, "SI-HITON-PC: Marking %s for removal from the candidates", this->m_data.varName(y));
         // Can not be added to the candidate PC, mark for removal
         remove.insert(y);
         continue;
       }
-      if (std::isless(scoreX, scoreY)) {
+      if (std::isgreater(pvX, pvY)) {
         x = y;
-        scoreX = scoreY;
+        pvX = pvY;
       }
     }
     // Remove all the candidates which can not be added
@@ -279,23 +279,23 @@ GetPC<Data, Var, Set>::getCandidatePC(
   bool changed = true;
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    // Find the variable which maximizes the minimum association score with the target,
+    // Find the variable which minimizes the maximum p-value with the target,
     // given any subset of the current candidate PC
     Var x = this->m_data.numVars();
-    double scoreX = std::numeric_limits<double>::lowest();
+    double pvX = std::numeric_limits<double>::max();
     auto remove = set_init(Set(), this->m_data.numVars());
     for (const Var y: candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      auto scoreY = this->m_data.minAssocScore(target, y, cpc, this->m_maxConditioning);
-      if (this->m_data.isIndependent(scoreY)) {
+      auto pvY = this->m_data.maxPValue(target, y, cpc, this->m_maxConditioning);
+      if (this->m_data.isIndependent(pvY)) {
         LOG_MESSAGE(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
         // Can not be added to the candidate PC, mark for removal
         remove.insert(y);
         continue;
       }
-      if (std::isless(scoreX, scoreY)) {
+      if (std::isgreater(pvX, pvY)) {
         x = y;
-        scoreX = scoreY;
+        pvX = pvY;
       }
     }
     // Remove all the candidates which can not be added
@@ -308,7 +308,7 @@ GetPC<Data, Var, Set>::getCandidatePC(
     LOG_MESSAGE(debug, "GetPC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(scoreX)) {
+    if (!this->m_data.isIndependent(pvX)) {
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.insert(x);
       changed = true;

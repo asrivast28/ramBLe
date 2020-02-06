@@ -56,10 +56,6 @@ public:
   pValue(const Var, const Var, const Set& = Set()) const;
 
   template <typename Set = std::set<Var>>
-  double
-  assocScore(const Var, const Var, const Set& = Set()) const;
-
-  template <typename Set = std::set<Var>>
   bool
   isIndependent(const Var, const Var, const Set& = Set()) const;
 
@@ -68,15 +64,15 @@ public:
 
   template <template <typename...> class SetType, typename... Args>
   double
-  minAssocScore(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
+  maxPValue(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
 
   template <template <typename...> class SetType, typename... Args>
   double
-  minAssocScore(const Var, const Var, const SetType<Var, Args...>&, const SetType<Var, Args...>&, const Var) const;
+  maxPValue(const Var, const Var, const SetType<Var, Args...>&, const SetType<Var, Args...>&, const Var) const;
 
   template <template <typename...> class SetType, typename... Args>
   std::pair<double, SetType<Var, Args...>>
-  minAssocScoreSubset(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
+  maxPValueSubset(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
 
   template <typename Set>
   bool

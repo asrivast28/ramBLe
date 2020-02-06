@@ -198,29 +198,6 @@ DiscreteData<Counter, Var>::pValue(
 template <typename Counter, typename Var>
 template <typename Set>
 /**
- * @brief Computes the association score for the given variables, given the conditioning set.
- *
- * @tparam Set The type of the container used for indices of the given variables.
- * @param x The index of the first variable.
- * @param y The index of the second variable.
- * @param given The indices of the variables to be conditioned on.
- *
- * @return A score in the range [0.0, 1.0] which quantifies
- *         the strength of association between the given variables.
- */
-double
-DiscreteData<Counter, Var>::assocScore(
-  const Var x,
-  const Var y,
-  const Set& given
-) const
-{
-  return (1.0 - this->pValue(x, y, given));
-}
-
-template <typename Counter, typename Var>
-template <typename Set>
-/**
  * @brief Checks if the variables are independent, given the conditioning set.
  *
  * @tparam Set The type of the container used for indices of the given variables.
@@ -240,21 +217,21 @@ DiscreteData<Counter, Var>::isIndependent(
 
 template <typename Counter, typename Var>
 /**
- * @brief Checks for independence, given the association score.
+ * @brief Checks for independence, given the p-value.
  *
- * @param assocScore The association score, expected to be in the range [0.0, 1.0].
+ * @param pv The p-value, expected to be in the range [0.0, 1.0].
  */
 bool
 DiscreteData<Counter, Var>::isIndependent(
-  const double assocScore
+  const double pv
 ) const
 {
-  return std::isgreater(1.0 - assocScore, m_threshold);
+  return std::isgreater(pv, m_threshold);
 }
 
 template <typename Counter, typename Var>
 /**
- * @brief Finds the minimum strength of association between the given variables,
+ * @brief Finds the maximum p-value between the given variables,
  *        conditioned on any subset of the given conditioning set.
  *
  * @tparam Set The type of the container used for indices of the given variables.
@@ -263,11 +240,11 @@ template <typename Counter, typename Var>
  * @param given The indices of the variables to be conditioned on.
  * @param maxSize The maximum size of the subset to be tested.
  *
- * @return The computed minimum association score.
+ * @return The computed maximum p-value.
  */
 template <template <typename...> class SetType, typename... Args>
 double
-DiscreteData<Counter, Var>::minAssocScore(
+DiscreteData<Counter, Var>::maxPValue(
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -275,20 +252,20 @@ DiscreteData<Counter, Var>::minAssocScore(
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
-  auto minScore = std::numeric_limits<double>::max();
-  for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
+  auto maxPV = std::numeric_limits<double>::lowest();
+  for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
     for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
-      auto thisScore = this->assocScore(x, y, condition);
-      minScore = std::min(thisScore, minScore);
+      auto thisPV = this->pValue(x, y, condition);
+      maxPV = std::max(thisPV, maxPV);
     }
   }
-  LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
-  return minScore;
+  LOG_MESSAGE(debug, "max p-value = %g", maxPV);
+  return maxPV;
 }
 
 template <typename Counter, typename Var>
 /**
- * @brief Finds the minimum strength of association between the given variables,
+ * @brief Finds the maximum p-value between the given variables,
  *        conditioned on any subset of the given conditioning set.
  *
  * @tparam Set The type of the container used for indices of the given variables.
@@ -298,11 +275,11 @@ template <typename Counter, typename Var>
  * @param seed The indices of the variables to be included in every subset.
  * @param maxSize The maximum size of the subset to be tested.
  *
- * @return The computed minimum association score.
+ * @return The computed maximum p-value.
  */
 template <template <typename...> class SetType, typename... Args>
 double
-DiscreteData<Counter, Var>::minAssocScore(
+DiscreteData<Counter, Var>::maxPValue(
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -311,23 +288,23 @@ DiscreteData<Counter, Var>::minAssocScore(
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
-  auto minScore = std::numeric_limits<double>::max();
-  for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
+  auto maxPV = std::numeric_limits<double>::lowest();
+  for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
     for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
       // Always include the seed set in the conditioning set
       condition = set_union(condition, seed);
-      auto thisScore = this->assocScore(x, y, condition);
-      minScore = std::min(thisScore, minScore);
+      auto thisPV = this->pValue(x, y, condition);
+      maxPV = std::max(thisPV, maxPV);
     }
   }
-  LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
-  return minScore;
+  LOG_MESSAGE(debug, "max p-value = %g", maxPV);
+  return maxPV;
 }
 
 template <typename Counter, typename Var>
 /**
- * @brief Finds the subset of the given conditioning set that minimizes
- *        the strength of association between the given variables.
+ * @brief Finds the subset of the given conditioning set that maximizes
+ *        the p-value between the given variables.
  *
  * @tparam Set The type of the container used for indices of the given variables.
  * @param x The index of the first variable.
@@ -335,11 +312,11 @@ template <typename Counter, typename Var>
  * @param given The indices of the variables to be conditioned on.
  * @param maxSize The maximum size of the subset to be tested.
  *
- * @return A pair with the computed minimum score and the corresponding subset.
+ * @return A pair with the computed maximum p-value and the corresponding subset.
  */
 template <template <typename...> class SetType, typename... Args>
 std::pair<double, SetType<Var, Args...>>
-DiscreteData<Counter, Var>::minAssocScoreSubset(
+DiscreteData<Counter, Var>::maxPValueSubset(
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -347,19 +324,19 @@ DiscreteData<Counter, Var>::minAssocScoreSubset(
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
-  auto minScore = std::numeric_limits<double>::max();
+  auto maxPV = std::numeric_limits<double>::lowest();
   auto z = set_init(SetType<Var, Args...>(), numVars());
-  for (auto i = 0u; (i <= subsetSize) && std::isgreater(minScore, m_threshold); ++i) {
+  for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
     for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
-      auto thisScore = this->assocScore(x, y, condition);
-      if (std::isless(thisScore, minScore)) {
-        minScore = thisScore;
+      auto thisPV = this->pValue(x, y, condition);
+      if (std::isgreater(thisPV, maxPV)) {
+        maxPV = thisPV;
         z = condition;
       }
     }
   }
-  LOG_MESSAGE(debug, "minAssocScore = %g", minScore);
-  return std::make_pair(minScore, z);
+  LOG_MESSAGE(debug, "max p-value = %g", maxPV);
+  return std::make_pair(maxPV, z);
 }
 
 template <typename Counter, typename Var>
@@ -382,8 +359,8 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var maxSize
 ) const
 {
-  auto minScore = this->minAssocScore(x, y, given, maxSize);
-  return this->isIndependent(minScore);
+  auto maxPV = this->maxPValue(x, y, given, maxSize);
+  return this->isIndependent(maxPV);
 }
 
 template <typename Counter, typename Var>
@@ -425,12 +402,12 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const mxx::comm& comm
 ) const
 {
-  static auto findMin = [] (const double& x, const double& y) { return std::islessequal(x, y) ? x : y; };
+  static auto findMax = [] (const double& x, const double& y) { return std::isgreaterequal(x, y) ? x : y; };
   static uint32_t threshold = this->testThreshold();
   uint32_t mine = 0u;
   uint32_t others = 0u;
   int r = 0;
-  auto minScore = std::numeric_limits<double>::max();
+  auto maxPV = std::numeric_limits<double>::lowest();
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   for (auto i = 0u; i <= subsetSize; ++i) {
     auto subsets = Subsets<SetType, Var, Args...>(given, i);
@@ -444,15 +421,15 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
         ++mine;
         // Only conduct more tests if the previous tests did not
         // return independence
-        if (!this->isIndependent(minScore)) {
-          auto thisScore = this->assocScore(x, y, *sit);
-          minScore = std::min(minScore, thisScore);
+        if (!this->isIndependent(maxPV)) {
+          auto thisPV = this->pValue(x, y, *sit);
+          maxPV = std::max(maxPV, thisPV);
         }
       }
       // Sync if all the processes have conducted the same number of tests
       if ((mine + others) == (threshold * comm.size())) {
-        minScore = mxx::allreduce(minScore, findMin, comm);
-        if (!this->isIndependent(minScore)) {
+        maxPV = mxx::allreduce(maxPV, findMax, comm);
+        if (!this->isIndependent(maxPV)) {
           mine = 0u;
           others = 0u;
         }
@@ -463,7 +440,7 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
       r = (r + 1) % comm.size();
     }
   }
-  return this->isIndependent(minScore);
+  return this->isIndependent(maxPV);
 }
 
 template <typename Counter, typename Var>
@@ -488,8 +465,8 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var maxSize
 ) const
 {
-  auto minScore = this->minAssocScore(x, y, given, seed, maxSize);
-  return this->isIndependent(minScore);
+  auto maxPV = this->maxPValue(x, y, given, seed, maxSize);
+  return this->isIndependent(maxPV);
 }
 
 template <typename Counter, typename Var>

@@ -39,17 +39,17 @@ DirectDiscovery<Data, Var, Set>::pickBestCandidate(
 ) const
 {
   Var x = this->m_data.numVars();
-  double scoreX = 0.0;
+  double pvX = std::numeric_limits<double>::max();
   for (const Var y: candidates) {
     LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
-    double scoreY = this->m_data.assocScore(target, y, cmb);
-    if (std::isless(scoreX, scoreY)) {
+    double pvY = this->m_data.pValue(target, y, cmb);
+    if (std::isgreater(pvX, pvY)) {
       x = y;
-      scoreX = scoreY;
+      pvX = pvY;
     }
   }
-  LOG_MESSAGE(debug, "Grow: %s chosen as the best candidate", this->m_data.varName(x));
-  return std::make_pair(x, scoreX);
+  LOG_MESSAGE_IF(x < this->m_data.numVars(), debug, "Grow: %s chosen as the best candidate", this->m_data.varName(x));
+  return std::make_pair(x, pvX);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -154,23 +154,23 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Function that updates scores for all the local pairs, given the current candidate MBs.
+ * @brief Function that updates p-values for all the local pairs, given the current candidate MBs.
  *
- * @param myScores A list of the scores corresponding to all the local pairs.
+ * @param myPV A list of the p-values corresponding to all the local pairs.
  * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
  */
 void
-DirectDiscovery<Data, Var, Set>::updateScores(
-  std::vector<std::tuple<Var, Var, double>>& myScores,
+DirectDiscovery<Data, Var, Set>::updatePValues(
+  std::vector<std::tuple<Var, Var, double>>& myPV,
   const std::unordered_map<Var, Set>& myBlankets
 ) const
 {
-  for (auto& score : myScores) {
-    LOG_MESSAGE(debug, "Updating the score for the pair (%s, %s)",
-                this->m_data.varName(std::get<0>(score)), this->m_data.varName(std::get<1>(score)));
-    std::get<2>(score) = this->m_data.assocScore(std::get<0>(score),
-                                                 std::get<1>(score),
-                                                 myBlankets.at(std::get<0>(score)));
+  for (auto& pv : myPV) {
+    LOG_MESSAGE(debug, "Updating the p-value for the pair (%s, %s)",
+                this->m_data.varName(std::get<0>(pv)), this->m_data.varName(std::get<1>(pv)));
+    std::get<2>(pv) = this->m_data.pValue(std::get<0>(pv),
+                                          std::get<1>(pv),
+                                          myBlankets.at(std::get<0>(pv)));
   }
 }
 
@@ -178,40 +178,40 @@ template <typename Data, typename Var, typename Set>
 /**
  * @brief Function that grows candidate MBs of the primary variables on this processor.
  *
- * @param myScores A list of the scores corresponding to all the local pairs.
+ * @param myPV A list of the p-values corresponding to all the local pairs.
  * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
  *
- * @return Set of all the scores which were added to the candidate MBs on this processor.
+ * @return Set of all the tuples which were added to the candidate MBs on this processor.
  */
 std::set<std::tuple<Var, Var, double>>
 DirectDiscovery<Data, Var, Set>::growAll(
-  const std::vector<std::tuple<Var, Var, double>>& myScores,
+  const std::vector<std::tuple<Var, Var, double>>& myPV,
   std::unordered_map<Var, Set>& myBlankets
 ) const
 {
   std::set<std::tuple<Var, Var, double>> added;
-  std::vector<std::tuple<Var, Var, double>> maxScores(myScores.size());
-  auto compareScores = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
-                          { return (std::get<0>(a) == std::get<0>(b)) ?
-                                   (std::isgreaterequal(std::get<2>(a), std::get<2>(b)) ? a : b) : b; };
+  std::vector<std::tuple<Var, Var, double>> minPV(myPV.size());
+  auto comparePV = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
+                      { return (std::get<0>(a) == std::get<0>(b)) ?
+                               (std::islessequal(std::get<2>(a), std::get<2>(b)) ? a : b) : b; };
   // First, do a forward segmented parallel prefix with primary variable defining the segment boundaries
-  // This will get the secondary variable with the max score to the corresponding primary variable boundary
-  mxx::global_scan(myScores.begin(), myScores.end(), maxScores.begin(), compareScores, this->m_comm, false);
+  // This will get the secondary variable with the minimum p-value to the corresponding primary variable boundary
+  mxx::global_scan(myPV.begin(), myPV.end(), minPV.begin(), comparePV, this->m_comm, false);
   // Then, do a reverse segmented parallel prefix with the same segments as before
-  // This will effectively broadcast the secondary variable with the maximum score within the segments
-  mxx::global_scan_inplace(maxScores.rbegin(), maxScores.rend(), compareScores, this->m_comm.reverse(), false);
-  // There might be multiple local copies of the max score corresponding to every segment
+  // This will effectively broadcast the secondary variable with the minimum p-value within the segments
+  mxx::global_scan_inplace(minPV.rbegin(), minPV.rend(), comparePV, this->m_comm.reverse(), false);
+  // There might be multiple local copies of the minimum p-value corresponding to every segment
   // Retain only one per segment
   auto comparePrimary = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
                            { return std::get<0>(a) == std::get<0>(b); };
-  auto uniqueEnd = std::unique(maxScores.begin(), maxScores.end(), comparePrimary);
+  auto uniqueEnd = std::unique(minPV.begin(), minPV.end(), comparePrimary);
   auto changes = set_init(Set(), this->m_data.numVars());
-  for (auto it = maxScores.begin(); it != uniqueEnd; ++it) {
+  for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
     if (!this->m_data.isIndependent(std::get<2>(*it))) {
       // Need to keep looping as long as even one variable's MB keeps changing
       changes.insert(std::get<0>(*it));
       // Add y to the blanket of x
-      LOG_MESSAGE(info, "%d: + Adding %s to the MB of %s (score = %g)", this->m_comm.rank(),
+      LOG_MESSAGE(info, "%d: + Adding %s to the MB of %s (p-value = %g)", this->m_comm.rank(),
                   this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
       myBlankets[std::get<0>(*it)].insert(std::get<1>(*it));
       added.insert(*it);
@@ -248,7 +248,7 @@ template <typename Data, typename Var, typename Set>
 /**
  * @brief Function that performs grow-shrink for multiple candidate MBs.
  *
- * @param myScores A list of the scores corresponding to all the local pairs.
+ * @param myPV A list of the p-values corresponding to all the local pairs.
  * @param myBlankets A map with all the local candidate MBs.
  * @param myAdded A list of all the local candidate MB pairs.
  *
@@ -256,7 +256,7 @@ template <typename Data, typename Var, typename Set>
  */
 void
 DirectDiscovery<Data, Var, Set>::growShrink(
-  std::vector<std::tuple<Var, Var, double>>& myScores,
+  std::vector<std::tuple<Var, Var, double>>& myPV,
   std::unordered_map<Var, Set>& myBlankets,
   std::set<std::pair<Var, Var>>& myAdded
 ) const
@@ -265,8 +265,8 @@ DirectDiscovery<Data, Var, Set>::growShrink(
   TIMER_DECLARE(tGrow);
   bool changed = true;
   while (changed) {
-    this->updateScores(myScores, myBlankets);
-    auto added = this->growAll(myScores, myBlankets);
+    this->updatePValues(myPV, myBlankets);
+    auto added = this->growAll(myPV, myBlankets);
     // Track blanket changes for all the primary variables across processors
     auto changes = set_init(Set(), this->m_data.numVars());
     for (const auto& as : added) {
@@ -275,20 +275,20 @@ DirectDiscovery<Data, Var, Set>::growShrink(
     set_allunion(changes, this->m_comm);
     if (!changes.empty()) {
       if (!added.empty()) {
-        // Record the added scores belonging to this processor
-        for (const auto& ms : myScores) {
-          if (added.find(ms) != added.end()) {
-            myAdded.insert(std::make_pair(std::get<0>(ms), std::get<1>(ms)));
+        // Record the added tuples belonging to this processor
+        for (const auto& mpv : myPV) {
+          if (added.find(mpv) != added.end()) {
+            myAdded.insert(std::make_pair(std::get<0>(mpv), std::get<1>(mpv)));
           }
         }
       }
-      // Remove added scores from future consideration, if they were on this processor
-      // Also remove the scores corresponding to primary variables whose MB did not change
-      auto addedOrUnchanged = [&added, &changes] (const std::tuple<Var, Var, double>& ms)
-                                                 { return (added.find(ms) != added.end()) ||
-                                                          !changes.contains(std::get<0>(ms)); };
-      auto newEnd = std::remove_if(myScores.begin(), myScores.end(), addedOrUnchanged);
-      myScores.resize(std::distance(myScores.begin(), newEnd));
+      // Remove added tuples from future consideration, if they were on this processor
+      // Also remove the tuples corresponding to primary variables whose MB did not change
+      auto addedOrUnchanged = [&added, &changes] (const std::tuple<Var, Var, double>& mpv)
+                                                 { return (added.find(mpv) != added.end()) ||
+                                                          !changes.contains(std::get<0>(mpv)); };
+      auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
+      myPV.resize(std::distance(myPV.begin(), newEnd));
     }
     else {
       changed = false;
@@ -313,7 +313,7 @@ template <typename Data, typename Var, typename Set>
  * @brief Function that performs symmetry correction for all the candidate MBs.
  *
  * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
- * @param myAdded A list of scores corresponding to the local candidate MB pairs.
+ * @param myAdded A list of tuples corresponding to the local candidate MB pairs.
  *
  * @return The pairs assigned to this processor after the symmetry correction.
  */
@@ -420,7 +420,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
     ++secondary;
   }
 
-  std::vector<std::tuple<Var, Var, double>> myScores(mySize);
+  std::vector<std::tuple<Var, Var, double>> myPV(mySize);
   std::unordered_map<Var, Set> myBlankets;
   myBlankets.insert(std::make_pair(*primary, set_init(Set(), this->m_data.numVars())));
   for (auto i = 0u; i < mySize; ++i, ++secondary) {
@@ -434,13 +434,13 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
       // Increment secondary variable once more if it is the same as the primary variable
       ++secondary;
     }
-    // Compute the initial marginal associations
-    myScores[i] = std::make_tuple(*primary, *secondary, 0.0);
+    // Initialize the p-values
+    myPV[i] = std::make_tuple(*primary, *secondary, std::numeric_limits<double>::max());
   }
 
   // Remember all the local MB ordered pairs
   std::set<std::pair<Var, Var>> myAdded;
-  this->growShrink(myScores, myBlankets, myAdded);
+  this->growShrink(myPV, myBlankets, myAdded);
 
   /* Symmetry correction */
   TIMER_DECLARE(tSymmetry);
@@ -527,13 +527,13 @@ GSMB<Data, Var, Set>::pickBestCandidate(
 {
   for (const Var y: candidates) {
     LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
-    double score = this->m_data.assocScore(target, y, cmb);
-    if (!this->m_data.isIndependent(score)) {
+    double pv = this->m_data.pValue(target, y, cmb);
+    if (!this->m_data.isIndependent(pv)) {
       LOG_MESSAGE(debug, "Grow: %s chosen as the best candidate", this->m_data.varName(y));
-      return std::make_pair(y, score);
+      return std::make_pair(y, pv);
     }
   }
-  return std::make_pair(this->m_data.numVars(), 0.0);
+  return std::make_pair(this->m_data.numVars(), 1.0);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -548,13 +548,13 @@ GSMB<Data, Var, Set>::getCandidateMB(
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   Var x = this->m_data.numVars();
-  double scoreX = 0.0;
+  double pvX = std::numeric_limits<double>::max();
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    std::tie(x, scoreX) = this->pickBestCandidate(target, candidates, cmb);
-    if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "+ Adding %s to the MB of %s (score = %g)",
-                  this->m_data.varName(x), this->m_data.varName(target), scoreX);
+    std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
+    if (!this->m_data.isIndependent(pvX)) {
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
+                  this->m_data.varName(x), this->m_data.varName(target), pvX);
       cmb.insert(x);
       candidates.erase(x);
       changed = true;
@@ -567,30 +567,28 @@ GSMB<Data, Var, Set>::getCandidateMB(
 
 template <typename Data, typename Var, typename Set>
 void
-GSMB<Data, Var, Set>::updateScores(
-  std::vector<std::tuple<Var, Var, double>>& myScores,
+GSMB<Data, Var, Set>::updatePValues(
+  std::vector<std::tuple<Var, Var, double>>& myPV,
   const std::unordered_map<Var, Set>& myBlankets
 ) const
 {
-  auto score = myScores.begin();
   auto primary = std::numeric_limits<Var>::max();
   bool found = false;
-  while (score != myScores.end()) {
-    if (primary != std::get<0>(*score)) {
-      // Updating scores for a new primary variable; reset
+  for (auto& mpv : myPV) {
+    if (primary != std::get<0>(mpv)) {
+      // Updating p-values for a new primary variable; reset
       found = false;
-      primary = std::get<0>(*score);
+      primary = std::get<0>(mpv);
     }
     if (!found) {
-      LOG_MESSAGE(debug, "Updating the score for the pair (%s, %s)",
-                  this->m_data.varName(primary), this->m_data.varName(std::get<1>(*score)));
+      LOG_MESSAGE(debug, "Updating the p-value for the pair (%s, %s)",
+                  this->m_data.varName(primary), this->m_data.varName(std::get<1>(mpv)));
       // A candidate to be added for this primary variable has not been found yet
       // Conduct CI test for this primary-secondary variable pair
-      found = !this->m_data.isIndependent(primary, std::get<1>(*score),
-                                          myBlankets.at(std::get<0>(*score)));
+      found = !this->m_data.isIndependent(primary, std::get<1>(mpv),
+                                          myBlankets.at(std::get<0>(mpv)));
     }
-    std::get<2>(*score) = static_cast<double>(found);
-    ++score;
+    std::get<2>(mpv) = 1.0 - static_cast<double>(found);
   }
 }
 
@@ -615,15 +613,15 @@ IAMB<Data, Var, Set>::getCandidateMB(
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   Var x = this->m_data.numVars();
-  double scoreX = 0.0;
+  double pvX = std::numeric_limits<double>::max();
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    std::tie(x, scoreX) = this->pickBestCandidate(target, candidates, cmb);
+    std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "+ Adding %s to the MB of %s",
-                  this->m_data.varName(x), this->m_data.varName(target));
+    if (!this->m_data.isIndependent(pvX)) {
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
+                  this->m_data.varName(x), this->m_data.varName(target), pvX);
       cmb.insert(x);
       candidates.erase(x);
       changed = true;
@@ -655,14 +653,15 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   Var x = this->m_data.numVars();
-  double scoreX = 0.0;
+  double pvX = std::numeric_limits<double>::max();
   while ((candidates.size() > 0) && changed) {
     changed = false;
-    std::tie(x, scoreX) = this->pickBestCandidate(target, candidates, cmb);
+    std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(scoreX)) {
-      LOG_MESSAGE(info, "+ Adding %s to the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
+    if (!this->m_data.isIndependent(pvX)) {
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
+                  this->m_data.varName(x), this->m_data.varName(target), pvX);
       cmb.insert(x);
       candidates.erase(x);
       changed = true;
@@ -686,7 +685,7 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
 template <typename Data, typename Var, typename Set>
 void
 InterIAMB<Data, Var, Set>::growShrink(
-  std::vector<std::tuple<Var, Var, double>>& myScores,
+  std::vector<std::tuple<Var, Var, double>>& myPV,
   std::unordered_map<Var, Set>& myBlankets,
   std::set<std::pair<Var, Var>>& myAdded
 ) const
@@ -697,9 +696,9 @@ InterIAMB<Data, Var, Set>::growShrink(
   while (changed) {
     /* Grow Phase */
     TIMER_START(tGrow);
-    this->updateScores(myScores, myBlankets);
+    this->updatePValues(myPV, myBlankets);
     auto prevBlankets = myBlankets;
-    auto added = this->growAll(myScores, myBlankets);
+    auto added = this->growAll(myPV, myBlankets);
     TIMER_PAUSE(tGrow);
     /* End of Grow Phase */
     /* Shrink Phase */
@@ -719,13 +718,13 @@ InterIAMB<Data, Var, Set>::growShrink(
     set_allunion(changes, this->m_comm);
     if (!changes.empty()) {
       if (!added.empty()) {
-        for (const auto& ms : myScores) {
-          if (added.find(ms) != added.end()) {
-            newAdded.insert(std::make_pair(std::get<0>(ms), std::get<1>(ms)));
+        for (const auto& mpv : myPV) {
+          if (added.find(mpv) != added.end()) {
+            newAdded.insert(std::make_pair(std::get<0>(mpv), std::get<1>(mpv)));
           }
         }
       }
-      bool sortScores = false;
+      bool sortPV = false;
       for (const auto& p : removed) {
         if (newAdded.find(p) != newAdded.end()) {
           // If this was a newly added pair during this iteration's grow phase,
@@ -736,20 +735,20 @@ InterIAMB<Data, Var, Set>::growShrink(
           // Otherwise, if it was a pair belonging to this processor then we
           // need to add it back and sort the list later
           myAdded.erase(p);
-          sortScores = true;
-          myScores.push_back(std::make_tuple(std::get<0>(p), std::get<1>(p), 0.0));
+          sortPV = true;
+          myPV.push_back(std::make_tuple(std::get<0>(p), std::get<1>(p), 0.0));
         }
       }
-      // Remove added scores from future consideration, if they were on this processor
-      // Also remove the scores corresponding to primary variables whose MB did not change
-      auto addedOrUnchanged = [&newAdded, &changes] (const std::tuple<Var, Var, double>& ms)
-                                                    { return (newAdded.find(std::make_pair(std::get<0>(ms),
-                                                                                           std::get<1>(ms))) != newAdded.end()) ||
-                                                             !changes.contains(std::get<0>(ms)); };
-      auto newEnd = std::remove_if(myScores.begin(), myScores.end(), addedOrUnchanged);
-      myScores.resize(std::distance(myScores.begin(), newEnd));
-      if (sortScores) {
-        std::sort(myScores.begin(), myScores.end());
+      // Remove added tuples from future consideration, if they were on this processor
+      // Also remove the tuples corresponding to primary variables whose MB did not change
+      auto addedOrUnchanged = [&newAdded, &changes] (const std::tuple<Var, Var, double>& mpv)
+                                                    { return (newAdded.find(std::make_pair(std::get<0>(mpv),
+                                                                                           std::get<1>(mpv))) != newAdded.end()) ||
+                                                             !changes.contains(std::get<0>(mpv)); };
+      auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
+      myPV.resize(std::distance(myPV.begin(), newEnd));
+      if (sortPV) {
+        std::sort(myPV.begin(), myPV.end());
       }
       // Finally, include the newly added pairs to the list of this processor's added pairs
       myAdded.insert(newAdded.begin(), newAdded.end());
