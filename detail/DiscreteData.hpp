@@ -190,7 +190,7 @@ DiscreteData<Counter, Var>::pValue(
     return 1.0;
   }
   boost::math::chi_squared dist(ret.first);
-  double pValue = 1.0 - boost::math::cdf(dist, ret.second);
+  double pValue = boost::math::cdf(boost::math::complement(dist, ret.second));
   LOG_MESSAGE(debug, "p-value = %g", pValue);
   return pValue;
 }
