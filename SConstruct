@@ -123,7 +123,6 @@ if ARGUMENTS.get('LOCALENVIRON', 1) not in [0, '0']:
 
   # Use all the flags specified by the environment
   for flag in os.environ.get('CPPFLAGS', '').split():
-    print(flag)
     if flag.startswith('-I'):
       cppPaths.append(flag[2:])
     else:
