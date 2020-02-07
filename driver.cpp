@@ -15,6 +15,7 @@
 #include "utils/Timer.hpp"
 #include "CTCounter.hpp"
 
+#include <boost/asio/ip/host_name.hpp>
 #include <mpi.h>
 
 #include <iostream>
@@ -230,6 +231,25 @@ main(
       std::cerr << pe.what() << std::endl;
     }
     return 1;
+  }
+  if (options.hostNames()) {
+    auto name = boost::asio::ip::host_name();
+    if (comm.is_first()) {
+      std::cout << std::endl << "*** Host names ***" << std::endl;
+      std::cout << comm.rank() << ": " << name << std::endl;
+    }
+    for (int i = 1; i < comm.size(); ++i) {
+      if (comm.rank() == i) {
+        comm.send(name, 0, i);
+      }
+      if (comm.is_first()) {
+        name = comm.recv<std::string>(i, i);
+        std::cout << i << ": " << name << std::endl;
+      }
+    }
+    if (comm.is_first()) {
+      std::cout << "******" << std::endl;
+    }
   }
 
   try {

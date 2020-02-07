@@ -72,6 +72,9 @@ public:
   bool
   forceParallel() const;
 
+  bool
+  hostNames() const;
+
   const std::string&
   logLevel() const;
 
@@ -97,6 +100,7 @@ private:
   bool m_learnNetwork;
   bool m_directEdges;
   bool m_forceParallel;
+  bool m_hostNames;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_
