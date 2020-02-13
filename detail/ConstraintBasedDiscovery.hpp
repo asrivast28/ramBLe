@@ -228,6 +228,7 @@ template <typename Data, typename Var, typename Set>
  */
 BayesianNetwork<Var>
 ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_parallel(
+  const double
 ) const
 {
   throw std::runtime_error("Getting skeleton in parallel is not implemented for the given algorithm");
@@ -296,14 +297,16 @@ template <typename Data, typename Var, typename Set>
  *
  * @param directEdges Specifies if the edges of the network should be directed.
  * @param isParallel Specifies if the skeleton should be constructed in parallel.
+ * @param imbalanceThreshold Specifies the amount of imbalance the parallel algorithm should tolerate.
  */
 BayesianNetwork<Var>
 ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
   const bool directEdges,
-  const bool isParallel
+  const bool isParallel,
+  const double imbalanceThreshold
 ) const
 {
-  auto bn = isParallel ? this->getSkeleton_parallel() : this->getSkeleton_sequential();
+  auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold) : this->getSkeleton_sequential();
   if (this->m_comm.is_first() && directEdges) {
     // First, orient the v-structures
     auto vStructures = this->findVStructures();

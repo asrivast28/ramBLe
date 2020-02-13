@@ -25,26 +25,35 @@ public:
   ~DirectDiscovery() { }
 
 protected:
-  std::set<std::tuple<Var, Var, double>>
-  growAll(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
-
   Set
   shrinkMB(const Var, Set&) const;
 
-  std::set<std::pair<Var, Var>>
-  shrinkAll(std::unordered_map<Var, Set>&) const;
-
   virtual
-  void
-  growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const;
+  std::pair<Var, double>
+  pickBestCandidate(const Var, const Set&, const Set&) const;
 
   virtual
   void
   updatePValues(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const;
 
+  std::set<std::tuple<Var, Var, double>>
+  growAll(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
+  std::set<std::pair<Var, Var>>
+  shrinkAll(std::unordered_map<Var, Set>&) const;
+
+  void
+  syncBlankets(std::unordered_map<Var, Set>&) const;
+
+  bool
+  fixImbalance(std::vector<std::tuple<Var, Var, double>>&, const double) const;
+
+  void
+  syncMissingBlankets(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
   virtual
-  std::pair<Var, double>
-  pickBestCandidate(const Var, const Set&, const Set&) const;
+  void
+  growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const;
 
 private:
   Set
@@ -57,7 +66,7 @@ private:
   symmetryCorrect(const std::unordered_map<Var, Set>&&, const std::set<std::pair<Var, Var>>&&) const;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel() const override;
+  getSkeleton_parallel(const double) const override;
 }; // class DirectDiscovery
 
 /**
@@ -120,7 +129,7 @@ private:
   getCandidateMB(const Var, Set) const override;
 
   void
-  growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const override;
+  growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;
 }; // class InterIAMB
 
 #include "detail/DirectDiscovery.hpp"

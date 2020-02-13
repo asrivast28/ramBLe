@@ -242,11 +242,90 @@ DirectDiscovery<Data, Var, Set>::shrinkAll(
 
 template <typename Data, typename Var, typename Set>
 /**
+ * @brief Function that synchronizes the candidate blankets by taking a
+ *        union of the blankets across all the processors.
+ *
+ * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
+ */
+void
+DirectDiscovery<Data, Var, Set>::syncBlankets(
+  std::unordered_map<Var, Set>& myBlankets
+) const
+{
+  for (const auto x : this->m_allVars) {
+    auto it = myBlankets.find(x);
+    auto blanket = (it != myBlankets.end()) ? it->second : set_init(Set(), this->m_data.numVars());
+    // Union will get the blanket from whichever processes have it
+    set_allunion(blanket, this->m_comm);
+    if (it != myBlankets.end()) {
+      it->second = blanket;
+    }
+  }
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function that fixes the imbalance in the p-value list across processors.
+ *
+ * @param myPV A list of the p-values corresponding to all the local pairs.
+ * @param imbalanceThreshold The amount of imbalance that can be tolerated.
+ *
+ * @return true if the list was redistributed to fix the imbalance.
+ */
+bool
+DirectDiscovery<Data, Var, Set>::fixImbalance(
+  std::vector<std::tuple<Var, Var, double>>& myPV,
+  const double imbalanceThreshold
+) const
+{
+  bool fixed = false;
+  const auto minSize = mxx::allreduce(myPV.size(), mxx::min<size_t>(), this->m_comm);
+  const auto maxSize = mxx::allreduce(myPV.size(), mxx::max<size_t>(), this->m_comm);
+  if (minSize * imbalanceThreshold < static_cast<double>(maxSize)) {
+    // Redistribute the pairs to fix the imbalance
+    mxx::stable_distribute_inplace(myPV, this->m_comm);
+    fixed = true;
+  }
+  return fixed;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function that gets the missing candidate blankets for the
+ *        primary variables on this processor.
+ *
+ * @param myPV A list of the p-values corresponding to all the local pairs.
+ * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
+ */
+void
+DirectDiscovery<Data, Var, Set>::syncMissingBlankets(
+  const std::vector<std::tuple<Var, Var, double>>& myPV,
+  std::unordered_map<Var, Set>& myBlankets
+) const
+{
+  for (const auto& mpv : myPV) {
+    const auto primary = std::get<0>(mpv);
+    if (myBlankets.find(primary) == myBlankets.end()) {
+      // This primary variable's blanket was not available on this processor
+      // Initialize the blanket for the new primary variable
+      myBlankets.insert(std::make_pair(primary, set_init(Set(), this->m_data.numVars())));
+    }
+  }
+  // Synchronize all the blankets
+  // XXX: We do not need to synchronize all the blankets. However, some performance testing
+  // shows that tracking which blankets should be synced does not result in better performance.
+  // Therefore, going with the easier way for now
+  this->syncBlankets(myBlankets);
+}
+
+template <typename Data, typename Var, typename Set>
+/**
  * @brief Function that performs grow-shrink for multiple candidate MBs.
  *
  * @param myPV A list of the p-values corresponding to all the local pairs.
  * @param myBlankets A map with all the local candidate MBs.
  * @param myAdded A list of all the local candidate MB pairs.
+ * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
  *
  * @return The total size of all the blankets at the end.
  */
@@ -254,11 +333,13 @@ void
 DirectDiscovery<Data, Var, Set>::growShrink(
   std::vector<std::tuple<Var, Var, double>>&& myPV,
   std::unordered_map<Var, Set>& myBlankets,
-  std::set<std::pair<Var, Var>>& myAdded
+  std::set<std::pair<Var, Var>>& myAdded,
+  const double imbalanceThreshold
 ) const
 {
   /* Grow Phase */
   TIMER_DECLARE(tGrow);
+  TIMER_DECLARE(tDist);
   bool changed = true;
   while (changed) {
     this->updatePValues(myPV, myBlankets);
@@ -285,12 +366,21 @@ DirectDiscovery<Data, Var, Set>::growShrink(
                                                           !changes.contains(std::get<0>(mpv)); };
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
       myPV.resize(std::distance(myPV.begin(), newEnd));
+      if (imbalanceThreshold > 1.0) {
+        TIMER_START(tDist);
+        if (this->fixImbalance(myPV, imbalanceThreshold)) {
+          this->syncMissingBlankets(myPV, myBlankets);
+        }
+        TIMER_PAUSE(tDist);
+      }
     }
     else {
       changed = false;
     }
   }
+  this->syncBlankets(myBlankets);
   if (this->m_comm.is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", tDist);
     TIMER_ELAPSED("Time taken in growing the candidate blankets: ", tGrow);
   }
   /* End of Grow Phase */
@@ -323,8 +413,8 @@ DirectDiscovery<Data, Var, Set>::symmetryCorrect(
   auto i = 0u;
   for (const auto& mb : myBlankets) {
     for (const auto secondary : mb.second) {
-      // Create an ordered pair corresponding to this pair only if
-      // it was a pair originally assigned to this processor
+      // Create an ordered pair corresponding to this pair only
+      // if it was a pair which was added on this processor
       if (myAdded.find(std::make_pair(mb.first, secondary)) != myAdded.end()) {
         if (mb.first < secondary) {
           myPairs[i] = std::make_pair(mb.first, secondary);
@@ -397,9 +487,12 @@ DirectDiscovery<Data, Var, Set>::symmetryCorrect(
 template <typename Data, typename Var, typename Set>
 /**
  * @brief Function for getting the undirected skeleton network in parallel.
+ *
+ * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
  */
 BayesianNetwork<Var>
 DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
+  const double imbalanceThreshold
 ) const
 {
   // First, block decompose all the variable pairs on all the processors
@@ -436,7 +529,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
 
   // Remember all the local MB ordered pairs
   std::set<std::pair<Var, Var>> myAdded;
-  this->growShrink(std::move(myPV), myBlankets, myAdded);
+  this->growShrink(std::move(myPV), myBlankets, myAdded, imbalanceThreshold);
 
   /* Symmetry correction */
   TIMER_DECLARE(tSymmetry);
@@ -683,12 +776,15 @@ void
 InterIAMB<Data, Var, Set>::growShrink(
   std::vector<std::tuple<Var, Var, double>>&& myPV,
   std::unordered_map<Var, Set>& myBlankets,
-  std::set<std::pair<Var, Var>>& myAdded
+  std::set<std::pair<Var, Var>>& myAdded,
+  const double imbalanceThreshold
 ) const
 {
   TIMER_DECLARE(tGrow);
   TIMER_DECLARE(tShrink);
+  TIMER_DECLARE(tDist);
   bool changed = true;
+  bool redistributed = false;
   while (changed) {
     /* Grow Phase */
     TIMER_START(tGrow);
@@ -697,6 +793,7 @@ InterIAMB<Data, Var, Set>::growShrink(
     auto added = this->growAll(myPV, myBlankets);
     TIMER_PAUSE(tGrow);
     /* End of Grow Phase */
+    this->syncBlankets(myBlankets);
     /* Shrink Phase */
     TIMER_START(tShrink);
     auto removed = this->shrinkAll(myBlankets);
@@ -705,6 +802,7 @@ InterIAMB<Data, Var, Set>::growShrink(
     // Track changes for all the variables across processors
     auto changes = set_init(Set(), this->m_data.numVars());
     std::set<std::pair<Var, Var>> newAdded;
+    // Only the candidate blankets which grew can change
     for (const auto& as : added) {
       if (prevBlankets.at(std::get<0>(as)) != myBlankets.at(std::get<0>(as))) {
         // The blanket for this variable changed
@@ -743,7 +841,26 @@ InterIAMB<Data, Var, Set>::growShrink(
                                                              !changes.contains(std::get<0>(mpv)); };
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
       myPV.resize(std::distance(myPV.begin(), newEnd));
-      if (sortPV) {
+      if (imbalanceThreshold > 1.0) {
+        TIMER_START(tDist);
+        bool fixed = this->fixImbalance(myPV, imbalanceThreshold);
+        bool sorted = false;
+        if ((redistributed || fixed) && mxx::any_of(sortPV, this->m_comm)) {
+          // If the p-value list was redistributed in any of the previous iterations AND
+          // there are newly added elements in the list, then we need to globally sort the list
+          mxx::sort(myPV.begin(), myPV.end(), this->m_comm);
+          sorted = true;
+        }
+        if (fixed || sorted) {
+          // We need to get the missing blankets if the p-value list was redistributed in this iteration
+          // This can happen if the imbalance was fixed OR if the list was sorted because of an addition
+          this->syncMissingBlankets(myPV, myBlankets);
+          redistributed = true;
+        }
+        TIMER_PAUSE(tDist);
+      }
+      if (!redistributed && sortPV) {
+        // If the p-values have never been redistributed, then we only need to sort locally
         std::sort(myPV.begin(), myPV.end());
       }
       // Finally, include the newly added pairs to the list of this processor's added pairs
@@ -754,6 +871,7 @@ InterIAMB<Data, Var, Set>::growShrink(
     }
   }
   if (this->m_comm.is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", tDist);
     TIMER_ELAPSED("Time taken in growing the candidate blankets: ", tGrow);
     TIMER_ELAPSED("Time taken in shrinking the candidate blankets: ", tShrink);
   }

@@ -56,6 +56,7 @@ ProgramOptions::ProgramOptions(
 
   po::options_description developer("Developer options");
   developer.add_options()
+    ("imbalance", po::value<double>(&m_imbalanceThreshold)->default_value(2.0), "Correct any imbalance in skeleton discovery more than the given threshold.")
     ("counter", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
     ("parallel", po::bool_switch(&m_forceParallel)->default_value(false), "Use the parallel implementation even for p=1.")
     ("hostnames", po::bool_switch(&m_hostNames)->default_value(false), "Print out the hostname for every process.")
@@ -193,6 +194,13 @@ ProgramOptions::maxConditioning(
 ) const
 {
   return m_maxConditioning;
+}
+
+double
+ProgramOptions::imbalanceThreshold(
+) const
+{
+  return m_imbalanceThreshold;
 }
 
 const std::string&

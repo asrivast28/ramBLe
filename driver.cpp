@@ -119,7 +119,7 @@ getNeighborhood(
   }
   if (options.learnNetwork() || !options.outputFile().empty()) {
     TIMER_DECLARE(tNetwork);
-    auto g = algo->getNetwork(options.directEdges(), (comm.size() > 1) || options.forceParallel());
+    auto g = algo->getNetwork(options.directEdges(), (comm.size() > 1) || options.forceParallel(), options.imbalanceThreshold());
     comm.barrier();
     if (comm.is_first()) {
       TIMER_ELAPSED("Time taken in getting the network: ", tNetwork);
