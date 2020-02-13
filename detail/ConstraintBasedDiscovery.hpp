@@ -92,7 +92,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectPC(
 ) const
 {
   auto initial = cpc;
-  for (const Var x: initial) {
+  for (const Var x : initial) {
     auto candidatesX = this->getCandidates(x);
     auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX)).first;
     if (!set_contains(cpcX, target)) {
@@ -170,7 +170,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectMB(
 ) const
 {
   auto initial = cmb;
-  for (const Var x: initial) {
+  for (const Var x : initial) {
     auto candidatesX = this->getCandidates(x);
     auto cmbX = this->getCandidateMB_cache(x, std::move(candidatesX)).first;
     if (!set_contains(cmbX, target)) {
@@ -209,9 +209,9 @@ ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_sequential(
 ) const
 {
   BayesianNetwork<Var> bn(this->m_data.varNames(m_allVars));
-  for (const auto x: m_allVars) {
+  for (const auto x : m_allVars) {
     auto pcX = this->getPC(x);
-    for (const auto y: pcX) {
+    for (const auto y : pcX) {
       if (x < y) {
         LOG_MESSAGE(info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
         bn.addEdge(x, y);
@@ -269,15 +269,15 @@ ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
 ) const
 {
   std::multimap<Var, std::pair<Var, Var>> vStructures;
-  for (const auto x: m_allVars) {
+  for (const auto x : m_allVars) {
     auto pcX = this->getPC(x);
     Set paX;
-    for (const auto y: pcX) {
+    for (const auto y : pcX) {
       // Candidate parents of x, which are not connected to y
       auto pcY = this->getPC(y);
       auto cpaX = set_difference(pcX, pcY);
       cpaX.erase(y);
-      for (const auto z: cpaX) {
+      for (const auto z : cpaX) {
         if (!(set_contains(paX, y) && set_contains(paX, z)) && this->isCollider(y, x, z)) {
           LOG_MESSAGE(info, "* Found new v-structure %s -> %s <- %s", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
           vStructures.insert(std::make_pair(x, std::make_pair(y, z)));

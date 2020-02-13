@@ -166,7 +166,7 @@ RowObservationReader<DataType>::RowObservationReader(
   mxx::bcast(this->m_data, 0, comm);
   // Can not broadcast a vector of strings
   // Broadcast each string separately
-  for (auto& name: this->m_varNames) {
+  for (auto& name : this->m_varNames) {
     mxx::bcast(name, 0, comm);
   }
 }
@@ -246,7 +246,7 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
   mxx::bcast(this->m_data, 0, comm);
   // Can not broadcast a vector of strings
   // Broadcast each string separately
-  for (auto& name: this->m_varNames) {
+  for (auto& name : this->m_varNames) {
     mxx::bcast(name, 0, comm);
   }
 }

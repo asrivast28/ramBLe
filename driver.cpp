@@ -291,7 +291,7 @@ main(
     }
 
     if (comm.is_first()) {
-      for (const auto var: nbrVars) {
+      for (const auto var : nbrVars) {
         std::cout << var << ",";
       }
       std::cout << std::endl;

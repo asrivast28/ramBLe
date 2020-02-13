@@ -47,7 +47,7 @@ TopologicalDiscovery<Data, Var, Set>::removeFalsePC(
 {
   auto removed = set_init(Set(), this->m_data.numVars());
   auto initial = cpc;
-  for (const Var x: initial) {
+  for (const Var x : initial) {
     cpc.erase(x);
     LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
     if (this->m_data.isIndependentAnySubset(target, x, cpc, this->m_maxConditioning)) {
@@ -82,11 +82,11 @@ TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
   LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
   auto pc = this->getPC(target);
-  for (const Var y: pc) {
+  for (const Var y : pc) {
     LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)", this->m_data.varName(y), this->m_data.varName(target));
     cmb.insert(y);
     auto pcY = this->getPC(y);
-    for (const Var x: pcY) {
+    for (const Var x : pcY) {
       if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
@@ -133,7 +133,7 @@ MMPC<Data, Var, Set>::getCandidatePC(
     // given any subset of the current candidate PC
     Var x = this->m_data.numVars();
     double pvX = std::numeric_limits<double>::max();
-    for (const Var y: candidates) {
+    for (const Var y : candidates) {
       LOG_MESSAGE(debug, "MMPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto pvY = this->m_data.maxPValue(target, y, cpc, this->m_maxConditioning);
       if (std::isgreater(pvX, pvY)) {
@@ -180,7 +180,7 @@ HITON<Data, Var, Set>::getCandidatePC(
     // Find the variable which minimizes the marginal p-value with the target
     Var x = this->m_data.numVars();
     double pvX = std::numeric_limits<double>::max();
-    for (const Var y: candidates) {
+    for (const Var y : candidates) {
       LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double pvY = this->m_data.pValue(target, y);
       if (std::isgreater(pvX, pvY)) {
@@ -224,7 +224,7 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
     Var x = this->m_data.numVars();
     double pvX = std::numeric_limits<double>::max();
     auto remove = set_init(Set(), this->m_data.numVars());
-    for (const Var y: candidates) {
+    for (const Var y : candidates) {
       LOG_MESSAGE(debug, "SI-HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       double pvY = this->m_data.pValue(target, y);
       if (this->m_data.isIndependent(pvY)) {
@@ -239,7 +239,7 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
       }
     }
     // Remove all the candidates which can not be added
-    for (const Var y: remove) {
+    for (const Var y : remove) {
       candidates.erase(y);
     }
     if (candidates.empty()) {
@@ -284,7 +284,7 @@ GetPC<Data, Var, Set>::getCandidatePC(
     Var x = this->m_data.numVars();
     double pvX = std::numeric_limits<double>::max();
     auto remove = set_init(Set(), this->m_data.numVars());
-    for (const Var y: candidates) {
+    for (const Var y : candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
       auto pvY = this->m_data.maxPValue(target, y, cpc, this->m_maxConditioning);
       if (this->m_data.isIndependent(pvY)) {
@@ -299,7 +299,7 @@ GetPC<Data, Var, Set>::getCandidatePC(
       }
     }
     // Remove all the candidates which can not be added
-    for (const Var y: remove) {
+    for (const Var y : remove) {
       candidates.erase(y);
     }
     if (candidates.empty()) {

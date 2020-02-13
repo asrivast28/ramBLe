@@ -69,7 +69,7 @@ operator<<(
 )
 {
   stream << "{";
-  for (auto elem: set) {
+  for (auto elem : set) {
     stream << static_cast<uint32_t>(elem) << ",";
   }
   if (set.size() > 0) {

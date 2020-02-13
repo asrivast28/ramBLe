@@ -40,7 +40,7 @@ DirectDiscovery<Data, Var, Set>::pickBestCandidate(
 {
   Var x = this->m_data.numVars();
   double pvX = std::numeric_limits<double>::max();
-  for (const Var y: candidates) {
+  for (const Var y : candidates) {
     LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
     double pvY = this->m_data.pValue(target, y, cmb);
     if (std::isgreater(pvX, pvY)) {
@@ -73,7 +73,7 @@ DirectDiscovery<Data, Var, Set>::shrinkMB(
     return removed;
   }
   auto initial = cmb;
-  for (const Var x: initial) {
+  for (const Var x : initial) {
     cmb.erase(x);
     LOG_MESSAGE(debug, "Shrink: Evaluating %s for removal from the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
     if (this->m_data.isIndependent(target, x, cmb)) {
@@ -142,7 +142,7 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
               this->m_data.varName(target));
   auto cpc = set_init(Set(), this->m_data.numVars());
   auto mb = this->getMB(target);
-  for (const Var y: mb) {
+  for (const Var y : mb) {
     if (this->evaluateCandidatePC(target, y, mb, this->getMB(y))) {
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s",
                   this->m_data.varName(y), this->m_data.varName(target));
@@ -522,7 +522,7 @@ GSMB<Data, Var, Set>::pickBestCandidate(
   const Set& cmb
 ) const
 {
-  for (const Var y: candidates) {
+  for (const Var y : candidates) {
     LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
     double pv = this->m_data.pValue(target, y, cmb);
     if (!this->m_data.isIndependent(pv)) {

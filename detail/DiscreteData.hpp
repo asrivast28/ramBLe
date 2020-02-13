@@ -102,7 +102,7 @@ DiscreteData<Counter, Var>::varNames(
 {
   std::vector<std::string> names(vars.size());
   auto i = 0u;
-  for (const auto var: vars) {
+  for (const auto var : vars) {
     LOG_MESSAGE_IF(var >= m_varNames.size(), error, "Variable index %d out of range.", static_cast<uint32_t>(var));
     names[i++] = m_varNames[var];
   }
@@ -134,7 +134,7 @@ DiscreteData<Counter, Var>::varIndex(
 ) const
 {
   Var x = 0u;
-  for (const auto& var: m_varNames) {
+  for (const auto& var : m_varNames) {
     if (var.compare(name) == 0) {
       break;
     }
@@ -160,7 +160,7 @@ DiscreteData<Counter, Var>::varIndices(
 ) const
 {
   auto indices = set_init(Set(), numVars());
-  for (const auto& name: names) {
+  for (const auto& name : names) {
     indices.insert(indices.end(), this->varIndex(name));
   }
   return indices;
@@ -254,7 +254,7 @@ DiscreteData<Counter, Var>::maxPValue(
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
   for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
-    for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
+    for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       maxPV = std::max(thisPV, maxPV);
     }
@@ -290,7 +290,7 @@ DiscreteData<Counter, Var>::maxPValue(
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
   for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
-    for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
+    for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       // Always include the seed set in the conditioning set
       condition = set_union(condition, seed);
       auto thisPV = this->pValue(x, y, condition);
@@ -327,7 +327,7 @@ DiscreteData<Counter, Var>::maxPValueSubset(
   auto maxPV = std::numeric_limits<double>::lowest();
   auto z = set_init(SetType<Var, Args...>(), numVars());
   for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
-    for (auto condition: Subsets<SetType, Var, Args...>(given, i)) {
+    for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       if (std::isgreater(thisPV, maxPV)) {
         maxPV = thisPV;

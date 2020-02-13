@@ -126,7 +126,7 @@ BayesianNetwork<Var>::applyVStructures(
   const std::multimap<Var, std::pair<Var, Var>>& vStructures
 )
 {
-  for (const auto& vs: vStructures) {
+  for (const auto& vs : vStructures) {
     auto x = this->wrap(this->m_idVertexMap.at(vs.first));
     auto y = this->wrap(this->m_idVertexMap.at(vs.second.first));
     auto z = this->wrap(this->m_idVertexMap.at(vs.second.second));
@@ -183,7 +183,7 @@ BayesianNetwork<Var>::breakDirectedCycles(
 {
   Edge e;
   auto maxCount = 0u;
-  for (const auto& cc: this->countEdgeCycles()) {
+  for (const auto& cc : this->countEdgeCycles()) {
     if (cc.second > maxCount) {
       e = cc.first;
       maxCount = cc.second;
@@ -238,7 +238,7 @@ BayesianNetwork<Var>::unshieldedColliderRule(
   }
   bool potential = false;
   // Examine all the edges incoming into Y for a potential X
-  for (const auto inY: m_directed.wrap(*y).inEdges()) {
+  for (const auto inY : m_directed.wrap(*y).inEdges()) {
     auto x = inY.source();
     // Check if an X exists such that no edge exists between X and Z
     if (!(this->edgeExists(*z, *x) || this->edgeExists(*x, *z))) {
@@ -263,7 +263,7 @@ BayesianNetwork<Var>::acyclicityRule(
   // Therefore, try to apply the rule by setting the source as Z and the target as X
   bool orientEdge = false;
   // Iterate over all the outgoing neighbors of X for a potential Y
-  for (const auto y: m_directed.wrap(*x).outNeighbors()) {
+  for (const auto y : m_directed.wrap(*x).outNeighbors()) {
     if (m_directed.edgeExists(*y, *z)) {
       // Orient this edge as X -> Z
       // ...as long as it does not create an immorality
@@ -273,7 +273,7 @@ BayesianNetwork<Var>::acyclicityRule(
   }
   bool immorality = false;
   if (orientEdge) {
-    for (const auto inZ: m_directed.wrap(*z).inEdges()) {
+    for (const auto inZ : m_directed.wrap(*z).inEdges()) {
       auto w = inZ.source();
       // Check if there is an edge between the source of another incoming edge into Z and X
       if (!(this->edgeExists(*x, *w) || this->edgeExists(*w, *x))) {
@@ -299,7 +299,7 @@ BayesianNetwork<Var>::hybridRule(
 {
   auto countY = 0u;
   // Iterate over all the incoming neighbors of Z for potential Y
-  for (const auto inZ: m_directed.wrap(*z).inEdges()) {
+  for (const auto inZ : m_directed.wrap(*z).inEdges()) {
     auto y = inZ.source();
     // Check if an undirected edge exists between X and Y
     if (this->edgeExists(*x, *y) && this->edgeExists(*y, *x)) {
@@ -322,7 +322,7 @@ BayesianNetwork<Var>::applyMeekRules(
 {
   bool changed = false;
   // Iterate over all the undirected edges
-  for (auto e: this->antiParallelEdges()) {
+  for (auto e : this->antiParallelEdges()) {
     // Check if the anti-parallel edge still exists
     if (!e.hasAntiParallel()) {
       continue;
@@ -368,13 +368,13 @@ BayesianNetwork<Var>::writeGraphviz(
 {
   std::ofstream out(fileName);
   out << (directed ? "digraph" : "graph") << " {" << std::endl;
-  for (const auto v: this->vertices()) {
+  for (const auto v : this->vertices()) {
     out << "  ";
     out << boost::escape_dot_string(v.property().label);
     out << " ;" << std::endl;
   }
   auto delimiter = directed ? " -> " : " -- ";
-  for (const auto e: this->edges()) {
+  for (const auto e : this->edges()) {
     bool write = false;
     if (directed && !this->edgeExists(e.target(), e.source())) {
       out << "  edge [dir=forward] ";
