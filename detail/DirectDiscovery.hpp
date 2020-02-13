@@ -319,8 +319,8 @@ template <typename Data, typename Var, typename Set>
  */
 std::vector<std::pair<Var, Var>>
 DirectDiscovery<Data, Var, Set>::symmetryCorrect(
-  const std::unordered_map<Var, Set>& myBlankets,
-  const std::set<std::pair<Var, Var>>& myAdded
+  const std::unordered_map<Var, Set>&& myBlankets,
+  const std::set<std::pair<Var, Var>>&& myAdded
 ) const
 {
   std::vector<std::pair<Var, Var>> myPairs(myAdded.size());
@@ -444,7 +444,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
 
   /* Symmetry correction */
   TIMER_DECLARE(tSymmetry);
-  auto myPairs = this->symmetryCorrect(myBlankets, myAdded);
+  auto myPairs = this->symmetryCorrect(std::move(myBlankets), std::move(myAdded));
   if (this->m_comm.is_first()) {
     TIMER_ELAPSED("Time taken in symmetry correcting the blankets: ", tSymmetry);
   }

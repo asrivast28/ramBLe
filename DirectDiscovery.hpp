@@ -54,7 +54,7 @@ private:
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
 
   std::vector<std::pair<Var, Var>>
-  symmetryCorrect(const std::unordered_map<Var, Set>&, const std::set<std::pair<Var, Var>>&) const;
+  symmetryCorrect(const std::unordered_map<Var, Set>&&, const std::set<std::pair<Var, Var>>&&) const;
 
   BayesianNetwork<Var>
   getSkeleton_parallel() const override;
