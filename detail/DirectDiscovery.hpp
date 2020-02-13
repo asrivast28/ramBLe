@@ -256,7 +256,7 @@ template <typename Data, typename Var, typename Set>
  */
 void
 DirectDiscovery<Data, Var, Set>::growShrink(
-  std::vector<std::tuple<Var, Var, double>>& myPV,
+  std::vector<std::tuple<Var, Var, double>>&& myPV,
   std::unordered_map<Var, Set>& myBlankets,
   std::set<std::pair<Var, Var>>& myAdded
 ) const
@@ -440,7 +440,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
 
   // Remember all the local MB ordered pairs
   std::set<std::pair<Var, Var>> myAdded;
-  this->growShrink(myPV, myBlankets, myAdded);
+  this->growShrink(std::move(myPV), myBlankets, myAdded);
 
   /* Symmetry correction */
   TIMER_DECLARE(tSymmetry);
@@ -685,7 +685,7 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
 template <typename Data, typename Var, typename Set>
 void
 InterIAMB<Data, Var, Set>::growShrink(
-  std::vector<std::tuple<Var, Var, double>>& myPV,
+  std::vector<std::tuple<Var, Var, double>>&& myPV,
   std::unordered_map<Var, Set>& myBlankets,
   std::set<std::pair<Var, Var>>& myAdded
 ) const

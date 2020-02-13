@@ -39,7 +39,7 @@ protected:
 
   virtual
   void
-  growShrink(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const;
+  growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const;
 
   virtual
   void
@@ -119,7 +119,7 @@ public:
 
 private:
   void
-  growShrink(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const override;
+  growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const override;
 }; // class InterIAMB
 
 #include "detail/DirectDiscovery.hpp"
