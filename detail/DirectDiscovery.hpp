@@ -205,11 +205,8 @@ DirectDiscovery<Data, Var, Set>::growAll(
   auto comparePrimary = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
                            { return std::get<0>(a) == std::get<0>(b); };
   auto uniqueEnd = std::unique(minPV.begin(), minPV.end(), comparePrimary);
-  auto changes = set_init(Set(), this->m_data.numVars());
   for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
     if (!this->m_data.isIndependent(std::get<2>(*it))) {
-      // Need to keep looping as long as even one variable's MB keeps changing
-      changes.insert(std::get<0>(*it));
       // Add y to the blanket of x
       LOG_MESSAGE(info, "%d: + Adding %s to the MB of %s (p-value = %g)", this->m_comm.rank(),
                   this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
@@ -301,7 +298,7 @@ DirectDiscovery<Data, Var, Set>::growShrink(
 
   /* Shrink Phase */
   TIMER_DECLARE(tShrink);
-  auto removed = this->shrinkAll(myBlankets);
+  this->shrinkAll(myBlankets);
   if (this->m_comm.is_first()) {
     TIMER_ELAPSED("Time taken in shrinking the candidate blankets: ", tShrink);
   }
