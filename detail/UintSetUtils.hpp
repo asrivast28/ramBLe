@@ -165,12 +165,12 @@ template <> \
 void \
 set_bcast<UintSet<Element, std::integral_constant<int, N>>>( \
   UintSet<Element, std::integral_constant<int, N>>& set, \
-  const int source, \
+  const int root, \
   const mxx::comm& comm \
 ) \
 { \
   auto size = (set.max() + 63) / 64; \
-  mxx::bcast(&set.m_set.b[0], size, source, comm); \
+  mxx::bcast(&set.m_set.b[0], size, root, comm); \
 } \
  \
 template <> \
@@ -186,6 +186,39 @@ set_allunion<UintSet<Element, std::integral_constant<int, N>>>( \
   mxx::allreduce(set.m_set.b, size, b, std::bit_or<ReduceType>(), comm); \
   memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
   delete[] b; \
+} \
+ \
+template <> \
+void \
+set_allunion_indexed<UintSet<Element, std::integral_constant<int, N>>>( \
+  std::unordered_map<Element, UintSet<Element, std::integral_constant<int, N>>>& indexedSets, \
+  const UintSet<Element, std::integral_constant<int, N>>& allIndices, \
+  const Element max, \
+  const mxx::comm& comm \
+) \
+{ \
+  using ReduceType = std::remove_reference<decltype(std::remove_reference<decltype(indexedSets)>::type::mapped_type::m_set.b[0])>::type; \
+  auto blockSize = static_cast<uint32_t>(max + 63) / 64; \
+  auto totalSize = blockSize * allIndices.max(); \
+  auto bitSets = new ReduceType[totalSize](); \
+  auto b = bitSets; \
+  for (const auto x : allIndices) { \
+    auto it = indexedSets.find(x); \
+    if (it != indexedSets.end()) { \
+      memcpy(b, (*(it->second)).b, blockSize * sizeof(ReduceType)); \
+    } \
+    b += blockSize; \
+  } \
+  mxx::allreduce(static_cast<ReduceType*>(MPI_IN_PLACE), totalSize, bitSets, std::bit_or<ReduceType>(), comm); \
+  b = bitSets; \
+  for (const auto x : allIndices) { \
+    auto it = indexedSets.find(x); \
+    if (it != indexedSets.end()) { \
+      memcpy((*(it->second)).b, b, blockSize * sizeof(ReduceType)); \
+    } \
+    b += blockSize; \
+  } \
+  delete[] bitSets; \
 } \
  \
 template <> \

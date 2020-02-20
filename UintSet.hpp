@@ -123,6 +123,11 @@ public:
   void
   set_allunion(Set&, const mxx::comm&);
 
+  template <typename Set, typename Var>
+  friend
+  void
+  set_allunion_indexed(std::unordered_map<Var, Set>&, const Set&, const Var, const mxx::comm&);
+
   template <typename Set>
   friend
   void

@@ -252,15 +252,7 @@ DirectDiscovery<Data, Var, Set>::syncBlankets(
   std::unordered_map<Var, Set>& myBlankets
 ) const
 {
-  for (const auto x : this->m_allVars) {
-    auto it = myBlankets.find(x);
-    auto blanket = (it != myBlankets.end()) ? it->second : set_init(Set(), this->m_data.numVars());
-    // Union will get the blanket from whichever processes have it
-    set_allunion(blanket, this->m_comm);
-    if (it != myBlankets.end()) {
-      it->second = blanket;
-    }
-  }
+  set_allunion_indexed(myBlankets, this->m_allVars, this->m_data.numVars(), this->m_comm);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -553,9 +545,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
     allBlankets[p.second].insert(p.first);
   }
   // Sync all the blankets across all the processors
-  for (const auto x : this->m_allVars) {
-    set_allunion(allBlankets[x], this->m_comm);
-  }
+  this->syncBlankets(allBlankets);
 
   // Get neighbors for the variables on this processor
   std::unordered_map<Var, Set> myNeighbors;
@@ -579,16 +569,21 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
     }
   }
   // Now, sync all the neighbors across all the processors
-  // and create the bayesian network
+  // XXX: Optimally, we can just gather all the data on process 0
+  //      and create and write the network from that process for now.
+  //      However, that will not be future proof, since we will need
+  //      the network on all the processors when we want to use it.
   auto varNames = this->m_data.varNames(this->m_allVars);
   BayesianNetwork<Var> bn(varNames);
   for (const auto x : this->m_allVars) {
-    auto pcX = set_init(Set(), this->m_data.numVars());
-    if (myNeighbors.find(x) != myNeighbors.end()) {
-      pcX = myNeighbors.at(x);
+    if (myNeighbors.find(x) == myNeighbors.end()) {
+      myNeighbors.insert(std::make_pair(x, set_init(Set(), this->m_data.numVars())));
     }
-    set_allunion(pcX, this->m_comm);
-    for (const auto y : pcX) {
+  }
+  set_allunion_indexed(myNeighbors, this->m_allVars, this->m_data.numVars(), this->m_comm);
+  // We can now create the Bayesian network independently on every processor
+  for (const auto x : this->m_allVars) {
+    for (const auto y : myNeighbors.at(x)) {
       LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
                      this->m_data.varName(x), this->m_data.varName(y));
       bn.addEdge(x, y);

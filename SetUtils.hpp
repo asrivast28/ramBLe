@@ -106,6 +106,14 @@ void
 set_allunion(Set&, const mxx::comm&);
 
 /**
+ * @brief Function for efficient union of multiple sets, done in accordance
+ *        with their indices, across processes.
+ */
+template <typename Set, typename Var>
+void
+set_allunion_indexed(std::unordered_map<Var, Set>&, const Set&, const Var, const mxx::comm&);
+
+/**
  * @brief Function for set intersection across processes.
  */
 template <typename Set>
