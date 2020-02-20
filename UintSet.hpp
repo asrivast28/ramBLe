@@ -42,7 +42,7 @@ public:
   class Enumerator;
 
 public:
-  using Set = typename UintTypeTrait<Size>::Set;
+  using Impl = typename UintTypeTrait<Size>::Set;
   // Required typedefs
   using value_type = Element;
   using iterator = Enumerator;
@@ -62,10 +62,10 @@ public:
 
   UintSet(const typename std::vector<Element>::iterator&, const typename std::vector<Element>::iterator&, const Element = capacity());
 
-  const Set&
+  const Impl&
   operator*() const;
 
-  Set&
+  Impl&
   operator*();
 
   bool
@@ -129,7 +129,7 @@ public:
   set_allintersect(Set&, const mxx::comm&);
 
 private:
-  Set m_set;
+  Impl m_set;
   Element m_max;
   mutable Element m_size;
 }; // class UintSet

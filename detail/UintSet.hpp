@@ -41,10 +41,10 @@ template <typename Element, typename Size>
  */
 class UintSet<Element, Size>::Enumerator : public std::iterator<std::forward_iterator_tag, Element> {
 public:
-  using Set = typename UintTypeTrait<Size>::Set;
+  using Impl = typename UintTypeTrait<Size>::Set;
 
 public:
-  Enumerator(const Set& set, const Element max)
+  Enumerator(const Impl& set, const Element max)
     : m_state(set),
       m_maxN(max >> 6),
       m_currN(0),
@@ -54,8 +54,8 @@ public:
     next();
   }
 
-  Enumerator(const Set& set, const Element max, const Element curr)
-    : m_state((curr < max) ? set : set_empty<Set>()),
+  Enumerator(const Impl& set, const Element max, const Element curr)
+    : m_state((curr < max) ? set : set_empty<Impl>()),
       m_maxN(max >> 6),
       m_currN(curr >> 6),
       m_max(max),
@@ -130,7 +130,7 @@ private:
   }
 
 private:
-  Set m_state;
+  Impl m_state;
   int m_maxN;
   int m_currN;
   Element m_max;
@@ -153,7 +153,7 @@ UintSet<Element, Size>::capacity(
 template <typename Element, typename Size>
 UintSet<Element, Size>::UintSet(
   const Element max
-) : m_set(set_empty<Set>()),
+) : m_set(set_empty<Impl>()),
     m_max(max),
     m_size()
 {
@@ -163,7 +163,7 @@ template <typename Element, typename Size>
 UintSet<Element, Size>::UintSet(
   const std::initializer_list<Element>& s,
   const Element max
-) : m_set(as_set<Set>(s.begin(), s.end())),
+) : m_set(as_set<Impl>(s.begin(), s.end())),
     m_max(max),
     m_size()
 {
@@ -175,7 +175,7 @@ UintSet<Element, Size>::UintSet(
   const typename UintSet<Element, Size>::iterator& first,
   const typename UintSet<Element, Size>::iterator& last,
   const Element max
-) : m_set(as_set<Set>(first, last)),
+) : m_set(as_set<Impl>(first, last)),
     m_max(max),
     m_size()
 {
@@ -187,7 +187,7 @@ UintSet<Element, Size>::UintSet(
   const typename std::vector<Element>::iterator& first,
   const typename std::vector<Element>::iterator& last,
   const Element max
-) : m_set(as_set<Set>(first, last)),
+) : m_set(as_set<Impl>(first, last)),
     m_max(max),
     m_size()
 {
@@ -195,7 +195,7 @@ UintSet<Element, Size>::UintSet(
 }
 
 template <typename Element, typename Size>
-const typename UintSet<Element, Size>::Set&
+const typename UintSet<Element, Size>::Impl&
 UintSet<Element, Size>::operator*(
 ) const
 {
@@ -203,7 +203,7 @@ UintSet<Element, Size>::operator*(
 }
 
 template <typename Element, typename Size>
-typename UintSet<Element, Size>::Set&
+typename UintSet<Element, Size>::Impl&
 UintSet<Element, Size>::operator*(
 )
 {
