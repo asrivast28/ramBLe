@@ -127,7 +127,6 @@ template <typename Data, typename Var, typename Set>
  *        target variable, using the MB of the variable.
  *
  * @param target The index of the target variable.
- * @param candidates The indices of all the candidate variables.
  *
  * @return A set containing the indices of all the variables
  *         in the PC of the given target variable.
@@ -135,7 +134,7 @@ template <typename Data, typename Var, typename Set>
 Set
 DirectDiscovery<Data, Var, Set>::getCandidatePC(
   const Var target,
-  Set candidates
+  Set
 ) const
 {
   LOG_MESSAGE(info, "Neighbors: Getting PC from MB for %s",

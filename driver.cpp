@@ -200,8 +200,8 @@ getNeighborhood(
 
 void
 my_mpi_errorhandler(
-  MPI_Comm* comm,
-  int* errorcode,
+  MPI_Comm*,
+  int*
   ...
 )
 {

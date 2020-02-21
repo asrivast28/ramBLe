@@ -51,6 +51,7 @@ if platform.system() in ['Darwin', 'Linux']:
   cpp = 'mpic++'
   cppFlags.extend([
               '-Wall',
+              '-Wextra',
               '-std=c++14',
               ])
   if releaseBuild:

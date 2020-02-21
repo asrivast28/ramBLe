@@ -21,9 +21,6 @@ class DirectDiscovery : public ConstraintBasedDiscovery<Data, Var, Set> {
 public:
   DirectDiscovery(const mxx::comm&, const Data&, const Var);
 
-  Set
-  getCandidatePC(const Var, Set) const override;
-
   virtual
   ~DirectDiscovery() { }
 
@@ -50,6 +47,9 @@ protected:
   pickBestCandidate(const Var, const Set&, const Set&) const;
 
 private:
+  Set
+  getCandidatePC(const Var, Set) const override;
+
   bool
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
 
@@ -73,10 +73,10 @@ class GSMB: public DirectDiscovery<Data, Var, Set> {
 public:
   GSMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
+private:
   Set
   getCandidateMB(const Var, Set) const override;
 
-private:
   void
   updatePValues(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const override;
 
@@ -97,6 +97,7 @@ class IAMB: public DirectDiscovery<Data, Var, Set> {
 public:
   IAMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
+private:
   Set
   getCandidateMB(const Var, Set) const override;
 }; // class IAMB
@@ -114,10 +115,10 @@ class InterIAMB: public DirectDiscovery<Data, Var, Set> {
 public:
   InterIAMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
+private:
   Set
   getCandidateMB(const Var, Set) const override;
 
-private:
   void
   growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&) const override;
 }; // class InterIAMB

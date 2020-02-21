@@ -62,6 +62,7 @@ class HITON: public TopologicalDiscovery<Data, Var, Set> {
 public:
   HITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
+private:
   Set
   getCandidatePC(const Var, Set) const override;
 }; // class HITON
@@ -79,6 +80,7 @@ class SemiInterleavedHITON: public TopologicalDiscovery<Data, Var, Set> {
 public:
   SemiInterleavedHITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
+private:
   Set
   getCandidatePC(const Var, Set) const override;
 }; // class SemiInterleavedHITON
@@ -96,6 +98,7 @@ class GetPC: public TopologicalDiscovery<Data, Var, Set> {
 public:
   GetPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
+private:
   Set
   getCandidatePC(const Var, Set) const override;
 }; // class GetPC
