@@ -110,6 +110,14 @@ if profiler is not None:
   else:
     print('WARNING: Profiling is not supported on', platform.system())
 
+if ARGUMENTS.get('SANITIZE', 0) not in [0, '0']:
+  if platform.system() == 'Linux':
+    cppFlags.append('-fsanitize=address')
+    #cppFlags.append('-fsanitize=leak')
+    #cppFlags.append('-fsanitize=undefined')
+    cppFlags.append('-fno-omit-frame-pointer')
+    linkFlags.append('-fsanitize=address')
+
 suffix = ARGUMENTS.get('SUFFIX')
 if suffix is not None:
   targetName += suffix
