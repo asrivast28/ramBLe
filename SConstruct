@@ -134,10 +134,27 @@ if ARGUMENTS.get('LOCALENVIRON', 1) not in [0, '0']:
     else:
       linkFlags.append(flag)
 
+
 env = Environment(ENV=os.environ, CXX=cpp, CXXFLAGS=cppFlags, CPPPATH=cppPaths, CPPDEFINES=cppDefs, LIBPATH=libPaths, LINKFLAGS=linkFlags)
-conf = Configure(env)
+
+def CheckCXXBuilder(context):
+  '''
+  Custom test for determining if the C++ build environment works.
+  '''
+  # First check if the compiler works
+  context.sconf.CheckCXX()
+  # Now, check if the linker works
+  context.Message('Checking whether the C++ linker works...')
+  # Use the file generated during the compiler testing
+  source = context.sconf.lastTarget.sources[0]
+  result = context.TryLink(source.get_contents(), source.get_suffix())
+  context.Result(result)
+  return result
+# Add the custom test for testing C++ build environment in the configuration
+conf = Configure(env, custom_tests = {'CheckCXXBuilder' : CheckCXXBuilder})
+
 # Check if the initial build environment works
-if not conf.CheckCXX():
+if not conf.CheckCXXBuilder():
   Exit(1)
 
 # Check for bit_util.hpp specific functions and build options
