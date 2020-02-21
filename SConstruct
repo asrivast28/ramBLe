@@ -147,7 +147,7 @@ def CheckCXXBuilder(context):
   context.Message('Checking whether the C++ linker works...')
   # Use the file generated during the compiler testing
   source = context.sconf.lastTarget.sources[0]
-  result = context.TryLink(source.get_contents(), source.get_suffix())
+  result = context.TryLink(source.get_contents().encode('utf-8'), source.get_suffix())
   context.Result(result)
   return result
 # Add the custom test for testing C++ build environment in the configuration
