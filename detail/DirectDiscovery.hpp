@@ -783,6 +783,7 @@ InterIAMB<Data, Var, Set>::growShrink(
   TIMER_DECLARE(tGrow);
   TIMER_DECLARE(tShrink);
   TIMER_DECLARE(tDist);
+  TIMER_DECLARE(tSync);
   bool changed = true;
   bool redistributed = false;
   while (changed) {
@@ -793,7 +794,9 @@ InterIAMB<Data, Var, Set>::growShrink(
     auto added = this->growAll(myPV, myBlankets);
     TIMER_PAUSE(tGrow);
     /* End of Grow Phase */
+    TIMER_START(tSync);
     this->syncBlankets(myBlankets);
+    TIMER_PAUSE(tSync);
     /* Shrink Phase */
     TIMER_START(tShrink);
     auto removed = this->shrinkAll(myBlankets);
@@ -854,7 +857,9 @@ InterIAMB<Data, Var, Set>::growShrink(
         if (fixed || sorted) {
           // We need to get the missing blankets if the p-value list was redistributed in this iteration
           // This can happen if the imbalance was fixed OR if the list was sorted because of an addition
+          TIMER_START(tSync);
           this->syncMissingBlankets(myPV, myBlankets);
+          TIMER_PAUSE(tSync);
           redistributed = true;
         }
         TIMER_PAUSE(tDist);
@@ -872,6 +877,7 @@ InterIAMB<Data, Var, Set>::growShrink(
   }
   if (this->m_comm.is_first()) {
     TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", tDist);
+    TIMER_ELAPSED("Time taken in synchronizing the candidate blankets: ", tSync);
     TIMER_ELAPSED("Time taken in growing the candidate blankets: ", tGrow);
     TIMER_ELAPSED("Time taken in shrinking the candidate blankets: ", tShrink);
   }
