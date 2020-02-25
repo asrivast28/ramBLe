@@ -12,6 +12,14 @@
 #include <algorithm>
 #include <type_traits>
 
+// MVAPICH2 (pre release-2.3.3)'s MPI_Allreduce segfaults in the function MPIR_Reduce_scatter_ring_2lvl.
+// Therefore, we use bounded-size MPI_Allreduce so that the function is never called.
+#if defined MVAPICH2_NUMVERSION && MVAPICH2_NUMVERSION < 20303300
+#define ALLREDUCE_MAXSIZE 65535u
+#else
+#define ALLREDUCE_MAXSIZE std::numeric_limits<uint32_t>::max()
+#endif
+
 
 /**
  * @brief Class that iterates over all the subsets of the given size of a given UintSet.
@@ -209,7 +217,13 @@ set_allunion_indexed<UintSet<Element, std::integral_constant<int, N>>>( \
     } \
     b += blockSize; \
   } \
-  mxx::allreduce(static_cast<ReduceType*>(MPI_IN_PLACE), totalSize, bitSets, std::bit_or<ReduceType>(), comm); \
+  b = bitSets; \
+  while (totalSize > 0) { \
+    auto reduceSize = std::min(totalSize, ALLREDUCE_MAXSIZE); \
+    mxx::allreduce(static_cast<ReduceType*>(MPI_IN_PLACE), reduceSize, b, std::bit_or<ReduceType>(), comm); \
+    b += reduceSize; \
+    totalSize -= reduceSize; \
+  } \
   b = bitSets; \
   for (const auto x : allIndices) { \
     auto it = indexedSets.find(x); \
