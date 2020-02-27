@@ -150,13 +150,14 @@ def CheckCXXBuilder(context):
   Custom test for determining if the C++ build environment works.
   '''
   # First check if the compiler works
-  context.sconf.CheckCXX()
-  # Now, check if the linker works
-  context.Message('Checking whether the C++ linker works...')
-  # Use the file generated during the compiler testing
-  source = context.sconf.lastTarget.sources[0]
-  result = context.TryLink(source.get_contents().decode('utf-8'), source.get_suffix())
-  context.Result(result)
+  result = context.sconf.CheckCXX()
+  if result:
+    # Now, check if the linker works
+    context.Message('Checking whether the C++ linker works...')
+    # Use the file generated during the compiler testing
+    source = context.sconf.lastTarget.sources[0]
+    result = context.TryLink(source.get_contents().decode('utf-8'), source.get_suffix())
+    context.Result(result)
   return result
 # Add the custom test for testing C++ build environment in the configuration
 conf = Configure(env, custom_tests = {'CheckCXXBuilder' : CheckCXXBuilder})
