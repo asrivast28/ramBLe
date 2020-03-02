@@ -195,10 +195,10 @@ DirectDiscovery<Data, Var, Set>::growAll(
                                (std::islessequal(std::get<2>(a), std::get<2>(b)) ? a : b) : b; };
   // First, do a forward segmented parallel prefix with primary variable defining the segment boundaries
   // This will get the secondary variable with the minimum p-value to the corresponding primary variable boundary
-  mxx::global_scan(myPV.begin(), myPV.end(), minPV.begin(), comparePV, this->m_comm, false);
+  mxx::global_scan(myPV.begin(), myPV.end(), minPV.begin(), comparePV, false, this->m_comm);
   // Then, do a reverse segmented parallel prefix with the same segments as before
   // This will effectively broadcast the secondary variable with the minimum p-value within the segments
-  mxx::global_scan_inplace(minPV.rbegin(), minPV.rend(), comparePV, this->m_comm.reverse(), false);
+  mxx::global_scan_inplace(minPV.rbegin(), minPV.rend(), comparePV, false, this->m_comm.reverse());
   // There might be multiple local copies of the minimum p-value corresponding to every segment
   // Retain only one per segment
   auto comparePrimary = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
