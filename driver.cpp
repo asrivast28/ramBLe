@@ -199,7 +199,7 @@ getNeighborhood(
 }
 
 void
-my_mpi_errorhandler(
+myMPIErrorHandler(
   MPI_Comm*,
   int*
   ...
@@ -209,6 +209,24 @@ my_mpi_errorhandler(
     throw std::runtime_error("MPI Error");
 }
 
+void
+warmupMPI(
+  const mxx::comm& comm
+)
+{
+  std::vector<uint8_t> send(comm.size());
+  std::vector<uint8_t> recv(comm.size());
+  // First, warmup Alltoall of size 1
+  mxx::all2all(&send[0], 1, &recv[0], comm);
+  // Then, warmup Alltoallv of size 1
+  std::vector<size_t> sendSizes(comm.size(), 1);
+  std::vector<size_t> sendDispls(comm.size());
+  std::iota(sendDispls.begin(), sendDispls.end(), 0);
+  std::vector<size_t> recvSizes(comm.size(), 1);
+  std::vector<size_t> recvDispls(sendDispls);
+  mxx::all2allv(&send[0], sendSizes, sendDispls, &recv[0], recvSizes, recvDispls, comm);
+}
+
 int
 main(
   int argc,
@@ -216,14 +234,20 @@ main(
 )
 {
   // Set up MPI
+  TIMER_DECLARE(tInit);
   MPI_Init(&argc, &argv);
 
-  // Set custom error handler (for debugging with working stack-trace on gdb)
-  MPI_Errhandler errhandler;
-  MPI_Errhandler_create(&my_mpi_errorhandler, &errhandler);
-  MPI_Errhandler_set(MPI_COMM_WORLD, errhandler);
-
   mxx::comm comm;
+  // Set custom error handler (for debugging with working stack-trace on gdb)
+  MPI_Errhandler handler;
+  MPI_Errhandler_create(&myMPIErrorHandler, &handler);
+  MPI_Errhandler_set(comm, handler);
+  comm.barrier();
+  if (comm.is_first()) {
+    TIMER_ELAPSED("Time taken in initializing MPI: ", tInit);
+  }
+
+
   ProgramOptions options;
   try {
     options.parse(argc, argv);
@@ -234,6 +258,7 @@ main(
     }
     return 1;
   }
+
   if (options.hostNames()) {
     auto name = boost::asio::ip::host_name();
     if (comm.is_first()) {
@@ -251,6 +276,16 @@ main(
     }
     if (comm.is_first()) {
       std::cout << "******" << std::endl;
+    }
+  }
+
+  if ((comm.size() > 1) && options.warmupMPI()) {
+    comm.barrier();
+    TIMER_DECLARE(tWarmup);
+    warmupMPI(comm);
+    comm.barrier();
+    if (comm.is_first()) {
+      TIMER_ELAPSED("Time taken in warming up MPI: ", tWarmup);
     }
   }
 

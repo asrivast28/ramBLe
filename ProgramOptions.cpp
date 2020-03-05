@@ -11,6 +11,7 @@ namespace fs = boost::filesystem;
 
 ProgramOptions::ProgramOptions(
 ) : m_desc("Constraint-based Causal Discovery"),
+    m_logLevel(),
     m_fileName(),
     m_algoName(),
     m_targetVar(),
@@ -29,7 +30,8 @@ ProgramOptions::ProgramOptions(
     m_learnNetwork(),
     m_directEdges(),
     m_forceParallel(),
-    m_hostNames()
+    m_hostNames(),
+    m_warmupMPI()
 {
   po::options_description visible("User options");
   visible.add_options()
@@ -62,6 +64,7 @@ ProgramOptions::ProgramOptions(
     ("counter", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
     ("parallel", po::bool_switch(&m_forceParallel)->default_value(false), "Use the parallel implementation even for p=1.")
     ("hostnames", po::bool_switch(&m_hostNames)->default_value(false), "Print out the hostname for every process.")
+    ("warmup", po::bool_switch(&m_warmupMPI)->default_value(false), "Warmup the MPI_Alltoall(v) functions before starting execution.")
 #ifdef LOGGING
     ("log", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
@@ -231,6 +234,13 @@ ProgramOptions::hostNames(
 ) const
 {
   return m_hostNames;
+}
+
+bool
+ProgramOptions::warmupMPI(
+) const
+{
+  return m_warmupMPI;
 }
 
 const std::string&

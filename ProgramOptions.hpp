@@ -81,6 +81,9 @@ public:
   bool
   hostNames() const;
 
+  bool
+  warmupMPI() const;
+
   const std::string&
   logLevel() const;
 
@@ -109,6 +112,7 @@ private:
   bool m_directEdges;
   bool m_forceParallel;
   bool m_hostNames;
+  bool m_warmupMPI;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_
