@@ -495,6 +495,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
   const double imbalanceThreshold
 ) const
 {
+  TIMER_DECLARE(tBlankets);
   // First, block decompose all the variable pairs on all the processors
   auto n = this->m_allVars.size();
   auto totalPairs = n * (n - 1);
@@ -532,10 +533,13 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
   this->growShrink(std::move(myPV), myBlankets, myAdded, imbalanceThreshold);
 
   /* Symmetry correction */
+  this->m_comm.barrier();
   TIMER_DECLARE(tSymmetry);
   auto myPairs = this->symmetryCorrect(std::move(myBlankets), std::move(myAdded));
+  this->m_comm.barrier();
   if (this->m_comm.is_first()) {
     TIMER_ELAPSED("Time taken in symmetry correcting the blankets: ", tSymmetry);
+    TIMER_ELAPSED("Time taken in getting the blankets: ", tBlankets);
   }
   /* End of Symmetry Correction */
 
@@ -591,6 +595,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
       bn.addEdge(y, x);
     }
   }
+  this->m_comm.barrier();
   if (this->m_comm.is_first()) {
     TIMER_ELAPSED("Time taken in getting the neighbors: ", tNeighbors);
   }
@@ -783,6 +788,7 @@ InterIAMB<Data, Var, Set>::growShrink(
   TIMER_DECLARE(tGrow);
   TIMER_DECLARE(tShrink);
   TIMER_DECLARE(tDist);
+  TIMER_RESET(tDist);
   TIMER_DECLARE(tSync);
   bool changed = true;
   bool redistributed = false;

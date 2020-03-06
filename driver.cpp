@@ -118,6 +118,7 @@ getNeighborhood(
     }
   }
   if (options.learnNetwork() || !options.outputFile().empty()) {
+    comm.barrier();
     TIMER_DECLARE(tNetwork);
     auto g = algo->getNetwork(options.directEdges(), (comm.size() > 1) || options.forceParallel(), options.imbalanceThreshold());
     comm.barrier();
