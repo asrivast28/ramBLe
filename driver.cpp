@@ -266,12 +266,14 @@ main(
     }
     TIMER_DECLARE(tRead);
     std::unique_ptr<DataReader<uint8_t>> reader;
-    auto varMajor = true;
+    constexpr auto varMajor = true;
     if (options.colObs()) {
-      reader.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), varMajor));
+      reader.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(),
+                                                        options.varNames(), options.obsIndices(), varMajor, options.parallelRead()));
     }
     else {
-      reader.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(), options.varNames(), options.obsIndices(), varMajor));
+      reader.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(),
+                                                     options.varNames(), options.obsIndices(), varMajor, options.parallelRead()));
     }
     comm.barrier();
     if (comm.is_first()) {

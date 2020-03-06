@@ -31,6 +31,9 @@ public:
   fileName() const;
 
   bool
+  parallelRead() const;
+
+  bool
   colObs() const;
 
   bool
@@ -97,6 +100,7 @@ private:
   uint32_t m_numObs;
   uint32_t m_maxConditioning;
   char m_separator;
+  bool m_parallelRead;
   bool m_colObs;
   bool m_varNames;
   bool m_obsIndices;

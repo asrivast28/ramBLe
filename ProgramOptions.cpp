@@ -21,6 +21,7 @@ ProgramOptions::ProgramOptions(
     m_numObs(),
     m_maxConditioning(),
     m_separator(),
+    m_parallelRead(),
     m_colObs(),
     m_varNames(),
     m_obsIndices(),
@@ -36,6 +37,7 @@ ProgramOptions::ProgramOptions(
     ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
     ("nobs,m", po::value<uint32_t>(&m_numObs), "Number of observations in the dataset.")
     ("file,f", po::value<std::string>(&m_fileName), "Name of the file from which dataset is to be read.")
+    ("readpar,r", po::bool_switch(&m_parallelRead)->default_value(false), "Read from the file in parallel.")
     ("colobs,c", po::bool_switch(&m_colObs)->default_value(false), "The file contains observations in columns.")
     ("separator,s", po::value<char>(&m_separator)->default_value(','), "Delimiting character in the file.")
     ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "The file contains variable names.")
@@ -110,6 +112,13 @@ ProgramOptions::fileName(
 ) const
 {
   return m_fileName;
+}
+
+bool
+ProgramOptions::parallelRead(
+) const
+{
+  return m_parallelRead;
 }
 
 bool
