@@ -151,7 +151,7 @@ edgeDifference(
     auto secondSource = secondNameDescriptorMap.at(firstVertices[boost::source(*eit, first)]);
     auto secondTarget = secondNameDescriptorMap.at(firstVertices[boost::target(*eit, first)]);
     if (!boost::edge(secondSource, secondTarget, second).second) {
-      edgeDiff.insert(std::make_pair(firstVertices[boost::source(*eit, first)], firstVertices[boost::source(*eit, first)]));
+      edgeDiff.insert(std::make_pair(firstVertices[boost::source(*eit, first)], firstVertices[boost::target(*eit, first)]));
     }
   }
   return edgeDiff;
