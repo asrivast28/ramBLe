@@ -1,0 +1,32 @@
+##
+# @file SConscript
+# @brief Provides functionality for building the scripts.
+import os
+
+Import('env')
+
+scriptsLibs = [
+               'boost_graph',
+               'boost_regex',
+               ]
+
+srcFiles = [
+            'compare_dot.cpp',
+            ]
+
+built = False
+# Do not modify the provided build environment
+buildEnv = env.Clone()
+# Check if the header and the library files can be located
+conf = Configure(buildEnv)
+for lib in scriptsLibs:
+  if not conf.CheckLib(lib, language='C++'):
+    Return('built')
+buildEnv = conf.Finish()
+
+scriptName = 'compare_dot'
+buildEnv.Program(target=scriptName, source=srcFiles)
+buildEnv.Install(buildEnv.scriptsDir, scriptName)
+
+built = True
+Return('built')

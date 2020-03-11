@@ -2,6 +2,7 @@
 /datasets/
 /csl*
 /test/testcsl*
+/scripts/compare_dot
 /.sconsign.dblite
 /.sconf_temp/
 /config.log

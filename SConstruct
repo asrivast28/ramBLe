@@ -189,6 +189,7 @@ env.targetName = targetName
 env.testName = testName
 env.topDir = topDir
 env.testDir = os.path.join(topDir, 'test')
+env.scriptsDir = os.path.join(topDir, 'scripts')
 
 buildDir = os.path.join('builds', buildDir)
 
@@ -198,3 +199,6 @@ if not SConscript('SConscript', exports='env', src_dir='.', variant_dir=buildDir
 if ARGUMENTS.get('TEST', 1) not in ('0', 0):
   if not SConscript(os.path.join('test', 'SConscript'), exports='env', src_dir='test', variant_dir=os.path.join(buildDir, 'test'), duplicate=0):
     print('Test suite was not built')
+if ARGUMENTS.get('SCRIPTS', 1) not in ('0', 0):
+  if not SConscript(os.path.join('scripts', 'SConscript'), exports='env', src_dir='scripts', variant_dir=os.path.join(buildDir, 'scripts'), duplicate=0):
+    print('Scripts were not built')
