@@ -25,6 +25,7 @@ libPaths = [
             ]
 
 allLibs = [
+           'boost_filesystem',
             ]
 
 linkFlags = [

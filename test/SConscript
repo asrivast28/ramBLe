@@ -7,7 +7,7 @@ Import('env')
 
 gTestLibs = [
              'gtest',
-            ]
+             ]
 
 srcFiles = [
             'test.cpp',
@@ -21,6 +21,8 @@ conf = Configure(buildEnv)
 if not conf.CheckCXXHeader('gtest/gtest.h'):
   Return('built')
 for lib in gTestLibs:
+  if lib in buildEnv.get('LIBS', []):
+    continue
   if not conf.CheckLib(lib, language='C++'):
     Return('built')
 buildEnv = conf.Finish()

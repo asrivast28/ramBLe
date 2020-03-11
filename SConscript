@@ -4,7 +4,6 @@
 Import('env')
 
 boostLibs = [
-             'boost_filesystem',
              'boost_program_options',
              'boost_system',
              ]
@@ -20,6 +19,8 @@ buildEnv = env.Clone()
 # Check if all the library files can be located
 conf = Configure(buildEnv)
 for lib in boostLibs:
+  if lib in buildEnv.get('LIBS', []):
+    continue
   if not conf.CheckLib(lib, language='C++'):
     Return('built')
 buildEnv = conf.Finish()

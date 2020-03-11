@@ -7,6 +7,8 @@
 
 #include "mxx/collective.hpp"
 
+#include <boost/filesystem.hpp>
+
 #include <algorithm>
 #include <fstream>
 
@@ -224,7 +226,7 @@ RowObservationReader<DataType>::RowObservationReader(
   auto myRows = numRows;
   auto myOffset = 0u;
   if (parallelRead || comm.is_first()) {
-    std::ifstream dataFile(fileName);
+    std::ifstream dataFile(boost::filesystem::canonical(fileName).string());
     std::string line;
     if (varNames) {
       // Consume the variable names before reading the data
@@ -324,7 +326,7 @@ ColumnObservationReader<DataType>::ColumnObservationReader(
   auto myRows = numRows;
   auto myOffset = 0u;
   if (parallelRead || comm.is_first()) {
-    std::ifstream dataFile(fileName);
+    std::ifstream dataFile(boost::filesystem::canonical(fileName).string());
     std::string line;
     if (obsIndices) {
       // Discard the observation indices
