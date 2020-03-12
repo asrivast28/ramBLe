@@ -49,6 +49,7 @@ if (!((ncol(data) == args$nvars) && (nrow(data) == args$nobs))) {
 }
 cat('Time taken in reading the file:', tRead['elapsed'], '\n')
 
+cat('Using bnlearn from', find.package('bnlearn'), '\n')
 library('bnlearn')
 network <- NULL
 tNetwork <- NULL
