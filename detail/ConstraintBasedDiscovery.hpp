@@ -236,57 +236,80 @@ ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_parallel(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Checks if y-x-z forms a v-structure.
+ * @brief Returns the maximum p-value corresponding to y-x-z v-structure.
  */
-bool
-ConstraintBasedDiscovery<Data, Var, Set>::isCollider(
+double
+ConstraintBasedDiscovery<Data, Var, Set>::colliderPValue(
   const Var y,
   const Var x,
   const Var z
 ) const
 {
   static auto smallerSet = [] (const Set& first, const Set& second)
-                              { return (first.size() <= second.size()) ? first: second; };
+                              { return (first.size() < second.size()) ? first: second; };
   auto setX = set_init(Set(), this->m_data.numVars());
   setX.insert(x);
   auto mbY = this->getMB(y);
   if (mbY.contains(z)) {
     mbY.erase(z);
   }
+  mbY.erase(x);
   auto mbZ = this->getMB(z);
   if (mbZ.contains(y)) {
     mbZ.erase(y);
   }
-  const auto& u = smallerSet(mbY, mbZ);
-  return !this->m_data.isIndependentAnySubset(y, z, u, setX, this->m_maxConditioning);
+  mbZ.erase(x);
+  return this->m_data.maxPValue(y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Finds all the potential v-structures around the given variable.
+ */
+std::vector<std::tuple<double, Var, Var, Var>>
+ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
+  const Var target
+) const
+{
+  std::vector<std::tuple<double, Var, Var, Var>> vStructures;
+  std::set<std::pair<Var, Var>> checked;
+  auto pcTarget = this->getPC(target);
+  for (const auto y : pcTarget) {
+    // Candidate parents of target, which are not connected to y
+    auto pcY = this->getPC(y);
+    auto cpaTarget = set_difference(pcTarget, pcY);
+    cpaTarget.erase(y);
+    for (const auto z : cpaTarget) {
+      auto curr = (y < z) ? std::make_pair(y, z) : std::make_pair(z, y);
+      if (checked.find(curr) == checked.end()) {
+        checked.insert(curr);
+        auto pv = this->colliderPValue(curr.first, target, curr.second);
+        if (!this->m_data.isIndependent(pv)) {
+          LOG_MESSAGE(info, "* Found new v-structure %s -> %s <- %s (p-value = %g)",
+                            this->m_data.varName(curr.first), this->m_data.varName(target), this->m_data.varName(curr.second), pv);
+          vStructures.push_back(std::make_tuple(pv, curr.first, target, curr.second));
+        }
+        LOG_MESSAGE_IF(this->m_data.isIndependent(pv), debug,
+                       "* Rejected the v-structure %s -> %s <- %s (p-value = %g)",
+                       this->m_data.varName(curr.first), this->m_data.varName(target), this->m_data.varName(curr.second), pv);
+      }
+    }
+  }
+  return vStructures;
 }
 
 template <typename Data, typename Var, typename Set>
 /**
  * @brief Finds all the potential v-structures in the network.
  */
-std::multimap<Var, std::pair<Var, Var>>
+std::vector<std::tuple<double, Var, Var, Var>>
 ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
 ) const
 {
-  std::multimap<Var, std::pair<Var, Var>> vStructures;
+  std::vector<std::tuple<double, Var, Var, Var>> vStructures;
   for (const auto x : m_allVars) {
-    auto pcX = this->getPC(x);
-    Set paX;
-    for (const auto y : pcX) {
-      // Candidate parents of x, which are not connected to y
-      auto pcY = this->getPC(y);
-      auto cpaX = set_difference(pcX, pcY);
-      cpaX.erase(y);
-      for (const auto z : cpaX) {
-        if (!(set_contains(paX, y) && set_contains(paX, z)) && this->isCollider(y, x, z)) {
-          LOG_MESSAGE(info, "* Found new v-structure %s -> %s <- %s", this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
-          vStructures.insert(std::make_pair(x, std::make_pair(y, z)));
-          paX.insert(y);
-          paX.insert(z);
-        }
-      }
-    }
+    auto xVStructures = this->findVStructures(x);
+    vStructures.insert(vStructures.end(), xVStructures.begin(), xVStructures.end());
   }
   return vStructures;
 }
@@ -308,9 +331,10 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
 {
   auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold) : this->getSkeleton_sequential();
   if (this->m_comm.is_first() && directEdges) {
+    TIMER_DECLARE(tDirect);
     // First, orient the v-structures
     auto vStructures = this->findVStructures();
-    bn.applyVStructures(vStructures);
+    bn.applyVStructures(std::move(vStructures));
     // Then, break any directed cycles in the network
     LOG_MESSAGE_IF(bn.hasDirectedCycles(), info, "* The initial network contains directed cycles");
     while (bn.hasDirectedCycles()) {
@@ -321,6 +345,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
     while (changed) {
       changed = bn.applyMeekRules();
     }
+    TIMER_ELAPSED("Time taken in directing the edges: ", tDirect);
   }
   return bn;
 }

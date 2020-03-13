@@ -253,7 +253,7 @@ DiscreteData<Counter, Var>::maxPValue(
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
-  for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
+  for (auto i = 0u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       maxPV = std::max(thisPV, maxPV);
@@ -287,14 +287,20 @@ DiscreteData<Counter, Var>::maxPValue(
   const Var maxSize
 ) const
 {
-  auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
+  auto seedPV = this->pValue(x, y, seed);
   auto maxPV = std::numeric_limits<double>::lowest();
-  for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
-    for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
-      // Always include the seed set in the conditioning set
-      condition = set_union(condition, seed);
-      auto thisPV = this->pValue(x, y, condition);
-      maxPV = std::max(thisPV, maxPV);
+  if (this->isIndependent(seedPV) || given.empty()) {
+    maxPV = seedPV;
+  }
+  else {
+    auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
+    for (auto i = 1u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
+      for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
+        // Always include the seed set in the conditioning set
+        condition = set_union(condition, seed);
+        auto thisPV = this->pValue(x, y, condition);
+        maxPV = std::max(thisPV, maxPV);
+      }
     }
   }
   LOG_MESSAGE(debug, "max p-value = %g", maxPV);
@@ -326,7 +332,7 @@ DiscreteData<Counter, Var>::maxPValueSubset(
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
   auto z = set_init(SetType<Var, Args...>(), numVars());
-  for (auto i = 0u; (i <= subsetSize) && std::islessequal(maxPV, m_threshold); ++i) {
+  for (auto i = 0u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       if (std::isgreater(thisPV, maxPV)) {

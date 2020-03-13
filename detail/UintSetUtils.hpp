@@ -98,8 +98,8 @@ public:
     : m_given(given),
       m_candidates(given.size(), false)
   {
-    auto i = 0u;
-    for (auto it = m_candidates.begin(); i < k; ++it, ++i) {
+    auto it = m_candidates.begin();
+    for (auto i = 0u; i < k; ++i, ++it) {
       *it = true;
     }
   }
@@ -272,14 +272,14 @@ operator<<(
   const UintSet<Element, Size>& set
 )
 {
-  stream << "{";
+  stream << '{';
   for (auto elem : set) {
-    stream << static_cast<uint32_t>(elem) << ",";
+    stream << static_cast<uint32_t>(elem) << ',';
   }
   if (set.size() > 0) {
     stream << '\b';
   }
-  stream << "}";
+  stream << '}';
   return stream;
 }
 

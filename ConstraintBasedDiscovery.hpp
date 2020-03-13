@@ -31,6 +31,9 @@ public:
   Set
   getMB(const Var) const;
 
+  std::vector<std::tuple<double, Var, Var, Var>>
+  findVStructures(const Var) const;
+
   BayesianNetwork<Var>
   getNetwork(const bool, const bool, const double = 0.0) const;
 
@@ -70,10 +73,10 @@ private:
   void
   symmetryCorrectMB(const Var, Set&) const;
 
-  bool
-  isCollider(const Var, const Var, const Var) const;
+  double
+  colliderPValue(const Var, const Var, const Var) const;
 
-  std::multimap<Var, std::pair<Var, Var>>
+  std::vector<std::tuple<double, Var, Var, Var>>
   findVStructures() const;
 
 protected:

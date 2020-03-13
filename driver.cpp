@@ -112,6 +112,12 @@ getNeighborhood(
     }
     else {
       neighborhoodVars = data.varNames(algo->getPC(target));
+      if (options.directEdges()) {
+        for (const auto& vs : algo->findVStructures(target)) {
+          std::cout << varNames[std::get<1>(vs)] << " -> " << varNames[std::get<2>(vs)] << " <- " <<
+                       varNames[std::get<3>(vs)] << std::endl;
+        }
+      }
     }
     if (comm.is_first()) {
       TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);

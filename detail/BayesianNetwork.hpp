@@ -119,25 +119,29 @@ template <typename Var>
 /**
  * @brief Orients the edges of the network in accordance with v-structures.
  *
- * @param vStructures A multimap with all the discovered v-structures.
+ * @param vStructures A tuple with all the discovered v-structures and the corresponding p-values.
  */
 void
 BayesianNetwork<Var>::applyVStructures(
-  const std::multimap<Var, std::pair<Var, Var>>& vStructures
+  std::vector<std::tuple<double, Var, Var, Var>>&& vStructures
 )
 {
+  // First sort the v-structures in the ascending order of the p-values
+  std::sort(vStructures.begin(), vStructures.end());
   for (const auto& vs : vStructures) {
-    auto x = this->wrap(this->m_idVertexMap.at(vs.first));
-    auto y = this->wrap(this->m_idVertexMap.at(vs.second.first));
-    auto z = this->wrap(this->m_idVertexMap.at(vs.second.second));
+    auto y = this->wrap(this->m_idVertexMap.at(std::get<1>(vs)));
+    auto x = this->wrap(this->m_idVertexMap.at(std::get<2>(vs)));
+    auto z = this->wrap(this->m_idVertexMap.at(std::get<3>(vs)));
     // First check if the reverse edges still exist
     if (!this->edgeExists(y, x) || !this->edgeExists(z, x)) {
-      LOG_MESSAGE(warning, "* Could not apply v-structure %s -> %s <- %s", y.property().label, x.property().label, z.property().label);
-      LOG_MESSAGE_IF(!this->edgeExists(y, x), info, "* %s - %s has already been oriented in the opposite direction", y.property().label, x.property().label);
-      LOG_MESSAGE_IF(!this->edgeExists(z, x), info, "* %s - %s has already been oriented in the opposite direction", x.property().label, z.property().label);
+      LOG_MESSAGE(warning, "* Could not apply v-structure %s -> %s <- %s (p-value = % g)",
+                           y.property().label, x.property().label, z.property().label, std::get<0>(vs));
+      LOG_MESSAGE_IF(!this->edgeExists(y, x), debug, "* %s - %s has already been oriented in the opposite direction", y.property().label, x.property().label);
+      LOG_MESSAGE_IF(!this->edgeExists(z, x), debug, "* %s - %s has already been oriented in the opposite direction", x.property().label, z.property().label);
       continue;
     }
-    LOG_MESSAGE(info, "+ Applying the v-structure %s -> %s <- %s", y.property().label, x.property().label, z.property().label);
+    LOG_MESSAGE(info, "+ Applying the v-structure %s -> %s <- %s (p-value = %g)",
+                      y.property().label, x.property().label, z.property().label, std::get<0>(vs));
     this->removeEdge(x, y);
     this->removeEdge(x, z);
   }
@@ -321,6 +325,8 @@ BayesianNetwork<Var>::applyMeekRules(
 )
 {
   bool changed = false;
+  auto isCollider = [] (const Vertex& v) { return (v.inDegree() > v.outDegree()) &&
+                                                  (v.inDegree() - v.outDegree() > 1); };
   // Iterate over all the undirected edges
   for (auto e : this->antiParallelEdges()) {
     // Check if the anti-parallel edge still exists
@@ -331,6 +337,10 @@ BayesianNetwork<Var>::applyMeekRules(
     // Therefore, check if the rules can be applied to the reverse direction
     auto source = e.source();
     auto target = e.target();
+    if (isCollider(source) && isCollider(target)) {
+      LOG_MESSAGE_IF(*source < *target, info, "* Fixing edge %s - %s because of conflicting v-structures", source.property().label, target.property().label);
+      continue;
+    }
     if (this->unshieldedColliderRule(target, source)) { // Apply Meek's Rule 1
       if (this->removeEdgeAcyclic(std::move(e))) {
         LOG_MESSAGE(info, "* Directing edge %s -> %s (R1: unshielded colliders)", target.property().label, source.property().label);
@@ -394,4 +404,4 @@ BayesianNetwork<Var>::writeGraphviz(
   out << "}" << std::endl;
 }
 
-#endif // DETAIL_BAYESIANNETWORK_HPP_
+#endif // DETAIL_BAYESIANNETWORK_HPP
