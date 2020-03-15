@@ -6,7 +6,15 @@
 # @author Ankit Srivastava <asrivast@gatech.edu>
 #
 
+cat('Using bnlearn from', find.package('bnlearn'), '\n')
+library('bnlearn')
 library('optparse')
+
+
+if (!exists("argv")) {
+        argv = commandArgs(trailing=TRUE)
+}
+
 parser <- OptionParser()
 parser <- add_option(parser, c('--nvars', '-n'), type='integer', help='Number of variables in the dataset.')
 parser <- add_option(parser, c('--nobs', '-m'), type='integer', help='Number of observations in the dataset.')
@@ -24,7 +32,7 @@ parser <- add_option(parser, c('--directed', '-d'), action='store_true', default
 parser <- add_option(parser, c('--alpha', '-p'), type='double', default=0.05, help='Threshold p-value.')
 parser <- add_option(parser, c('--conditioning', '-g'), type='integer', help='Maximum size of conditioning sets.')
 parser <- add_option(parser, c('--log'), type='character', help='Level of logging.')
-args <- parse_args(parser, args=commandArgs(trailing=TRUE))
+args <- parse_args(parser, args=argv)
 
 if (!args$learn && is.null(args$target) && is.null(args$output)) {
         cat("At least one of --target, --learn, or --output should be specified.\n")
@@ -49,8 +57,6 @@ if (!((ncol(data) == args$nvars) && (nrow(data) == args$nobs))) {
 }
 cat('Time taken in reading the file:', tRead['elapsed'], '\n')
 
-cat('Using bnlearn from', find.package('bnlearn'), '\n')
-library('bnlearn')
 network <- NULL
 tNetwork <- NULL
 if (args$learn || !is.null(args$target) || !is.null(args$output)) {
