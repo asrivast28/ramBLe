@@ -102,7 +102,10 @@ TEST_P(InsuranceData, DirectedNetwork) {
   expectedBN.addEdge(static_cast<uint8_t>(1), static_cast<uint8_t>(13));
   expectedBN.addEdge(static_cast<uint8_t>(2), static_cast<uint8_t>(4));
   expectedBN.addEdge(static_cast<uint8_t>(2), static_cast<uint8_t>(8));
+  expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(9));
+  expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(13));
   expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(18));
+  expectedBN.addEdge(static_cast<uint8_t>(4), static_cast<uint8_t>(11));
   expectedBN.addEdge(static_cast<uint8_t>(5), static_cast<uint8_t>(7));
   expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(4));
   expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(8));
@@ -110,13 +113,8 @@ TEST_P(InsuranceData, DirectedNetwork) {
   expectedBN.addEdge(static_cast<uint8_t>(8), static_cast<uint8_t>(2));
   expectedBN.addEdge(static_cast<uint8_t>(8), static_cast<uint8_t>(6));
   expectedBN.addEdge(static_cast<uint8_t>(8), static_cast<uint8_t>(11));
-  expectedBN.addEdge(static_cast<uint8_t>(9), static_cast<uint8_t>(3));
-  expectedBN.addEdge(static_cast<uint8_t>(9), static_cast<uint8_t>(12));
-  expectedBN.addEdge(static_cast<uint8_t>(11), static_cast<uint8_t>(4));
-  expectedBN.addEdge(static_cast<uint8_t>(11), static_cast<uint8_t>(8));
   expectedBN.addEdge(static_cast<uint8_t>(12), static_cast<uint8_t>(9));
-  expectedBN.addEdge(static_cast<uint8_t>(13), static_cast<uint8_t>(1));
-  expectedBN.addEdge(static_cast<uint8_t>(13), static_cast<uint8_t>(3));
+  expectedBN.addEdge(static_cast<uint8_t>(18), static_cast<uint8_t>(3));
   expectedBN.addEdge(static_cast<uint8_t>(23), static_cast<uint8_t>(24));
   expectedBN.addEdge(static_cast<uint8_t>(24), static_cast<uint8_t>(4));
   // Check false positives
@@ -209,13 +207,13 @@ TEST_P(AlarmData, DirectedNetwork) {
   expectedBN.addEdge(static_cast<uint8_t>(0), static_cast<uint8_t>(5));
   expectedBN.addEdge(static_cast<uint8_t>(1), static_cast<uint8_t>(4));
   expectedBN.addEdge(static_cast<uint8_t>(2), static_cast<uint8_t>(4));
+  expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(4));
+  expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(6));
   expectedBN.addEdge(static_cast<uint8_t>(4), static_cast<uint8_t>(1));
   expectedBN.addEdge(static_cast<uint8_t>(4), static_cast<uint8_t>(2));
   expectedBN.addEdge(static_cast<uint8_t>(4), static_cast<uint8_t>(3));
   expectedBN.addEdge(static_cast<uint8_t>(5), static_cast<uint8_t>(0));
   expectedBN.addEdge(static_cast<uint8_t>(5), static_cast<uint8_t>(6));
-  expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(3));
-  expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(5));
   expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(35));
   expectedBN.addEdge(static_cast<uint8_t>(7), static_cast<uint8_t>(8));
   expectedBN.addEdge(static_cast<uint8_t>(9), static_cast<uint8_t>(10));
@@ -238,7 +236,6 @@ TEST_P(AlarmData, DirectedNetwork) {
   expectedBN.addEdge(static_cast<uint8_t>(33), static_cast<uint8_t>(14));
   expectedBN.addEdge(static_cast<uint8_t>(34), static_cast<uint8_t>(8));
   expectedBN.addEdge(static_cast<uint8_t>(34), static_cast<uint8_t>(11));
-  expectedBN.addEdge(static_cast<uint8_t>(35), static_cast<uint8_t>(6));
   // Check false positives
   EXPECT_NE(expectedBN, computedBN);
 
