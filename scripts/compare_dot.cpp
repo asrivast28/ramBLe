@@ -191,7 +191,7 @@ compareEdges(
     if (verbose) {
       std::cerr << "Edges found only in the first graph: " << std::endl;
       for (const auto& e : firstOnly) {
-        std::cout << "(" << e.first << separator << e.second << ")" << std::endl;
+        std::cerr << "(" << e.first << separator << e.second << ")" << std::endl;
       }
     }
   }
@@ -201,7 +201,7 @@ compareEdges(
     if (verbose) {
       std::cerr << "Edges found only in the second graph: " << std::endl;
       for (const auto& e : secondOnly) {
-        std::cout << "(" << e.first << separator << e.second << ")" << std::endl;
+        std::cerr << "(" << e.first << separator << e.second << ")" << std::endl;
       }
     }
   }
