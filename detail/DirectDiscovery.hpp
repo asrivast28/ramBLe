@@ -484,7 +484,9 @@ template <typename Data, typename Var, typename Set>
  */
 BayesianNetwork<Var>
 DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
-  const double imbalanceThreshold
+  const double imbalanceThreshold,
+  std::unordered_map<Var, Set>& allBlankets,
+  std::unordered_map<Var, Set>& allNeighbors
 ) const
 {
   TIMER_DECLARE(tBlankets);
@@ -536,7 +538,6 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
   /* End of Symmetry Correction */
 
   TIMER_DECLARE(tNeighbors);
-  std::unordered_map<Var, Set> allBlankets;
   for (const auto x : this->m_allVars) {
     allBlankets[x] = set_init(Set(), this->m_data.numVars());
   }
@@ -548,7 +549,6 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
   this->syncBlankets(allBlankets);
 
   // Get neighbors for the variables on this processor
-  std::unordered_map<Var, Set> myNeighbors;
   for (const auto& p : myPairs) {
     const auto& mbFirst = allBlankets.at(p.first);
     const auto& mbSecond = allBlankets.at(p.second);
@@ -562,10 +562,10 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
       mbTest.erase(p.first);
     }
     if (!this->m_data.isIndependentAnySubset(p.first, p.second, mbTest, this->m_maxConditioning)) {
-      if (myNeighbors.find(p.first) == myNeighbors.end()) {
-        myNeighbors[p.first] = set_init(Set(), this->m_data.numVars());
+      if (allNeighbors.find(p.first) == allNeighbors.end()) {
+        allNeighbors[p.first] = set_init(Set(), this->m_data.numVars());
       }
-      myNeighbors[p.first].insert(p.second);
+      allNeighbors[p.first].insert(p.second);
     }
   }
   // Now, sync all the neighbors across all the processors
@@ -576,18 +576,23 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
   auto varNames = this->m_data.varNames(this->m_allVars);
   BayesianNetwork<Var> bn(varNames);
   for (const auto x : this->m_allVars) {
-    if (myNeighbors.find(x) == myNeighbors.end()) {
-      myNeighbors.insert(std::make_pair(x, set_init(Set(), this->m_data.numVars())));
+    if (allNeighbors.find(x) == allNeighbors.end()) {
+      allNeighbors[x] = set_init(Set(), this->m_data.numVars());
     }
   }
-  set_allunion_indexed(myNeighbors, this->m_allVars, this->m_data.numVars(), this->m_comm);
+  set_allunion_indexed(allNeighbors, this->m_allVars, this->m_data.numVars(), this->m_comm);
   // We can now create the Bayesian network independently on every processor
   for (const auto x : this->m_allVars) {
-    for (const auto y : myNeighbors.at(x)) {
-      LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
-                     this->m_data.varName(x), this->m_data.varName(y));
-      bn.addEdge(x, y);
-      bn.addEdge(y, x);
+    for (const auto y : allNeighbors.at(x)) {
+      if (x < y) {
+        LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
+                       this->m_data.varName(x), this->m_data.varName(y));
+        bn.addEdge(x, y);
+        bn.addEdge(y, x);
+        // The neighbor set of y has x in it only if x > y
+        // Therefore, we need to make it symmetric here before returning
+        allNeighbors[y].insert(x);
+      }
     }
   }
   this->m_comm.barrier();

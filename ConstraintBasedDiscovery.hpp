@@ -58,16 +58,16 @@ protected:
 
   virtual
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const;
+  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const;
 
 private:
-  std::pair<Set, bool>&
+  Set&
   getCandidatePC_cache(const Var, Set&&) const;
 
   void
   symmetryCorrectPC(const Var, Set&) const;
 
-  std::pair<Set, bool>&
+  Set&
   getCandidateMB_cache(const Var, Set&&) const;
 
   void
@@ -86,8 +86,10 @@ protected:
   const Var m_maxConditioning;
 
 private:
-  mutable std::unordered_map<Var, std::pair<Set, bool>> m_cachedPC;
-  mutable std::unordered_map<Var, std::pair<Set, bool>> m_cachedMB;
+  mutable std::unordered_map<Var, Set> m_cachedPC;
+  mutable std::unordered_map<Var, Set> m_cachedMB;
+  mutable std::unordered_map<Var, bool> m_cachedPCSymmetric;
+  mutable std::unordered_map<Var, bool> m_cachedMBSymmetric;
 }; // class ConstraintBasedDiscovery
 
 #include "detail/ConstraintBasedDiscovery.hpp"

@@ -23,7 +23,11 @@ ConstraintBasedDiscovery<Data, Var, Set>::ConstraintBasedDiscovery(
 ) : m_comm(comm),
     m_data(data),
     m_allVars(set_init(Set(), data.numVars())),
-    m_maxConditioning(maxConditioning)
+    m_maxConditioning(maxConditioning),
+    m_cachedPC(),
+    m_cachedMB(),
+    m_cachedPCSymmetric(),
+    m_cachedMBSymmetric()
 {
   for (auto i = 0u; i < data.numVars(); ++i) {
     m_allVars.insert(m_allVars.end(), i);
@@ -59,7 +63,7 @@ template <typename Data, typename Var, typename Set>
  *         all the variables in the candidate PC of the given target variable,
  *         and the second element specifying if the set has been symmetry corrected.
  */
-std::pair<Set, bool>&
+Set&
 ConstraintBasedDiscovery<Data, Var, Set>::getCandidatePC_cache(
   const Var target,
   Set&& candidates
@@ -69,8 +73,9 @@ ConstraintBasedDiscovery<Data, Var, Set>::getCandidatePC_cache(
   LOG_MESSAGE_IF(cacheIt != m_cachedPC.end(), trace, "* Found candidate PC for %s in the cache",
                                                      this->m_data.varName(target))
   if (cacheIt == m_cachedPC.end()) {
-    auto cpc = std::make_pair(this->getCandidatePC(target, std::move(candidates)), false);
+    auto cpc = this->getCandidatePC(target, std::move(candidates));
     cacheIt = m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
+    m_cachedPCSymmetric[target] = false;
   }
   return cacheIt->second;
 }
@@ -93,7 +98,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectPC(
   for (const Var x : initial) {
     auto candidatesX = this->getCandidates(x);
     const auto& cpcX = this->getCandidatePC_cache(x, std::move(candidatesX));
-    if (!set_contains(cpcX.first, target)) {
+    if (!set_contains(cpcX, target)) {
       LOG_MESSAGE(info, "- Removing %s from the PC of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cpc.erase(x);
     }
@@ -117,11 +122,11 @@ ConstraintBasedDiscovery<Data, Var, Set>::getPC(
 {
   auto candidates = this->getCandidates(target);
   auto& cpc = this->getCandidatePC_cache(target, std::move(candidates));
-  if (!cpc.second) {
-    this->symmetryCorrectPC(target, cpc.first);
-    cpc.second = true;
+  if (!m_cachedPCSymmetric.at(target)) {
+    this->symmetryCorrectPC(target, cpc);
+    m_cachedPCSymmetric[target] = true;
   }
-  return cpc.first;
+  return cpc;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -135,7 +140,7 @@ template <typename Data, typename Var, typename Set>
  *         all the variables in the candidate MB of the given target variable,
  *         and the second element specifying if the set has been symmetry corrected.
  */
-std::pair<Set, bool>&
+Set&
 ConstraintBasedDiscovery<Data, Var, Set>::getCandidateMB_cache(
   const Var target,
   Set&& candidates
@@ -145,8 +150,9 @@ ConstraintBasedDiscovery<Data, Var, Set>::getCandidateMB_cache(
   LOG_MESSAGE_IF(cacheIt != m_cachedMB.end(), trace, "* Found candidate MB for %s in the cache",
                                                      this->m_data.varName(target));
   if (cacheIt == m_cachedMB.end()) {
-    auto cmb = std::make_pair(this->getCandidateMB(target, std::move(candidates)), false);
+    auto cmb = this->getCandidateMB(target, std::move(candidates));
     cacheIt = m_cachedMB.insert(cacheIt, std::make_pair(target, cmb));
+    m_cachedMBSymmetric[target] = false;
   }
   return cacheIt->second;
 }
@@ -169,7 +175,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectMB(
   for (const Var x : initial) {
     auto candidatesX = this->getCandidates(x);
     const auto& cmbX = this->getCandidateMB_cache(x, std::move(candidatesX));
-    if (!set_contains(cmbX.first, target)) {
+    if (!set_contains(cmbX, target)) {
       LOG_MESSAGE(info, "- Removing %s from the MB of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cmb.erase(x);
     }
@@ -189,11 +195,11 @@ ConstraintBasedDiscovery<Data, Var, Set>::getMB(
 {
   auto candidates = this->getCandidates(target);
   auto& cmb = this->getCandidateMB_cache(target, std::move(candidates));
-  if (!cmb.second) {
-    this->symmetryCorrectMB(target, cmb.first);
-    cmb.second = true;
+  if (!m_cachedMBSymmetric.at(target)) {
+    this->symmetryCorrectMB(target, cmb);
+    m_cachedMBSymmetric[target] = true;
   }
-  return cmb.first;
+  return cmb;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -224,10 +230,13 @@ template <typename Data, typename Var, typename Set>
  */
 BayesianNetwork<Var>
 ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_parallel(
-  const double
+  const double,
+  std::unordered_map<Var, Set>&,
+  std::unordered_map<Var, Set>&
 ) const
 {
   throw std::runtime_error("Getting skeleton in parallel is not implemented for the given algorithm");
+  return BayesianNetwork<Var>(this->m_data.varNames(m_allVars));
 }
 
 template <typename Data, typename Var, typename Set>
@@ -241,8 +250,8 @@ ConstraintBasedDiscovery<Data, Var, Set>::colliderPValue(
   const Var z
 ) const
 {
-  static auto smallerSet = [] (const Set& first, const Set& second)
-                              { return (first.size() < second.size()) ? first: second; };
+  static auto smallerSet = [] (const Set& first, const Set& second) -> const auto&
+                              { return (first.size() < second.size()) ? first : second; };
   auto setX = set_init(Set(), this->m_data.numVars());
   setX.insert(x);
   auto mbY = this->getMB(y);
@@ -312,7 +321,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Top level function for getting the complete causal network.
+ * @brief Top level function for getting the Bayesian network.
  *
  * @param directEdges Specifies if the edges of the network should be directed.
  * @param isParallel Specifies if the skeleton should be constructed in parallel.
@@ -325,7 +334,14 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
   const double imbalanceThreshold
 ) const
 {
-  auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold) : this->getSkeleton_sequential();
+  auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold, m_cachedMB, m_cachedPC) : this->getSkeleton_sequential();
+  if (isParallel) {
+    // Parallel skeleton returns symmetry corrected sets
+    for (const auto x : m_allVars) {
+      m_cachedMBSymmetric[x] = true;
+      m_cachedPCSymmetric[x] = true;
+    }
+  }
   if (this->m_comm.is_first() && directEdges) {
     TIMER_DECLARE(tDirect);
     // First, orient the v-structures
