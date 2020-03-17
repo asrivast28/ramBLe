@@ -37,34 +37,30 @@ def create_submission_script(args):
     from shutil import copymode
     from tempfile import NamedTemporaryFile
 
-    preamble_format = \
-'''\
-#PBS -N %s                  # job name
-#PBS -l walltime=%s         # duration of the job
-#PBS -l nodes=%d:ppn=%d     # number of nodes and cores per node
-#PBS -q %s                  # queue name (where job is submitted)
-#PBS -j oe                  # combine output and error messages into a single file
-#PBS -o %s                  # output file name
-'''
+    preamble_lines = [
+        '#PBS -N %s\t# job name',
+        '#PBS -l walltime=%s\t# duration of the job',
+        '#PBS -l nodes=%d:ppn=%d\t# number of nodes and cores per node',
+        '#PBS -q %s\t# queue name (where job is submitted)',
+        '#PBS -j oe\t# combine output and error messages into a single file',
+        '#PBS -o %s\t# output file name',
+    ]
     output = args.output if args.output is not None else args.name + '.out'
     if os.path.exists(output):
         raise RuntimeError('Output file %s already exists' % output)
-    preamble = preamble_format % (args.name, args.time, args.nodes, args.procs, args.queue, output)
     if args.depend:
-        preamble += \
-'#PBS -W depend=afterok:%s  # job ID of the job on which this job depends\n' % args.depend
+        preamble_lines.append('#PBS -W depend=afterok:%s\t# job ID of the job on which this job depends' % args.depend)
     if args.after:
-        preamble += \
-'#PBS -a %s                 # delay executing the job until the given time and date\n' % args.after
+        preamble_lines.append('#PBS -a %s\t# delay executing the job until the given time and date' % args.after)
     if args.queue == 'hive-priority':
-        preamble += \
-'#PBS -l advres=asrivastava64.90 # hive-priority specific argument\n'
-    preamble += '\n'
+        preamble_lines.append('#PBS -l advres=asrivastava64.90\t# hive-priority specific argument')
+    preamble = '\n'.join(preamble_lines) % (args.name, args.time, args.nodes, args.procs, args.queue, output) + '\n'
 
-    with NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as pbs:
-        pbs.write(preamble)
+    with NamedTemporaryFile(mode='w', suffix=os.path.splitext(args.script)[1], delete=False) as pbs:
         with open(args.script, 'r') as orig:
-            pbs.write(orig.read())
+            lines = orig.readlines()
+            lines.insert(1 if lines[0].startswith(r'#!') else 0, preamble)
+            pbs.write(''.join(lines))
     copymode(args.script, pbs.name)
     return pbs.name
 
