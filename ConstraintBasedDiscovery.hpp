@@ -25,10 +25,10 @@ class ConstraintBasedDiscovery {
 public:
   ConstraintBasedDiscovery(const mxx::comm&, const Data&, const Var);
 
-  Set
+  const Set&
   getPC(const Var) const;
 
-  Set
+  const Set&
   getMB(const Var) const;
 
   std::vector<std::tuple<double, Var, Var, Var>>
@@ -61,13 +61,13 @@ protected:
   getSkeleton_parallel(const double) const;
 
 private:
-  std::pair<Set, bool>
+  std::pair<Set, bool>&
   getCandidatePC_cache(const Var, Set) const;
 
   void
   symmetryCorrectPC(const Var, Set&) const;
 
-  std::pair<Set, bool>
+  std::pair<Set, bool>&
   getCandidateMB_cache(const Var, Set) const;
 
   void

@@ -81,11 +81,11 @@ TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
 {
   LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
-  auto pc = this->getPC(target);
+  const auto& pc = this->getPC(target);
   for (const Var y : pc) {
     LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)", this->m_data.varName(y), this->m_data.varName(target));
     cmb.insert(y);
-    auto pcY = this->getPC(y);
+    const auto& pcY = this->getPC(y);
     for (const Var x : pcY) {
       if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);

@@ -59,22 +59,20 @@ template <typename Data, typename Var, typename Set>
  *         all the variables in the candidate PC of the given target variable,
  *         and the second element specifying if the set has been symmetry corrected.
  */
-std::pair<Set, bool>
+std::pair<Set, bool>&
 ConstraintBasedDiscovery<Data, Var, Set>::getCandidatePC_cache(
   const Var target,
   Set candidates
 ) const
 {
   auto cacheIt = m_cachedPC.find(target);
+  LOG_MESSAGE_IF(cacheIt != m_cachedPC.end(), trace, "* Found candidate PC for %s in the cache",
+                                                     this->m_data.varName(target))
   if (cacheIt == m_cachedPC.end()) {
     auto cpc = std::make_pair(this->getCandidatePC(target, std::move(candidates)), false);
-    m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
-    return cpc;
+    cacheIt = m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));
   }
-  else {
-    LOG_MESSAGE(trace, "* Found candidate PC for %s in the cache", this->m_data.varName(target))
-    return cacheIt->second;
-  }
+  return cacheIt->second;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -94,8 +92,8 @@ ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectPC(
   auto initial = cpc;
   for (const Var x : initial) {
     auto candidatesX = this->getCandidates(x);
-    auto cpcX = this->getCandidatePC_cache(x, std::move(candidatesX)).first;
-    if (!set_contains(cpcX, target)) {
+    const auto& cpcX = this->getCandidatePC_cache(x, std::move(candidatesX));
+    if (!set_contains(cpcX.first, target)) {
       LOG_MESSAGE(info, "- Removing %s from the PC of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cpc.erase(x);
     }
@@ -112,13 +110,13 @@ template <typename Data, typename Var, typename Set>
  * @return A set containing the indices of all the variables
  *         in the correct PC set of the target variable.
  */
-Set
+const Set&
 ConstraintBasedDiscovery<Data, Var, Set>::getPC(
   const Var target
 ) const
 {
   auto candidates = this->getCandidates(target);
-  auto cpc = this->getCandidatePC_cache(target, std::move(candidates));
+  auto& cpc = this->getCandidatePC_cache(target, std::move(candidates));
   if (!cpc.second) {
     this->symmetryCorrectPC(target, cpc.first);
     cpc.second = true;
@@ -137,22 +135,20 @@ template <typename Data, typename Var, typename Set>
  *         all the variables in the candidate MB of the given target variable,
  *         and the second element specifying if the set has been symmetry corrected.
  */
-std::pair<Set, bool>
+std::pair<Set, bool>&
 ConstraintBasedDiscovery<Data, Var, Set>::getCandidateMB_cache(
   const Var target,
   Set candidates
 ) const
 {
   auto cacheIt = m_cachedMB.find(target);
+  LOG_MESSAGE_IF(cacheIt != m_cachedMB.end(), trace, "* Found candidate MB for %s in the cache",
+                                                     this->m_data.varName(target));
   if (cacheIt == m_cachedMB.end()) {
     auto cmb = std::make_pair(this->getCandidateMB(target, std::move(candidates)), false);
-    m_cachedMB.insert(cacheIt, std::make_pair(target, cmb));
-    return cmb;
+    cacheIt = m_cachedMB.insert(cacheIt, std::make_pair(target, cmb));
   }
-  else {
-    LOG_MESSAGE(trace, "* Found candidate MB for %s in the cache", this->m_data.varName(target));
-    return cacheIt->second;
-  }
+  return cacheIt->second;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -172,8 +168,8 @@ ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectMB(
   auto initial = cmb;
   for (const Var x : initial) {
     auto candidatesX = this->getCandidates(x);
-    auto cmbX = this->getCandidateMB_cache(x, std::move(candidatesX)).first;
-    if (!set_contains(cmbX, target)) {
+    const auto& cmbX = this->getCandidateMB_cache(x, std::move(candidatesX));
+    if (!set_contains(cmbX.first, target)) {
       LOG_MESSAGE(info, "- Removing %s from the MB of %s (asymmetry)", this->m_data.varName(x), this->m_data.varName(target));
       cmb.erase(x);
     }
@@ -186,13 +182,13 @@ template <typename Data, typename Var, typename Set>
  *
  * @param target The index of the target variable.
  */
-Set
+const Set&
 ConstraintBasedDiscovery<Data, Var, Set>::getMB(
   const Var target
 ) const
 {
   auto candidates = this->getCandidates(target);
-  auto cmb = this->getCandidateMB_cache(target, std::move(candidates));
+  auto& cmb = this->getCandidateMB_cache(target, std::move(candidates));
   if (!cmb.second) {
     this->symmetryCorrectMB(target, cmb.first);
     cmb.second = true;
@@ -210,7 +206,7 @@ ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_sequential(
 {
   BayesianNetwork<Var> bn(this->m_data.varNames(m_allVars));
   for (const auto x : m_allVars) {
-    auto pcX = this->getPC(x);
+    const auto& pcX = this->getPC(x);
     for (const auto y : pcX) {
       if (x < y) {
         LOG_MESSAGE(info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
@@ -273,10 +269,10 @@ ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
 {
   std::vector<std::tuple<double, Var, Var, Var>> vStructures;
   std::set<std::pair<Var, Var>> checked;
-  auto pcTarget = this->getPC(target);
+  const auto& pcTarget = this->getPC(target);
   for (const auto y : pcTarget) {
     // Candidate parents of target, which are not connected to y
-    auto pcY = this->getPC(y);
+    const auto& pcY = this->getPC(y);
     auto cpaTarget = set_difference(pcTarget, pcY);
     cpaTarget.erase(y);
     for (const auto z : cpaTarget) {

@@ -140,7 +140,7 @@ DirectDiscovery<Data, Var, Set>::getCandidatePC(
   LOG_MESSAGE(info, "Neighbors: Getting PC from MB for %s",
               this->m_data.varName(target));
   auto cpc = set_init(Set(), this->m_data.numVars());
-  auto mb = this->getMB(target);
+  const auto& mb = this->getMB(target);
   for (const Var y : mb) {
     if (this->evaluateCandidatePC(target, y, mb, this->getMB(y))) {
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s",
