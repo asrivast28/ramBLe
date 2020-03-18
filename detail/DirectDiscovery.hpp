@@ -493,7 +493,7 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
   auto totalPairs = n * (n - 1);
   auto batchSize = (totalPairs / this->m_comm.size()) + ((totalPairs % this->m_comm.size() != 0) ? 1 : 0);
   auto myOffset = std::min(this->m_comm.rank() * batchSize, totalPairs);
-  auto mySize = std::min(batchSize, totalPairs - myOffset);
+  auto mySize = static_cast<uint32_t>(std::min(batchSize, totalPairs - myOffset));
 
   auto vars = std::vector<Var>(this->m_allVars.begin(), this->m_allVars.end());
   auto primary = vars.begin() + (myOffset / (n - 1));

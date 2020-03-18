@@ -179,6 +179,9 @@ set_bcast<UintSet<Element, std::integral_constant<int, N>>>( \
 { \
   auto size = (set.max() + 63) / 64; \
   mxx::bcast(&set.m_set.b[0], size, root, comm); \
+  if (comm.rank() != root) { \
+    set.m_size = 0; \
+  } \
 } \
  \
 template <> \
@@ -193,6 +196,7 @@ set_allunion<UintSet<Element, std::integral_constant<int, N>>>( \
   auto b = new ReduceType[size]; \
   mxx::allreduce(set.m_set.b, size, b, std::bit_or<ReduceType>(), comm); \
   memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
+  set.m_size = 0; \
   delete[] b; \
 } \
  \
@@ -229,6 +233,7 @@ set_allunion_indexed<UintSet<Element, std::integral_constant<int, N>>>( \
     auto it = indexedSets.find(x); \
     if (it != indexedSets.end()) { \
       memcpy((*(it->second)).b, b, blockSize * sizeof(ReduceType)); \
+      (it->second).m_size = 0; \
     } \
     b += blockSize; \
   } \
@@ -247,6 +252,7 @@ set_allintersect<UintSet<Element, std::integral_constant<int, N>>>( \
   auto b = new ReduceType[size]; \
   mxx::allreduce(set.m_set.b, size, b, std::bit_and<ReduceType>(), comm); \
   memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
+  set.m_size = 0; \
   delete[] b; \
 }
 

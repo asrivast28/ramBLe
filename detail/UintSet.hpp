@@ -167,7 +167,7 @@ UintSet<Element, Size>::UintSet(
     m_max(max),
     m_size()
 {
-  m_size = set_size(m_set);
+  m_size = static_cast<Element>(set_size(m_set));
 }
 
 template <typename Element, typename Size>
@@ -179,7 +179,7 @@ UintSet<Element, Size>::UintSet(
     m_max(max),
     m_size()
 {
-  m_size = set_size(m_set);
+  m_size = static_cast<Element>(set_size(m_set));
 }
 
 template <typename Element, typename Size>
@@ -191,7 +191,7 @@ UintSet<Element, Size>::UintSet(
     m_max(max),
     m_size()
 {
-  m_size = set_size(m_set);
+  m_size = static_cast<Element>(set_size(m_set));
 }
 
 template <typename Element, typename Size>
@@ -264,7 +264,7 @@ UintSet<Element, Size>::erase(
 )
 {
   LOG_MESSAGE_IF(!contains(x), warning, "Removing a value (%d) which does not exist in the set", static_cast<int>(x));
-  if (contains(x)) {
+  if ((m_size != 0) && contains(x)) {
     --m_size;
   }
   m_set = set_remove(std::move(m_set), static_cast<int>(x));
@@ -279,12 +279,12 @@ UintSet<Element, Size>::max(
 }
 
 template <typename Element, typename Size>
-uint32_t
+Element
 UintSet<Element, Size>::size(
 ) const
 {
   if (m_size == 0) {
-    m_size = set_size(m_set);
+    m_size = static_cast<Element>(set_size(m_set));
   }
   return m_size;
 }

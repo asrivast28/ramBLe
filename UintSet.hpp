@@ -86,7 +86,7 @@ public:
   Element
   max() const;
 
-  uint32_t
+  Element
   size() const;
 
   bool
