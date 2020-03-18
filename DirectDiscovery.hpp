@@ -57,7 +57,7 @@ protected:
 
 private:
   Set
-  getCandidatePC(const Var, Set) const override;
+  getCandidatePC(const Var, Set&&) const override;
 
   bool
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
@@ -84,7 +84,7 @@ public:
 
 private:
   Set
-  getCandidateMB(const Var, Set) const override;
+  getCandidateMB(const Var, Set&&) const override;
 
   void
   updatePValues(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&) const override;
@@ -108,7 +108,7 @@ public:
 
 private:
   Set
-  getCandidateMB(const Var, Set) const override;
+  getCandidateMB(const Var, Set&&) const override;
 }; // class IAMB
 
 /**
@@ -126,7 +126,7 @@ public:
 
 private:
   Set
-  getCandidateMB(const Var, Set) const override;
+  getCandidateMB(const Var, Set&&) const override;
 
   void
   growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;

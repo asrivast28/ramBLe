@@ -76,7 +76,7 @@ template <typename Data, typename Var, typename Set>
 Set
 TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
@@ -120,7 +120,7 @@ template <typename Data, typename Var, typename Set>
 Set
 MMPC<Data, Var, Set>::getCandidatePC(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
@@ -170,7 +170,7 @@ template <typename Data, typename Var, typename Set>
 Set
 HITON<Data, Var, Set>::getCandidatePC(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
@@ -213,7 +213,7 @@ template <typename Data, typename Var, typename Set>
 Set
 SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
@@ -270,7 +270,7 @@ template <typename Data, typename Var, typename Set>
 Set
 GetPC<Data, Var, Set>::getCandidatePC(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));

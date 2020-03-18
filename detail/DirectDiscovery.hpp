@@ -134,7 +134,7 @@ template <typename Data, typename Var, typename Set>
 Set
 DirectDiscovery<Data, Var, Set>::getCandidatePC(
   const Var target,
-  Set
+  Set&&
 ) const
 {
   LOG_MESSAGE(info, "Neighbors: Getting PC from MB for %s",
@@ -629,7 +629,7 @@ template <typename Data, typename Var, typename Set>
 Set
 GSMB<Data, Var, Set>::getCandidateMB(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
@@ -694,7 +694,7 @@ template <typename Data, typename Var, typename Set>
 Set
 IAMB<Data, Var, Set>::getCandidateMB(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
@@ -734,7 +734,7 @@ template <typename Data, typename Var, typename Set>
 Set
 InterIAMB<Data, Var, Set>::getCandidateMB(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));

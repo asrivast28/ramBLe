@@ -62,7 +62,7 @@ template <typename Data, typename Var, typename Set>
 std::pair<Set, bool>&
 ConstraintBasedDiscovery<Data, Var, Set>::getCandidatePC_cache(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   auto cacheIt = m_cachedPC.find(target);
@@ -138,7 +138,7 @@ template <typename Data, typename Var, typename Set>
 std::pair<Set, bool>&
 ConstraintBasedDiscovery<Data, Var, Set>::getCandidateMB_cache(
   const Var target,
-  Set candidates
+  Set&& candidates
 ) const
 {
   auto cacheIt = m_cachedMB.find(target);

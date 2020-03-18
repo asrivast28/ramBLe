@@ -46,11 +46,11 @@ protected:
 
   virtual
   Set
-  getCandidatePC(const Var, Set) const = 0;
+  getCandidatePC(const Var, Set&&) const = 0;
 
   virtual
   Set
-  getCandidateMB(const Var, Set) const = 0;
+  getCandidateMB(const Var, Set&&) const = 0;
 
   virtual
   BayesianNetwork<Var>
@@ -62,13 +62,13 @@ protected:
 
 private:
   std::pair<Set, bool>&
-  getCandidatePC_cache(const Var, Set) const;
+  getCandidatePC_cache(const Var, Set&&) const;
 
   void
   symmetryCorrectPC(const Var, Set&) const;
 
   std::pair<Set, bool>&
-  getCandidateMB_cache(const Var, Set) const;
+  getCandidateMB_cache(const Var, Set&&) const;
 
   void
   symmetryCorrectMB(const Var, Set&) const;

@@ -25,7 +25,7 @@ public:
   removeFalsePC(const Var, Set&) const;
 
   Set
-  getCandidateMB(const Var, Set) const override;
+  getCandidateMB(const Var, Set&&) const override;
 
   virtual
   ~TopologicalDiscovery() { }
@@ -46,7 +46,7 @@ public:
   MMPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
   Set
-  getCandidatePC(const Var, Set) const override;
+  getCandidatePC(const Var, Set&&) const override;
 }; // class MMPC
 
 /**
@@ -64,7 +64,7 @@ public:
 
 private:
   Set
-  getCandidatePC(const Var, Set) const override;
+  getCandidatePC(const Var, Set&&) const override;
 }; // class HITON
 
 /**
@@ -82,7 +82,7 @@ public:
 
 private:
   Set
-  getCandidatePC(const Var, Set) const override;
+  getCandidatePC(const Var, Set&&) const override;
 }; // class SemiInterleavedHITON
 
 /**
@@ -100,7 +100,7 @@ public:
 
 private:
   Set
-  getCandidatePC(const Var, Set) const override;
+  getCandidatePC(const Var, Set&&) const override;
 }; // class GetPC
 
 #include "detail/TopologicalDiscovery.hpp"
