@@ -5,6 +5,7 @@ from itertools import product
 import os
 import os.path
 from os.path import join
+import sys
 from tempfile import NamedTemporaryFile
 
 
@@ -144,10 +145,13 @@ def run_experiment(basedir, scratch, config, repeat, bnlearn):
     for r in range(repeat):
         arguments = config[-1] + ' -o %s' % outfile
         print(arguments)
+        sys.stdout.flush()
         output = subprocess.check_output(arguments, shell=True).decode('utf-8')
         print(output)
+        sys.stdout.flush()
         if not bnlearn:
             print('Comparing generated file %s with %s' % (outfile, dotfile))
+            sys.stdout.flush()
             subprocess.check_call(' '.join([join(basedir, 'scripts', 'compare_dot'), dotfile, outfile, '-d']), shell=True)
         runtimes.append(parse_runtimes(output))
     return runtimes
@@ -165,7 +169,10 @@ def main():
     with open(args.results, 'w') as results:
         results.write('# warmup,reading,blankets,symmetry,neighbors,direction,gsquare,network,writing\n')
         for config in all_configs:
-            results.write('# Runtimes for dataset=%s using algorithm=%s on processors=%d \n' % tuple(config[:3]))
+            if not args.bnlearn:
+                results.write('# our runtime for dataset=%s using algorithm=%s on processors=%d \n' % tuple(config[:3]))
+            else:
+                results.write('# bnlearn\'s runtime for dataset=%s using algorithm=%s \n' % tuple(config[:2]))
             for rt in run_experiment(args.basedir, args.scratch, config, args.repeat, args.bnlearn):
                 results.write(','.join(str(t) for t in rt) + '\n')
                 results.flush()
