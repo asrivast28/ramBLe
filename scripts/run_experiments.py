@@ -35,11 +35,9 @@ all_algorithms = [
     ]
 
 all_processes = [
-    1,
-    2,
     ]
-# for power in range(1, 11):
-    # all_processes.append(2 ** power)
+for power in range(0, 11):
+    all_processes.append(2 ** power)
 
 ppn_mappings = OrderedDict([
     (16, '1:2:3:4:5:6:7:8:13:14:15:16:17:18:19:20'),
@@ -117,19 +115,20 @@ def get_mpi_configurations(scratch, processes, ppns):
 def parse_runtimes(output):
     import re
 
-    warmup = re.search('Time taken in warming up MPI: (\d+.\d+)', output)
+    float_pattern = '((?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?)'
+    warmup = re.search('Time taken in warming up MPI: ' + float_pattern, output)
     warmup = float(0 if warmup is None else warmup.group(1))
-    reading = float(re.search('Time taken in reading the file: (\d+.\d+)', output).group(1))
-    blankets = re.search('Time taken in getting the blankets: (\d+.\d+)', output)
+    reading = float(re.search('Time taken in reading the file: ' + float_pattern, output).group(1))
+    blankets = re.search('Time taken in getting the blankets: ' + float_pattern, output)
     blankets = float(0 if blankets is None else blankets.group(1))
-    symmetry = re.search('Time taken in symmetry correcting the blankets: (\d+.\d+)', output)
+    symmetry = re.search('Time taken in symmetry correcting the blankets: ' + float_pattern, output)
     symmetry = float(0 if symmetry is None else symmetry.group(1))
-    neighbors = re.search('Time taken in getting the neighbors: (\d+.\d+)', output)
+    neighbors = re.search('Time taken in getting the neighbors: ' + float_pattern, output)
     neighbors = float(0 if neighbors is None else neighbors.group(1))
-    direction = float(re.search('Time taken in directing the edges: (\d+.\d+)', output).group(1))
-    gsquare = float(re.search('Time taken in G-square computations: (\d+.\d+)', output).group(1))
-    network = float(re.search('Time taken in getting the network: (\d+.\d+)', output).group(1))
-    writing = float(re.search('Time taken in writing the network: (\d+.\d+)', output).group(1))
+    direction = float(re.search('Time taken in directing the edges: ' + float_pattern, output).group(1))
+    gsquare = float(re.search('Time taken in G-square computations: ' + float_pattern, output).group(1))
+    network = float(re.search('Time taken in getting the network: ' + float_pattern, output).group(1))
+    writing = float(re.search('Time taken in writing the network: ' + float_pattern, output).group(1))
     return [warmup, reading, blankets, symmetry, neighbors, direction, gsquare, network, writing]
 
 
