@@ -73,12 +73,12 @@ def parse_args():
 
 def get_executable_configurations(basedir, datasets, algorithms, bnlearn):
     boolean_args = ['-c', '-v', '-i']
-    default_csl_args = ['-r', '-d', '--warmup', '--hostnames']
+    default_csl_args = ['-r', '--warmup', '--hostnames']
     executable = join(basedir, 'csl') if not bnlearn else join(basedir, 'scripts/csl_bnlearn.R')
     configurations = []
     for name, algorithm in product(datasets, algorithms):
         dataset_args = all_datasets[name]
-        script_args = [executable]
+        script_args = [executable, '-d']
         script_args.append('-a %s -f %s' % (algorithm, join(basedir, dataset_args[0])))
         script_args.append('-n %d -m %d -s \'%s\'' % tuple(dataset_args[1:4]))
         script_args.extend(b for i, b in enumerate(boolean_args) if dataset_args[4 + i])
@@ -113,23 +113,29 @@ def get_mpi_configurations(scratch, processes, ppns):
     return configurations
 
 
-def parse_runtimes(output):
+def get_runtime(action, output, required=True):
     import re
 
-    float_pattern = '((?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?)'
-    warmup = re.search('Time taken in warming up MPI: ' + float_pattern, output)
-    warmup = float(0 if warmup is None else warmup.group(1))
-    reading = float(re.search('Time taken in reading the file: ' + float_pattern, output).group(1))
-    blankets = re.search('Time taken in getting the blankets: ' + float_pattern, output)
-    blankets = float(0 if blankets is None else blankets.group(1))
-    symmetry = re.search('Time taken in symmetry correcting the blankets: ' + float_pattern, output)
-    symmetry = float(0 if symmetry is None else symmetry.group(1))
-    neighbors = re.search('Time taken in getting the neighbors: ' + float_pattern, output)
-    neighbors = float(0 if neighbors is None else neighbors.group(1))
-    direction = float(re.search('Time taken in directing the edges: ' + float_pattern, output).group(1))
-    gsquare = float(re.search('Time taken in G-square computations: ' + float_pattern, output).group(1))
-    network = float(re.search('Time taken in getting the network: ' + float_pattern, output).group(1))
-    writing = float(re.search('Time taken in writing the network: ' + float_pattern, output).group(1))
+    float_pattern = r'((?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?)'
+    pattern = 'Time taken in %s: %s' % (action, float_pattern)
+    match = re.search(pattern, output)
+    if required:
+        return float(match.group(1))
+    else:
+        return float(match.group(1) if match is not None else 0)
+
+def parse_runtimes(output):
+    # optional runtimes
+    warmup = get_runtime('warming up MPI', output, required=False)
+    blankets = get_runtime('getting the blankets', output, required=False)
+    symmetry = get_runtime('symmetry correcting the blankets', output, required=False)
+    neighbors = get_runtime('getting the neighbors', output, required=False)
+    direction = get_runtime('directing the edges', output, required=False)
+    gsquare = get_runtime('G-square computations', output, required=False)
+    # required runtimes
+    reading = get_runtime('reading the file', output, required=True)
+    network = get_runtime('getting the network', output, required=True)
+    writing = get_runtime('writing the network', output, required=True)
     return [warmup, reading, blankets, symmetry, neighbors, direction, gsquare, network, writing]
 
 
