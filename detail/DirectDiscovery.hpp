@@ -332,6 +332,7 @@ DirectDiscovery<Data, Var, Set>::growShrink(
   /* Grow Phase */
   TIMER_DECLARE(tGrow);
   TIMER_DECLARE(tDist);
+  TIMER_RESET(tDist);
   bool changed = true;
   while (changed) {
     this->updatePValues(myPV, myBlankets);
