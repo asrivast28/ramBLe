@@ -127,6 +127,7 @@ def get_runtime(action, output, required=True):
 def parse_runtimes(output):
     # optional runtimes
     warmup = get_runtime('warming up MPI', output, required=False)
+    redistributing = get_runtime('redistributing', output, required=False)
     blankets = get_runtime('getting the blankets', output, required=False)
     symmetry = get_runtime('symmetry correcting the blankets', output, required=False)
     neighbors = get_runtime('getting the neighbors', output, required=False)
@@ -136,7 +137,7 @@ def parse_runtimes(output):
     reading = get_runtime('reading the file', output, required=True)
     network = get_runtime('getting the network', output, required=True)
     writing = get_runtime('writing the network', output, required=True)
-    return [warmup, reading, blankets, symmetry, neighbors, direction, gsquare, network, writing]
+    return [warmup, reading, redistributing, blankets, symmetry, neighbors, direction, gsquare, network, writing]
 
 
 def run_experiment(basedir, scratch, config, repeat, bnlearn):
@@ -173,7 +174,7 @@ def main():
         mpi_configs = get_mpi_configurations(args.scratch, args.process, args.ppn)
         all_configs = list((executable[0], executable[1], mpi[0], mpi[-1] + ' ' + executable[-1]) for executable, mpi in product(all_configs, mpi_configs))
     with open(args.results, 'w') as results:
-        results.write('# warmup,reading,blankets,symmetry,neighbors,direction,gsquare,network,writing\n')
+        results.write('# warmup,reading,redistributing,blankets,symmetry,neighbors,direction,gsquare,network,writing\n')
         for config in all_configs:
             if not args.bnlearn:
                 results.write('# our runtime for dataset=%s using algorithm=%s on processors=%d \n' % tuple(config[:3]))
