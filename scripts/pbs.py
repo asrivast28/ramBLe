@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('-o', '--output', type=str, metavar='FILE', help='Name of the output file.')
     parser.add_argument('-d', '--depend', type=str, metavar='JOBID', help='ID of the job on which this job depends.')
     parser.add_argument('-a', '--after', type=str, metavar='HHMM', help='Schedule the job after the given time.')
+    parser.add_argument('-v', '--variables', type=str, nargs='*', default=[], metavar='VAR=VALUE', help='Variables to pass to the run script.')
     args = parser.parse_args()
     return args
 
@@ -65,12 +66,15 @@ def create_submission_script(args):
     return pbs.name
 
 
-def submit_job(script):
+def submit_job(script, variables):
     '''
     Submit a PBS job.
     '''
     import subprocess
-    subprocess.check_call(['qsub', script])
+    command = ['qsub', script]
+    if variables:
+        command.append('-v ' + ','.join(variables))
+    subprocess.check_call(command)
 
 
 def main():
@@ -80,7 +84,7 @@ def main():
     args = parse_args()
     script = create_submission_script(args)
     # print(script)
-    submit_job(script)
+    submit_job(script, args.variables)
 
 if __name__ == '__main__':
     main()
