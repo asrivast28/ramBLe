@@ -1,5 +1,4 @@
 # Bayesian Networks - Constraint-based Structure Learning
-===
 [![](https://github.com/asrivast28/discover-mb/workflows/Build%20and%20Unit%20Tests/badge.svg)](https://github.com/asrivast28/discover-mb/actions)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 
