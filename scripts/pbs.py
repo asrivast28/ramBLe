@@ -4,6 +4,20 @@
 # @file pbs.py
 # @brief Script for submitting PBS jobs.
 # @author Ankit Srivastava <asrivast@gatech.edu>
+#
+# Copyright 2020 Georgia Institute of Technology
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
 def parse_args():
@@ -53,8 +67,6 @@ def create_submission_script(args):
         preamble_lines.append('#PBS -W depend=afterok:%s\t# job ID of the job on which this job depends' % args.depend)
     if args.after:
         preamble_lines.append('#PBS -a %s\t# delay executing the job until the given time and date' % args.after)
-    if args.queue == 'hive-priority':
-        preamble_lines.append('#PBS -l advres=asrivastava64.90\t# hive-priority specific argument')
     preamble = '\n'.join(preamble_lines) % (args.name, args.time, args.nodes, args.procs, args.queue, output) + '\n'
 
     with NamedTemporaryFile(mode='w', suffix=os.path.splitext(args.script)[1], delete=False) as pbs:
