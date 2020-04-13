@@ -77,3 +77,7 @@ This class of algorithms first finds the parent-child (PC) sets of nodes.
 [Semi-interleaved HITON-PC](http://www.jmlr.org/papers/v11/aliferis10a.html) algorithm by Aliferis et al.
 * `getpc`  
 [Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
+
+## Licensing
+Our code is licensed under the Apache License 2.0 (see LICENSE).
+The licensing does not apply to the `ext` folder. Please refer to the individual files for their licensing terms.
