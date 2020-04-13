@@ -3,11 +3,11 @@
  * @brief The implementation of the main function, and other
  *        functions that drive the program execution.
  */
-#include "DiscreteData.hpp"
 #include "DataReader.hpp"
-#include "DirectDiscovery.hpp"
+#include "BlanketLearning.hpp"
+#include "DirectLearning.hpp"
+#include "DiscreteData.hpp"
 #include "ProgramOptions.hpp"
-#include "TopologicalDiscovery.hpp"
 #include "UintSet.hpp"
 
 #include "mxx/comm.hpp"
@@ -36,7 +36,7 @@
  *         The unique_ptr points to a nullptr if the algorithm is not found.
  */
 template <typename Var, typename Set, typename Data>
-std::unique_ptr<ConstraintBasedDiscovery<Data, Var, Set>>
+std::unique_ptr<ConstraintBasedLearning<Data, Var, Set>>
 getAlgorithm(
   const std::string& algoName,
   const mxx::comm& comm,
@@ -46,7 +46,7 @@ getAlgorithm(
 {
   std::stringstream ss;
   if (algoName.compare("gs") == 0) {
-    return std::make_unique<GSMB<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<GS<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << "gs,";
   if (algoName.compare("iamb") == 0) {
@@ -74,7 +74,7 @@ getAlgorithm(
   }
   ss << "getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
-  return std::unique_ptr<ConstraintBasedDiscovery<Data, Var, Set>>();
+  return std::unique_ptr<ConstraintBasedLearning<Data, Var, Set>>();
 }
 
 /**

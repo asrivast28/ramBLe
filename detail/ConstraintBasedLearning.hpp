@@ -1,13 +1,14 @@
 /**
- * @file ConstraintBasedDiscovery.hpp
- * @brief Implementation of the ConstraintBasedDiscovery functions.
+ * @file ConstraintBasedLearning.hpp
+ * @brief Implementation of the classes for constraint-based learning.
  */
-#ifndef DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_
-#define DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_
+#ifndef DETAIL_CONSTRAINTBASEDLEARNING_HPP_
+#define DETAIL_CONSTRAINTBASEDLEARNING_HPP_
 
 #include "../SetUtils.hpp"
 
 #include "utils/Logging.hpp"
+#include "utils/Timer.hpp"
 
 
 template <typename Data, typename Var, typename Set>
@@ -16,7 +17,7 @@ template <typename Data, typename Var, typename Set>
  *
  * @param data Reference to an object of the Data.
  */
-ConstraintBasedDiscovery<Data, Var, Set>::ConstraintBasedDiscovery(
+ConstraintBasedLearning<Data, Var, Set>::ConstraintBasedLearning(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
@@ -43,7 +44,7 @@ template <typename Data, typename Var, typename Set>
  * @return The indices of all the variables except the target.
  */
 Set
-ConstraintBasedDiscovery<Data, Var, Set>::getCandidates(
+ConstraintBasedLearning<Data, Var, Set>::getCandidates(
   const Var target
 ) const
 {
@@ -64,7 +65,7 @@ template <typename Data, typename Var, typename Set>
  *         and the second element specifying if the set has been symmetry corrected.
  */
 Set&
-ConstraintBasedDiscovery<Data, Var, Set>::getCandidatePC_cache(
+ConstraintBasedLearning<Data, Var, Set>::getCandidatePC_cache(
   const Var target,
   Set&& candidates
 ) const
@@ -89,7 +90,7 @@ template <typename Data, typename Var, typename Set>
  *            the candidate PC set.
  */
 void
-ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectPC(
+ConstraintBasedLearning<Data, Var, Set>::symmetryCorrectPC(
   const Var target,
   Set& cpc
 ) const
@@ -116,7 +117,7 @@ template <typename Data, typename Var, typename Set>
  *         in the correct PC set of the target variable.
  */
 const Set&
-ConstraintBasedDiscovery<Data, Var, Set>::getPC(
+ConstraintBasedLearning<Data, Var, Set>::getPC(
   const Var target
 ) const
 {
@@ -141,7 +142,7 @@ template <typename Data, typename Var, typename Set>
  *         and the second element specifying if the set has been symmetry corrected.
  */
 Set&
-ConstraintBasedDiscovery<Data, Var, Set>::getCandidateMB_cache(
+ConstraintBasedLearning<Data, Var, Set>::getCandidateMB_cache(
   const Var target,
   Set&& candidates
 ) const
@@ -166,7 +167,7 @@ template <typename Data, typename Var, typename Set>
  *                The function removes the indices from the candidate set.
  */
 void
-ConstraintBasedDiscovery<Data, Var, Set>::symmetryCorrectMB(
+ConstraintBasedLearning<Data, Var, Set>::symmetryCorrectMB(
   const Var target,
   Set& cmb
 ) const
@@ -189,7 +190,7 @@ template <typename Data, typename Var, typename Set>
  * @param target The index of the target variable.
  */
 const Set&
-ConstraintBasedDiscovery<Data, Var, Set>::getMB(
+ConstraintBasedLearning<Data, Var, Set>::getMB(
   const Var target
 ) const
 {
@@ -207,7 +208,7 @@ template <typename Data, typename Var, typename Set>
  * @brief Function for getting the undirected skeleton network sequentially.
  */
 BayesianNetwork<Var>
-ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_sequential(
+ConstraintBasedLearning<Data, Var, Set>::getSkeleton_sequential(
 ) const
 {
   BayesianNetwork<Var> bn(this->m_data.varNames(m_allVars));
@@ -229,7 +230,7 @@ template <typename Data, typename Var, typename Set>
  * @brief Function for getting the undirected skeleton network in parallel.
  */
 BayesianNetwork<Var>
-ConstraintBasedDiscovery<Data, Var, Set>::getSkeleton_parallel(
+ConstraintBasedLearning<Data, Var, Set>::getSkeleton_parallel(
   const double,
   std::unordered_map<Var, Set>&,
   std::unordered_map<Var, Set>&
@@ -244,7 +245,7 @@ template <typename Data, typename Var, typename Set>
  * @brief Returns the maximum p-value corresponding to y-x-z v-structure.
  */
 double
-ConstraintBasedDiscovery<Data, Var, Set>::colliderPValue(
+ConstraintBasedLearning<Data, Var, Set>::colliderPValue(
   const Var y,
   const Var x,
   const Var z
@@ -272,7 +273,7 @@ template <typename Data, typename Var, typename Set>
  * @brief Finds all the potential v-structures around the given variable.
  */
 std::vector<std::tuple<double, Var, Var, Var>>
-ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
+ConstraintBasedLearning<Data, Var, Set>::findVStructures(
   const Var target
 ) const
 {
@@ -308,7 +309,7 @@ template <typename Data, typename Var, typename Set>
  * @brief Finds all the potential v-structures in the network.
  */
 std::vector<std::tuple<double, Var, Var, Var>>
-ConstraintBasedDiscovery<Data, Var, Set>::findVStructures(
+ConstraintBasedLearning<Data, Var, Set>::findVStructures(
 ) const
 {
   std::vector<std::tuple<double, Var, Var, Var>> vStructures;
@@ -328,7 +329,7 @@ template <typename Data, typename Var, typename Set>
  * @param imbalanceThreshold Specifies the amount of imbalance the parallel algorithm should tolerate.
  */
 BayesianNetwork<Var>
-ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
+ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   const bool directEdges,
   const bool isParallel,
   const double imbalanceThreshold
@@ -362,4 +363,4 @@ ConstraintBasedDiscovery<Data, Var, Set>::getNetwork(
   return bn;
 }
 
-#endif // DETAIL_CONSTRAINTBASEDDISCOVERY_HPP_
+#endif // DETAIL_CONSTRAINTBASEDLEARNING_HPP_

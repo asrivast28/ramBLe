@@ -5,14 +5,14 @@
 #ifndef TEST_DIRECTEDNETWORK_HPP_
 #define TEST_DIRECTEDNETWORK_HPP_
 
+#include "BlanketLearning.hpp"
 #include "CTCounter.hpp"
 #include "DiscreteData.hpp"
-#include "DirectDiscovery.hpp"
 #include "UintSet.hpp"
 
 
 using Counter = CTCounter<>;
-using Algorithm = GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>;
+using Algorithm = GS<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>;
 
 class ChildData : public testing::TestWithParam<bool> {
 protected:

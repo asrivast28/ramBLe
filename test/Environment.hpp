@@ -17,7 +17,7 @@
  * @brief Environment for running unit tests on data from the examples
  *        in the Neapolitan text book.
  */
-class NeapolitanEnvironment: public testing::Environment {
+class NeapolitanEnvironment : public testing::Environment {
 public:
   void
   SetUp() override {
@@ -51,7 +51,7 @@ uint32_t NeapolitanEnvironment::m = 0;
 /**
  * @brief Environment for running unit tests on the lizards dataset.
  */
-class LizardsEnvironment: public testing::Environment {
+class LizardsEnvironment : public testing::Environment {
 public:
   void
   SetUp() override {
@@ -79,7 +79,7 @@ uint32_t LizardsEnvironment::m = 0;
 /**
  * @brief Environment for running unit tests on the coronary dataset.
  */
-class CoronaryEnvironment: public testing::Environment {
+class CoronaryEnvironment : public testing::Environment {
 public:
   void
   SetUp() override {
@@ -107,7 +107,7 @@ uint32_t CoronaryEnvironment::m = 0;
 /**
  * @brief Environment for running unit tests on the asia dataset.
  */
-class AsiaEnvironment: public testing::Environment {
+class AsiaEnvironment : public testing::Environment {
 public:
   void
   SetUp() override {

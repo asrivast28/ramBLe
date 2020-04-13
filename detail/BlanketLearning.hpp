@@ -1,10 +1,9 @@
 /**
- * @file DirectDiscovery.hpp
- * @brief Implementation of the DirectDiscovery as well as
- *        the derived class functions.
+ * @file BlanketLearning.hpp
+ * @brief Implementation of the classes for blanket learning algorithms.
  */
-#ifndef DETAIL_DIRECTDISCOVERY_HPP_
-#define DETAIL_DIRECTDISCOVERY_HPP_
+#ifndef DETAIL_BLANKETLEARNING_HPP_
+#define DETAIL_BLANKETLEARNING_HPP_
 
 #include "../SetUtils.hpp"
 
@@ -22,17 +21,39 @@ template <typename Data, typename Var, typename Set>
  *
  * @param data Reference to an object of the Data.
  */
-DirectDiscovery<Data, Var, Set>::DirectDiscovery(
+BlanketLearning<Data, Var, Set>::BlanketLearning(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : ConstraintBasedDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
+  TIMER_RESET(m_tGrow);
+  TIMER_RESET(m_tShrink);
+  TIMER_RESET(m_tDist);
+  TIMER_RESET(m_tSymmetry);
+  TIMER_RESET(m_tSync);
+  TIMER_RESET(m_tBlankets);
+  TIMER_RESET(m_tNeighbors);
+}
+
+template <typename Data, typename Var, typename Set>
+BlanketLearning<Data, Var, Set>::~BlanketLearning(
+)
+{
+  if (this->m_comm.is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in growing the candidate blankets: ", m_tGrow);
+    TIMER_ELAPSED_NONZERO("Time taken in shrinking the candidate blankets: ", m_tShrink);
+    TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", m_tDist);
+    TIMER_ELAPSED_NONZERO("Time taken in symmetry correcting the blankets: ", m_tSymmetry);
+    TIMER_ELAPSED_NONZERO("Time taken in synchronizing the blankets: ", m_tSync);
+    TIMER_ELAPSED_NONZERO("Time taken in getting the blankets: ", m_tBlankets);
+    TIMER_ELAPSED_NONZERO("Time taken in getting the neighbors: ", m_tNeighbors);
+  }
 }
 
 template <typename Data, typename Var, typename Set>
 std::pair<Var, double>
-DirectDiscovery<Data, Var, Set>::pickBestCandidate(
+BlanketLearning<Data, Var, Set>::pickBestCandidate(
   const Var target,
   const Set& candidates,
   const Set& cmb
@@ -63,7 +84,7 @@ template <typename Data, typename Var, typename Set>
  * @return The indices of the variables that were removed from the candidate MB.
  */
 Set
-DirectDiscovery<Data, Var, Set>::shrinkMB(
+BlanketLearning<Data, Var, Set>::shrinkMB(
   const Var target,
   Set& cmb
 ) const
@@ -100,7 +121,7 @@ template <typename Data, typename Var, typename Set>
  *         otherwise return false.
  */
 bool
-DirectDiscovery<Data, Var, Set>::evaluateCandidatePC(
+BlanketLearning<Data, Var, Set>::evaluateCandidatePC(
   const Var x,
   const Var y,
   const Set& mbX,
@@ -132,7 +153,7 @@ template <typename Data, typename Var, typename Set>
  *         in the PC of the given target variable.
  */
 Set
-DirectDiscovery<Data, Var, Set>::getCandidatePC(
+BlanketLearning<Data, Var, Set>::getCandidatePC(
   const Var target,
   Set&&
 ) const
@@ -159,7 +180,7 @@ template <typename Data, typename Var, typename Set>
  * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
  */
 void
-DirectDiscovery<Data, Var, Set>::updatePValues(
+BlanketLearning<Data, Var, Set>::updatePValues(
   std::vector<std::tuple<Var, Var, double>>& myPV,
   const std::unordered_map<Var, Set>& myBlankets
 ) const
@@ -183,7 +204,7 @@ template <typename Data, typename Var, typename Set>
  * @return Set of all the tuples which were added to the candidate MBs on this processor.
  */
 std::set<std::tuple<Var, Var, double>>
-DirectDiscovery<Data, Var, Set>::growAll(
+BlanketLearning<Data, Var, Set>::growAll(
   const std::vector<std::tuple<Var, Var, double>>& myPV,
   std::unordered_map<Var, Set>& myBlankets
 ) const
@@ -225,7 +246,7 @@ template <typename Data, typename Var, typename Set>
  * @return Set of all the pairs which were removed from the candidate MBs on this processor.
  */
 std::set<std::pair<Var, Var>>
-DirectDiscovery<Data, Var, Set>::shrinkAll(
+BlanketLearning<Data, Var, Set>::shrinkAll(
   std::unordered_map<Var, Set>& myBlankets
 ) const
 {
@@ -248,7 +269,7 @@ template <typename Data, typename Var, typename Set>
  * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
  */
 void
-DirectDiscovery<Data, Var, Set>::syncBlankets(
+BlanketLearning<Data, Var, Set>::syncBlankets(
   std::unordered_map<Var, Set>& myBlankets
 ) const
 {
@@ -265,7 +286,7 @@ template <typename Data, typename Var, typename Set>
  * @return true if the list was redistributed to fix the imbalance.
  */
 bool
-DirectDiscovery<Data, Var, Set>::fixImbalance(
+BlanketLearning<Data, Var, Set>::fixImbalance(
   std::vector<std::tuple<Var, Var, double>>& myPV,
   const double imbalanceThreshold
 ) const
@@ -290,7 +311,7 @@ template <typename Data, typename Var, typename Set>
  * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
  */
 void
-DirectDiscovery<Data, Var, Set>::syncMissingBlankets(
+BlanketLearning<Data, Var, Set>::syncMissingBlankets(
   const std::vector<std::tuple<Var, Var, double>>& myPV,
   std::unordered_map<Var, Set>& myBlankets
 ) const
@@ -322,7 +343,7 @@ template <typename Data, typename Var, typename Set>
  * @return The total size of all the blankets at the end.
  */
 void
-DirectDiscovery<Data, Var, Set>::growShrink(
+BlanketLearning<Data, Var, Set>::growShrink(
   std::vector<std::tuple<Var, Var, double>>&& myPV,
   std::unordered_map<Var, Set>& myBlankets,
   std::set<std::pair<Var, Var>>& myAdded,
@@ -330,9 +351,7 @@ DirectDiscovery<Data, Var, Set>::growShrink(
 ) const
 {
   /* Grow Phase */
-  TIMER_DECLARE(tGrow);
-  TIMER_DECLARE(tDist);
-  TIMER_RESET(tDist);
+  TIMER_START(this->m_tGrow);
   bool changed = true;
   while (changed) {
     this->updatePValues(myPV, myBlankets);
@@ -360,30 +379,31 @@ DirectDiscovery<Data, Var, Set>::growShrink(
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
       myPV.resize(std::distance(myPV.begin(), newEnd));
       if (imbalanceThreshold > 1.0) {
-        TIMER_START(tDist);
+        TIMER_START(this->m_tDist);
         if (this->fixImbalance(myPV, imbalanceThreshold)) {
+          TIMER_START(this->m_tSync);
           this->syncMissingBlankets(myPV, myBlankets);
+          TIMER_PAUSE(this->m_tSync);
         }
-        TIMER_PAUSE(tDist);
+        TIMER_PAUSE(this->m_tDist);
       }
     }
     else {
       changed = false;
     }
   }
+  TIMER_START(this->m_tSync);
   this->syncBlankets(myBlankets);
+  TIMER_PAUSE(this->m_tSync);
+  TIMER_PAUSE(this->m_tGrow);
   if (this->m_comm.is_first()) {
-    TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", tDist);
-    TIMER_ELAPSED("Time taken in growing the candidate blankets: ", tGrow);
   }
   /* End of Grow Phase */
 
   /* Shrink Phase */
-  TIMER_DECLARE(tShrink);
+  TIMER_START(this->m_tShrink);
   this->shrinkAll(myBlankets);
-  if (this->m_comm.is_first()) {
-    TIMER_ELAPSED("Time taken in shrinking the candidate blankets: ", tShrink);
-  }
+  TIMER_PAUSE(this->m_tShrink);
   /* End of Shrink Phase */
 }
 
@@ -397,7 +417,7 @@ template <typename Data, typename Var, typename Set>
  * @return The pairs assigned to this processor after the symmetry correction.
  */
 std::vector<std::pair<Var, Var>>
-DirectDiscovery<Data, Var, Set>::symmetryCorrect(
+BlanketLearning<Data, Var, Set>::symmetryCorrect(
   const std::unordered_map<Var, Set>&& myBlankets,
   const std::set<std::pair<Var, Var>>&& myAdded
 ) const
@@ -484,13 +504,13 @@ template <typename Data, typename Var, typename Set>
  * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
  */
 BayesianNetwork<Var>
-DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
+BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
   const double imbalanceThreshold,
   std::unordered_map<Var, Set>& allBlankets,
   std::unordered_map<Var, Set>& allNeighbors
 ) const
 {
-  TIMER_DECLARE(tBlankets);
+  TIMER_START(this->m_tBlankets);
   // First, block decompose all the variable pairs on all the processors
   auto n = this->m_allVars.size();
   auto totalPairs = n * (n - 1);
@@ -529,16 +549,14 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
 
   /* Symmetry correction */
   this->m_comm.barrier();
-  TIMER_DECLARE(tSymmetry);
+  TIMER_START(this->m_tSymmetry);
   auto myPairs = this->symmetryCorrect(std::move(myBlankets), std::move(myAdded));
   this->m_comm.barrier();
-  if (this->m_comm.is_first()) {
-    TIMER_ELAPSED("Time taken in symmetry correcting the blankets: ", tSymmetry);
-    TIMER_ELAPSED("Time taken in getting the blankets: ", tBlankets);
-  }
+  TIMER_PAUSE(this->m_tSymmetry);
+  TIMER_PAUSE(this->m_tBlankets);
   /* End of Symmetry Correction */
 
-  TIMER_DECLARE(tNeighbors);
+  TIMER_START(this->m_tNeighbors);
   for (const auto x : this->m_allVars) {
     allBlankets[x] = set_init(Set(), this->m_data.numVars());
   }
@@ -547,7 +565,9 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
     allBlankets[p.second].insert(p.first);
   }
   // Sync all the blankets across all the processors
+  TIMER_START(this->m_tSync);
   this->syncBlankets(allBlankets);
+  TIMER_PAUSE(this->m_tSync);
 
   // Get neighbors for the variables on this processor
   for (const auto& p : myPairs) {
@@ -597,24 +617,22 @@ DirectDiscovery<Data, Var, Set>::getSkeleton_parallel(
     }
   }
   this->m_comm.barrier();
-  if (this->m_comm.is_first()) {
-    TIMER_ELAPSED("Time taken in getting the neighbors: ", tNeighbors);
-  }
+  TIMER_PAUSE(this->m_tNeighbors);
   return bn;
 }
 
 template <typename Data, typename Var, typename Set>
-GSMB<Data, Var, Set>::GSMB(
+GS<Data, Var, Set>::GS(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : DirectDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : BlanketLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
 template <typename Data, typename Var, typename Set>
 std::pair<Var, double>
-GSMB<Data, Var, Set>::pickBestCandidate(
+GS<Data, Var, Set>::pickBestCandidate(
   const Var target,
   const Set& candidates,
   const Set& cmb
@@ -633,17 +651,18 @@ GSMB<Data, Var, Set>::pickBestCandidate(
 
 template <typename Data, typename Var, typename Set>
 Set
-GSMB<Data, Var, Set>::getCandidateMB(
+GS<Data, Var, Set>::getCandidateMB(
   const Var target,
   Set&& candidates
 ) const
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
-  LOG_MESSAGE(info, "GSMB: Getting MB for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "GS: Getting MB for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
   bool changed = true;
   Var x = this->m_data.numVars();
   double pvX = std::numeric_limits<double>::max();
+  TIMER_START(this->m_tGrow);
   while ((candidates.size() > 0) && changed) {
     changed = false;
     std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
@@ -655,14 +674,17 @@ GSMB<Data, Var, Set>::getCandidateMB(
       changed = true;
     }
   }
+  TIMER_PAUSE(this->m_tGrow);
+  TIMER_START(this->m_tShrink);
   this->shrinkMB(target, cmb);
+  TIMER_PAUSE(this->m_tShrink);
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cmb;
 }
 
 template <typename Data, typename Var, typename Set>
 void
-GSMB<Data, Var, Set>::updatePValues(
+GS<Data, Var, Set>::updatePValues(
   std::vector<std::tuple<Var, Var, double>>& myPV,
   const std::unordered_map<Var, Set>& myBlankets
 ) const
@@ -692,7 +714,7 @@ IAMB<Data, Var, Set>::IAMB(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : DirectDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : BlanketLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -709,6 +731,7 @@ IAMB<Data, Var, Set>::getCandidateMB(
   bool changed = true;
   Var x = this->m_data.numVars();
   double pvX = std::numeric_limits<double>::max();
+  TIMER_START(this->m_tGrow);
   while ((candidates.size() > 0) && changed) {
     changed = false;
     std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
@@ -722,7 +745,10 @@ IAMB<Data, Var, Set>::getCandidateMB(
       changed = true;
     }
   }
+  TIMER_PAUSE(this->m_tGrow);
+  TIMER_START(this->m_tShrink);
   this->shrinkMB(target, cmb);
+  TIMER_PAUSE(this->m_tShrink);
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cmb;
 }
@@ -732,7 +758,7 @@ InterIAMB<Data, Var, Set>::InterIAMB(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : DirectDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : BlanketLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -750,6 +776,7 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
   Var x = this->m_data.numVars();
   double pvX = std::numeric_limits<double>::max();
   while ((candidates.size() > 0) && changed) {
+    TIMER_START(this->m_tGrow);
     changed = false;
     std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
@@ -761,8 +788,11 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
       candidates.erase(x);
       changed = true;
     }
+    TIMER_PAUSE(this->m_tGrow);
     if (changed) {
+      TIMER_START(this->m_tShrink);
       auto removed = this->shrinkMB(target, cmb);
+      TIMER_PAUSE(this->m_tShrink);
       // If the last added variable was removed then the candidate MB
       // did not really change
       if (removed != Set{x}) {
@@ -786,28 +816,23 @@ InterIAMB<Data, Var, Set>::growShrink(
   const double imbalanceThreshold
 ) const
 {
-  TIMER_DECLARE(tGrow);
-  TIMER_DECLARE(tShrink);
-  TIMER_DECLARE(tDist);
-  TIMER_RESET(tDist);
-  TIMER_DECLARE(tSync);
   bool changed = true;
   bool redistributed = false;
   while (changed) {
     /* Grow Phase */
-    TIMER_START(tGrow);
+    TIMER_START(this->m_tGrow);
     this->updatePValues(myPV, myBlankets);
     auto prevBlankets = myBlankets;
     auto added = this->growAll(myPV, myBlankets);
-    TIMER_PAUSE(tGrow);
+    TIMER_PAUSE(this->m_tGrow);
     /* End of Grow Phase */
-    TIMER_START(tSync);
+    TIMER_START(this->m_tSync);
     this->syncBlankets(myBlankets);
-    TIMER_PAUSE(tSync);
+    TIMER_PAUSE(this->m_tSync);
     /* Shrink Phase */
-    TIMER_START(tShrink);
+    TIMER_START(this->m_tShrink);
     auto removed = this->shrinkAll(myBlankets);
-    TIMER_PAUSE(tShrink);
+    TIMER_PAUSE(this->m_tShrink);
     /* End of Shrink Phase */
     // Track changes for all the variables across processors
     auto changes = set_init(Set(), this->m_data.numVars());
@@ -852,7 +877,7 @@ InterIAMB<Data, Var, Set>::growShrink(
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
       myPV.resize(std::distance(myPV.begin(), newEnd));
       if (imbalanceThreshold > 1.0) {
-        TIMER_START(tDist);
+        TIMER_START(this->m_tDist);
         bool fixed = this->fixImbalance(myPV, imbalanceThreshold);
         bool sorted = false;
         if ((redistributed || fixed) && mxx::any_of(sortPV, this->m_comm)) {
@@ -864,12 +889,12 @@ InterIAMB<Data, Var, Set>::growShrink(
         if (fixed || sorted) {
           // We need to get the missing blankets if the p-value list was redistributed in this iteration
           // This can happen if the imbalance was fixed OR if the list was sorted because of an addition
-          TIMER_START(tSync);
+          TIMER_START(this->m_tSync);
           this->syncMissingBlankets(myPV, myBlankets);
-          TIMER_PAUSE(tSync);
+          TIMER_PAUSE(this->m_tSync);
           redistributed = true;
         }
-        TIMER_PAUSE(tDist);
+        TIMER_PAUSE(this->m_tDist);
       }
       if (!redistributed && sortPV) {
         // If the p-values have never been redistributed, then we only need to sort locally
@@ -882,12 +907,6 @@ InterIAMB<Data, Var, Set>::growShrink(
       changed = false;
     }
   }
-  if (this->m_comm.is_first()) {
-    TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", tDist);
-    TIMER_ELAPSED("Time taken in synchronizing the candidate blankets: ", tSync);
-    TIMER_ELAPSED("Time taken in growing the candidate blankets: ", tGrow);
-    TIMER_ELAPSED("Time taken in shrinking the candidate blankets: ", tShrink);
-  }
 }
 
-#endif // DETAIL_DIRECTDISCOVERY_HPP_
+#endif // DETAIL_BLANKETLEARNING_HPP_

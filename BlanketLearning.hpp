@@ -1,12 +1,13 @@
 /**
- * @file DirectDiscovery.hpp
- * @brief Declaration of the DirectDiscovery class and all the
- *        classes that are derived from it.
+ * @file BlanketLearning.hpp
+ * @brief Declaration of the classes for blanket learning algorithms.
  */
-#ifndef DIRECTDISCOVERY_HPP_
-#define DIRECTDISCOVERY_HPP_
+#ifndef BLANKETLEARNING_HPP_
+#define BLANKETLEARNING_HPP_
 
-#include "ConstraintBasedDiscovery.hpp"
+#include "ConstraintBasedLearning.hpp"
+
+#include "utils/Timer.hpp"
 
 
 /**
@@ -17,12 +18,12 @@
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class DirectDiscovery : public ConstraintBasedDiscovery<Data, Var, Set> {
+class BlanketLearning : public ConstraintBasedLearning<Data, Var, Set> {
 public:
-  DirectDiscovery(const mxx::comm&, const Data&, const Var);
+  BlanketLearning(const mxx::comm&, const Data&, const Var);
 
   virtual
-  ~DirectDiscovery() { }
+  ~BlanketLearning();
 
 protected:
   Set
@@ -67,7 +68,16 @@ private:
 
   BayesianNetwork<Var>
   getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
-}; // class DirectDiscovery
+
+protected:
+  TIMER_DECLARE(m_tGrow, mutable);
+  TIMER_DECLARE(m_tShrink, mutable);
+  TIMER_DECLARE(m_tDist, mutable);
+  TIMER_DECLARE(m_tSymmetry, mutable);
+  TIMER_DECLARE(m_tSync, mutable);
+  TIMER_DECLARE(m_tBlankets, mutable);
+  TIMER_DECLARE(m_tNeighbors, mutable);
+}; // class BlanketLearning
 
 /**
  * @brief Class that implements Grow-Shrink strategy for MB discovery,
@@ -78,9 +88,9 @@ private:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class GSMB: public DirectDiscovery<Data, Var, Set> {
+class GS : public BlanketLearning<Data, Var, Set> {
 public:
-  GSMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  GS(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set
@@ -91,7 +101,7 @@ private:
 
   std::pair<Var, double>
   pickBestCandidate(const Var, const Set&, const Set&) const override;
-}; // class GSMB
+}; // class GS
 
 /**
  * @brief Class that implements Incremental Association strategy for MB discovery,
@@ -102,7 +112,7 @@ private:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class IAMB: public DirectDiscovery<Data, Var, Set> {
+class IAMB : public BlanketLearning<Data, Var, Set> {
 public:
   IAMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
@@ -120,7 +130,7 @@ private:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class InterIAMB: public DirectDiscovery<Data, Var, Set> {
+class InterIAMB : public BlanketLearning<Data, Var, Set> {
 public:
   InterIAMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
@@ -132,6 +142,6 @@ private:
   growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;
 }; // class InterIAMB
 
-#include "detail/DirectDiscovery.hpp"
+#include "detail/BlanketLearning.hpp"
 
-#endif // DIRECTDISCOVERY_HPP_
+#endif // BLANKETLEARNING_HPP_

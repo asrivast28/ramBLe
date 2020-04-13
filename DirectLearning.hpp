@@ -1,12 +1,11 @@
 /**
- * @file TopologicalDiscovery.hpp
- * @brief Declaration of the TopologicalDiscovery class and all the
- *        classes that are derived from it.
+ * @file DirectLearning.hpp
+ * @brief Declaration of the classes for direct learning algorithms.
  */
-#ifndef TOPOLOGICALDISCOVERY_HPP_
-#define TOPOLOGICALDISCOVERY_HPP_
+#ifndef DIRECTLEARNING_HPP_
+#define DIRECTLEARNING_HPP_
 
-#include "ConstraintBasedDiscovery.hpp"
+#include "ConstraintBasedLearning.hpp"
 
 
 /**
@@ -17,9 +16,9 @@
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class TopologicalDiscovery : public ConstraintBasedDiscovery<Data, Var, Set> {
+class DirectLearning : public ConstraintBasedLearning<Data, Var, Set> {
 public:
-  TopologicalDiscovery(const mxx::comm&, const Data&, const Var);
+  DirectLearning(const mxx::comm&, const Data&, const Var);
 
   Set
   removeFalsePC(const Var, Set&) const;
@@ -28,8 +27,8 @@ public:
   getCandidateMB(const Var, Set&&) const override;
 
   virtual
-  ~TopologicalDiscovery() { }
-}; // class TopologicalDiscovery
+  ~DirectLearning() { }
+}; // class DirectLearning
 
 
 /**
@@ -41,7 +40,7 @@ public:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class MMPC: public TopologicalDiscovery<Data, Var, Set> {
+class MMPC : public DirectLearning<Data, Var, Set> {
 public:
   MMPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
@@ -58,7 +57,7 @@ public:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class HITON: public TopologicalDiscovery<Data, Var, Set> {
+class HITON : public DirectLearning<Data, Var, Set> {
 public:
   HITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
@@ -76,7 +75,7 @@ private:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class SemiInterleavedHITON: public TopologicalDiscovery<Data, Var, Set> {
+class SemiInterleavedHITON : public DirectLearning<Data, Var, Set> {
 public:
   SemiInterleavedHITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
@@ -94,7 +93,7 @@ private:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class GetPC: public TopologicalDiscovery<Data, Var, Set> {
+class GetPC : public DirectLearning<Data, Var, Set> {
 public:
   GetPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
@@ -103,6 +102,6 @@ private:
   getCandidatePC(const Var, Set&&) const override;
 }; // class GetPC
 
-#include "detail/TopologicalDiscovery.hpp"
+#include "detail/DirectLearning.hpp"
 
-#endif // TOPOLOGICALDISCOVERY_HPP_
+#endif // DIRECTLEARNING_HPP_

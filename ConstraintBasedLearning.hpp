@@ -1,9 +1,9 @@
 /**
- * @file ConstraintBasedDiscovery.hpp
- * @brief Declaration of the ConstraintBasedDiscovery class.
+ * @file ConstraintBasedLearning.hpp
+ * @brief Declaration of the classes for constraint-based learning.
  */
-#ifndef CONSTRAINTBASEDDISCOVERY_HPP_
-#define CONSTRAINTBASEDDISCOVERY_HPP_
+#ifndef CONSTRAINTBASEDLEARNING_HPP_
+#define CONSTRAINTBASEDLEARNING_HPP_
 
 #include "BayesianNetwork.hpp"
 
@@ -21,9 +21,9 @@
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class ConstraintBasedDiscovery {
+class ConstraintBasedLearning {
 public:
-  ConstraintBasedDiscovery(const mxx::comm&, const Data&, const Var);
+  ConstraintBasedLearning(const mxx::comm&, const Data&, const Var);
 
   const Set&
   getPC(const Var) const;
@@ -38,7 +38,7 @@ public:
   getNetwork(const bool, const bool, const double = 0.0) const;
 
   virtual
-  ~ConstraintBasedDiscovery() { }
+  ~ConstraintBasedLearning() { }
 
 protected:
   Set
@@ -90,8 +90,8 @@ private:
   mutable std::unordered_map<Var, Set> m_cachedMB;
   mutable std::unordered_map<Var, bool> m_cachedPCSymmetric;
   mutable std::unordered_map<Var, bool> m_cachedMBSymmetric;
-}; // class ConstraintBasedDiscovery
+}; // class ConstraintBasedLearning
 
-#include "detail/ConstraintBasedDiscovery.hpp"
+#include "detail/ConstraintBasedLearning.hpp"
 
-#endif // CONSTRAINTBASEDDISCOVERY_HPP_
+#endif // CONSTRAINTBASEDLEARNING_HPP_

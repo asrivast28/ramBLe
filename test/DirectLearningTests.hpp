@@ -1,23 +1,23 @@
 /**
- * @file TopologicalDiscoveryTests.hpp
- * @brief Unit tests for the Topological MB discovery algorithms.
+ * @file DirectLearningTests.hpp
+ * @brief Unit tests for the direct learning algorithms.
  */
-#ifndef TEST_TOPOLOGICALDISCOVERY_HPP_
-#define TEST_TOPOLOGICALDISCOVERY_HPP_
+#ifndef TEST_DIRECTLEARNING_HPP_
+#define TEST_DIRECTLEARNING_HPP_
 
 #include "Environment.hpp"
 #include "DiscreteData.hpp"
-#include "TopologicalDiscovery.hpp"
+#include "DirectLearning.hpp"
 
 
 using Counter = CTCounter<>;
-// All the different direct discovery algorithms
-using TopologicalDiscoveryAlgorithms = testing::Types<MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
-                                                      SemiInterleavedHITON<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
-                                                      GetPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
+// All the different direct learning algorithms
+using DirectLearningAlgorithms = testing::Types<MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
+                                                     SemiInterleavedHITON<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
+                                                     GetPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
 
 template <typename Algorithm>
-class CoronaryTopologicalDiscovery : public testing::Test {
+class CoronaryDirectLearning : public testing::Test {
 protected:
   void
   SetUp() override {
@@ -40,9 +40,9 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_CASE(CoronaryTopologicalDiscovery, TopologicalDiscoveryAlgorithms);
+TYPED_TEST_CASE(CoronaryDirectLearning, DirectLearningAlgorithms);
 
-TYPED_TEST(CoronaryTopologicalDiscovery, ParentsChildren) {
+TYPED_TEST(CoronaryDirectLearning, ParentsChildren) {
   auto target = this->data->varIndex("Smoking");
   auto trueSmokingPC = this->data->template varIndices<UintSet<uint8_t>>({"M. Work", "P. Work", "Pressure", "Proteins"});
   auto computedSmokingPC = this->algo->getPC(target);
@@ -76,7 +76,7 @@ TYPED_TEST(CoronaryTopologicalDiscovery, ParentsChildren) {
 
 
 template <typename Algorithm>
-class AsiaTopologicalDiscovery : public testing::Test {
+class AsiaDirectLearning : public testing::Test {
 protected:
   void
   SetUp() override {
@@ -99,9 +99,9 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_CASE(AsiaTopologicalDiscovery, TopologicalDiscoveryAlgorithms);
+TYPED_TEST_CASE(AsiaDirectLearning, DirectLearningAlgorithms);
 
-TYPED_TEST(AsiaTopologicalDiscovery, ParentsChildren) {
+TYPED_TEST(AsiaDirectLearning, ParentsChildren) {
   auto target = this->data->varIndex("asia");
   auto trueAsiaPC = this->data->template varIndices<UintSet<uint8_t>>({});
   auto computedAsiaPC = this->algo->getPC(target);
@@ -143,4 +143,4 @@ TYPED_TEST(AsiaTopologicalDiscovery, ParentsChildren) {
   EXPECT_EQ(computedDyspPC, trueDyspPC);
 }
 
-#endif // TEST_TOPOLOGICALDISCOVERY_HPP_
+#endif // TEST_DIRECTLEARNING_HPP_

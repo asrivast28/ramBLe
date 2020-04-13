@@ -5,8 +5,11 @@
 #ifndef DATAREADER_HPP_
 #define DATAREADER_HPP_
 
+#include "mxx/comm.hpp"
+
 #include <sstream>
 #include <vector>
+
 
 /**
  * @brief Base for all the classes that read data from a file.

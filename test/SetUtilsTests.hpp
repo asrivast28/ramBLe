@@ -16,7 +16,7 @@
 
 
 template <typename Set>
-class SetUtilsTests: public testing::Test {
+class SetUtilsTests : public testing::Test {
 protected:
   void
   SetUp() override {

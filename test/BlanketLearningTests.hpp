@@ -1,25 +1,25 @@
 /**
- * @file DirectDiscoveryTests.hpp
- * @brief Unit tests for the Direct MB discovery algorithms.
+ * @file BlanketLearningTests.hpp
+ * @brief Unit tests for the blanket learning algorithms.
  */
-#ifndef TEST_DIRECTDISCOVERY_HPP_
-#define TEST_DIRECTDISCOVERY_HPP_
+#ifndef TEST_BLANKETLEARNING_HPP_
+#define TEST_BLANKETLEARNING_HPP_
 
 #include "Environment.hpp"
+#include "BlanketLearning.hpp"
 #include "CTCounter.hpp"
 #include "DiscreteData.hpp"
-#include "DirectDiscovery.hpp"
 #include "UintSet.hpp"
 
 
 using Counter = CTCounter<>;
-// All the different direct discovery algorithms
-using DirectDiscoveryAlgorithms = testing::Types<GSMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
+// All the different blanket learning algorithms
+using BlanketLearningAlgorithms = testing::Types<GS<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
                                                  IAMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
                                                  InterIAMB<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
 
 template <typename Algorithm>
-class CoronaryDirectDiscovery : public testing::Test {
+class CoronaryBlanketLearning : public testing::Test { 
 protected:
   void
   SetUp() override {
@@ -42,9 +42,9 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_CASE(CoronaryDirectDiscovery, DirectDiscoveryAlgorithms);
+TYPED_TEST_CASE(CoronaryBlanketLearning, BlanketLearningAlgorithms);
 
-TYPED_TEST(CoronaryDirectDiscovery, MarkovBlanket) {
+TYPED_TEST(CoronaryBlanketLearning, MarkovBlanket) {
   auto target = this->data->varIndex("Smoking");
   auto trueSmokingMB = this->data->template varIndices<UintSet<uint8_t>>({"M. Work", "P. Work", "Pressure", "Proteins"});
   auto computedSmokingMB = this->algo->getMB(target);
@@ -76,7 +76,7 @@ TYPED_TEST(CoronaryDirectDiscovery, MarkovBlanket) {
   EXPECT_EQ(computedFamilyMB, trueFamilyMB);
 }
 
-TYPED_TEST(CoronaryDirectDiscovery, ParentsChildren) {
+TYPED_TEST(CoronaryBlanketLearning, ParentsChildren) {
   auto target = this->data->varIndex("Smoking");
   auto trueSmokingPC = this->data->template varIndices<UintSet<uint8_t>>({"M. Work", "P. Work", "Pressure", "Proteins"});
   auto computedSmokingPC = this->algo->getPC(target);
@@ -108,7 +108,7 @@ TYPED_TEST(CoronaryDirectDiscovery, ParentsChildren) {
   EXPECT_EQ(computedFamilyPC, trueFamilyPC);
 }
 
-TYPED_TEST(CoronaryDirectDiscovery, DirectedNetwork) {
+TYPED_TEST(CoronaryBlanketLearning, DirectedNetwork) {
   auto computedBN = this->algo->getNetwork(true, false);
 
   auto smoking = this->data->varIndex("Smoking");
@@ -137,7 +137,7 @@ TYPED_TEST(CoronaryDirectDiscovery, DirectedNetwork) {
 
 
 template <typename Algorithm>
-class AsiaDirectDiscovery : public testing::Test {
+class AsiaBlanketLearning : public testing::Test {
 protected:
   void
   SetUp() override {
@@ -160,9 +160,9 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_CASE(AsiaDirectDiscovery, DirectDiscoveryAlgorithms);
+TYPED_TEST_CASE(AsiaBlanketLearning, BlanketLearningAlgorithms);
 
-TYPED_TEST(AsiaDirectDiscovery, MarkovBlanket) {
+TYPED_TEST(AsiaBlanketLearning, MarkovBlanket) {
   auto target = this->data->varIndex("asia");
   auto trueAsiaMB = this->data->template varIndices<UintSet<uint8_t>>({});
   auto computedAsiaMB = this->algo->getMB(target);
@@ -204,7 +204,7 @@ TYPED_TEST(AsiaDirectDiscovery, MarkovBlanket) {
   EXPECT_EQ(computedDyspMB, trueDyspMB);
 }
 
-TYPED_TEST(AsiaDirectDiscovery, ParentsChildren) {
+TYPED_TEST(AsiaBlanketLearning, ParentsChildren) {
   auto target = this->data->varIndex("asia");
   auto trueAsiaPC = this->data->template varIndices<UintSet<uint8_t>>({});
   auto computedAsiaPC = this->algo->getPC(target);
@@ -246,7 +246,7 @@ TYPED_TEST(AsiaDirectDiscovery, ParentsChildren) {
   EXPECT_EQ(computedDyspPC, trueDyspPC);
 }
 
-TYPED_TEST(AsiaDirectDiscovery, DirectedNetwork) {
+TYPED_TEST(AsiaBlanketLearning, DirectedNetwork) {
   auto computedBN = this->algo->getNetwork(true, false);
 
   auto smoke = this->data->varIndex("smoke");
@@ -267,4 +267,4 @@ TYPED_TEST(AsiaDirectDiscovery, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-#endif // TEST_DIRECTDISCOVERY_HPP_
+#endif // TEST_BLANKETLEARNING_HPP_

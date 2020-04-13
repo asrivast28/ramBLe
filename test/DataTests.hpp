@@ -55,7 +55,7 @@ TYPED_TEST(NeapolitanData, MarginalPValue) {
 
 
 template <typename Counter>
-class LizardsData: public testing::Test {
+class LizardsData : public testing::Test {
 protected:
   void
   SetUp() override {
@@ -103,7 +103,7 @@ TYPED_TEST(LizardsData, ConditionalPValue) {
 
 
 template <typename Counter>
-class CoronaryData: public testing::Test {
+class CoronaryData : public testing::Test {
 protected:
   void
   SetUp() override {

@@ -1,10 +1,9 @@
 /**
- * @file TopologicalDiscovery.hpp
- * @brief Implementation of the TopologicalDiscovery class and all the
- *        classes that are derived from it.
+ * @file DirectLearning.hpp
+ * @brief Implementation of the classes for direct learning algorithms.
  */
-#ifndef DETAIL_TOPOLOGICALDISCOVERY_HPP_
-#define DETAIL_TOPOLOGICALDISCOVERY_HPP_
+#ifndef DETAIL_DIRECTLEARNING_HPP_
+#define DETAIL_DIRECTLEARNING_HPP_
 
 #include "../SetUtils.hpp"
 
@@ -19,11 +18,11 @@ template <typename Data, typename Var, typename Set>
  *
  * @param data Reference to an object of the Data.
  */
-TopologicalDiscovery<Data, Var, Set>::TopologicalDiscovery(
+DirectLearning<Data, Var, Set>::DirectLearning(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : ConstraintBasedDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -40,7 +39,7 @@ template <typename Data, typename Var, typename Set>
  *         from the candidate PC set.
  */
 Set
-TopologicalDiscovery<Data, Var, Set>::removeFalsePC(
+DirectLearning<Data, Var, Set>::removeFalsePC(
   const Var target,
   Set& cpc
 ) const
@@ -74,12 +73,12 @@ template <typename Data, typename Var, typename Set>
  *         in the MB of the given target variable.
  */
 Set
-TopologicalDiscovery<Data, Var, Set>::getCandidateMB(
+DirectLearning<Data, Var, Set>::getCandidateMB(
   const Var target,
   Set&& candidates
 ) const
 {
-  LOG_MESSAGE(info, "Topological Discovery: Getting MB from PC for %s", this->m_data.varName(target));
+  LOG_MESSAGE(info, "Blankets: Getting MB from PC for %s", this->m_data.varName(target));
   auto cmb = set_init(Set(), this->m_data.numVars());
   const auto& pc = this->getPC(target);
   for (const Var y : pc) {
@@ -112,7 +111,7 @@ MMPC<Data, Var, Set>::MMPC(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -162,7 +161,7 @@ HITON<Data, Var, Set>::HITON(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -205,7 +204,7 @@ SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -262,7 +261,7 @@ GetPC<Data, Var, Set>::GetPC(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : TopologicalDiscovery<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
 }
 
@@ -321,4 +320,4 @@ GetPC<Data, Var, Set>::getCandidatePC(
   return cpc;
 }
 
-#endif // DETAIL_TOPOLOGICALDISCOVERY_HPP_
+#endif // DETAIL_DIRECTLEARNING_HPP_

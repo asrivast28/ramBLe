@@ -10,7 +10,7 @@
 namespace fs = boost::filesystem;
 
 ProgramOptions::ProgramOptions(
-) : m_desc("Constraint-based Causal Discovery"),
+) : m_desc("Constraint-Based BN Learning"),
     m_logLevel(),
     m_fileName(),
     m_algoName(),

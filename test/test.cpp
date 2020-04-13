@@ -6,8 +6,8 @@
 #include "SetUtilsTests.hpp"
 #include "Environment.hpp"
 #include "DataTests.hpp"
-#include "DirectDiscoveryTests.hpp"
-#include "TopologicalDiscoveryTests.hpp"
+#include "BlanketLearningTests.hpp"
+#include "DirectLearningTests.hpp"
 #include "DirectedNetworkTests.hpp"
 
 #include "mxx/comm.hpp"
