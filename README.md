@@ -11,9 +11,9 @@ This project has been tested only on Linux platform, using gcc with C++14 suppor
 Boost libraries are used for parsing the command line options, logging, and a few other purposes.  
 * **[SCons](http://scons.org/)**  
 SCons, a cross-platform Python based build environment, is required for building the project.  
-* The following two repositories are used as submodules:  
-  * **[SABNAtk](https://gitlab.com/SCoRe-Group/SABNAtk)**  
-  SABNAtk library is used for executing counting queries over the datasets.  
+* The following repositories are used as submodules:
+  * **[mxx](https://gitlab.com/patflick/mxx)**  
+  mxx is used as a C++ wrapper for MPI.
   * **[C++ Utils](https://github.com/asrivast28/cpp-utils)**  
   Logging functionality from the repository is used.
 * **[Google Test](https://github.com/google/googletest)** (optional)   
