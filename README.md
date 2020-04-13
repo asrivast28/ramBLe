@@ -79,5 +79,5 @@ This class of algorithms first finds the parent-child (PC) sets of nodes.
 [Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
 
 ## Licensing
-Our code is licensed under the Apache License 2.0 (see LICENSE).
+Our code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE)).
 The licensing does not apply to the `ext` folder. Please refer to the individual files for their licensing terms.
