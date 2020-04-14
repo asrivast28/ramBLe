@@ -24,8 +24,9 @@ After the dependencies have been installed, the project can be built as:
 <pre><code>scons
 </code></pre>  
 This will create an executable named `csl`, which can be used for constraint-based structure learning.  
-Path to the Boost libraries can be specified as:  
-<pre><code>scons BOOSTLIBPATH=&lt;Boost library path, default is /usr/lib/x86_64-lib-gnu&gt;
+By default, all the paths from the environment in `CPATH` and `LIBRARY_PATH` variables are used as include paths and library paths.  
+Path to external includes and libraries at non-default locations can also be specified as:  
+<pre><code>scons LOCALINCLUDES=&lt;comma-delimited list of paths&rt; LOCALLIBS=&lt;comma-delimited list of paths&gt;
 </code></pre>
 
 #### Unit Tests

@@ -184,13 +184,38 @@ conf = Configure(env, custom_tests = {'CheckCXXBuilder' : CheckCXXBuilder})
 if not conf.CheckCXXBuilder():
   Exit(1)
 
-# Check for bit_util.hpp specific functions and build options
-bitutilBuiltins = ['ctzll', 'popcountll']
-for builtin in bitutilBuiltins:
+conf.env.Append(CXXFLAGS='-march=native')
+# Check for functions and build options required by the external libraries
+extBuiltins = ['ctzll', 'popcountll']
+for builtin in extBuiltins:
   if not conf.CheckDeclaration('__builtin_%s' % builtin):
     print('ERROR: __builtin_%s is required by bit_util.hpp' % builtin)
     Exit(1)
-conf.env.Append(CXXFLAGS='-march=native')
+# Check for aligned malloc declaration
+if conf.CheckCHeader('mm_malloc.h'):
+  if not conf.CheckDeclaration('_mm_malloc', '#include <mm_malloc.h>'):
+    print('ERROR: _mm_malloc is required by the bitvector counter from SABNAtk')
+    Exit(1)
+else:
+  print('ERROR: mm_malloc.h not found')
+  Exit(1)
+vectorizationOptions = [
+  ('__AVX2__', 'HAVE_AVX2_INSTRUCTIONS'),
+  ('__AVX512BW__', 'HAVE_AVX512BW_INSTRUCTIONS'),
+  ('__SSE4_1__', None),
+  ('__SSE4_2__', None),
+]
+vectorize = False
+# Check if vectorization can be used
+for typedef, define in vectorizationOptions:
+  if conf.CheckDeclaration(typedef, language='C++'):
+    vectorize = True
+    if define is not None:
+      # Add the definition to the list of CPPDEFINES
+      conf.env.Append(CPPDEFINES=define)
+if not vectorize:
+  print('WARNING: vectorization is not supported; performance of the SABNAtk counters will be impacted')
+  conf.env.Replace(CXXFLAGS=cppFlags)
 
 # Check for boost header location
 if not conf.CheckCXXHeader('boost/version.hpp'):

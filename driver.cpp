@@ -28,7 +28,9 @@
 #include "mxx/comm.hpp"
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
+#include "BVCounter.hpp"
 #include "CTCounter.hpp"
+#include "RadCounter.hpp"
 
 #include <boost/asio/ip/host_name.hpp>
 #include <mpi.h>
@@ -63,31 +65,31 @@ getAlgorithm(
   if (algoName.compare("gs") == 0) {
     return std::make_unique<GS<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "gs,";
+  ss << "gs";
   if (algoName.compare("iamb") == 0) {
     return std::make_unique<IAMB<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "iamb,";
+  ss << ",iamb";
   if (algoName.compare("inter.iamb") == 0) {
     return std::make_unique<InterIAMB<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "inter.iamb,";
+  ss << ",inter.iamb";
   if (algoName.compare("mmpc") == 0) {
     return std::make_unique<MMPC<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "mmpc,";
+  ss << ",mmpc";
   if (algoName.compare("hiton") == 0) {
     return std::make_unique<HITON<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "hiton,";
+  ss << ",hiton";
   if (algoName.compare("si.hiton.pc") == 0) {
     return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "si.hiton.pc,";
+  ss << ",si.hiton.pc";
   if (algoName.compare("getpc") == 0) {
     return std::make_unique<GetPC<Data, Var, Set>>(comm, data, maxConditioning);
   }
-  ss << "getpc";
+  ss << ",getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
   return std::unique_ptr<ConstraintBasedLearning<Data, Var, Set>>();
 }
@@ -156,6 +158,41 @@ getNeighborhood(
 }
 
 /**
+ * @brief Creates the contingency table counter.
+ */
+template<template <typename...> class CounterType, typename Size, typename Iter>
+typename std::enable_if<
+  std::is_same<CounterType<>, CTCounter<>>::value,
+  CounterType<>
+>::type
+createCounter(
+  const uint32_t n,
+  const uint32_t m,
+  Iter it
+)
+{
+  return CounterType<>::create(n, m, it);
+}
+
+/**
+ * @brief Creates the SABNAtk library counters.
+ */
+template<template <typename...> class CounterType, typename Size, typename Iter>
+typename std::enable_if<
+  std::is_same<CounterType<Size>, BVCounter<Size>>::value ||
+  std::is_same<CounterType<Size>, RadCounter<Size>>::value,
+  CounterType<Size>
+>::type
+createCounter(
+  const uint32_t n,
+  const uint32_t m,
+  Iter it
+)
+{
+  return CounterType<Size>::create(n, m, it);
+}
+
+/**
  * @brief Gets the neighborhood for the given target variable.
  *
  * @tparam CounterType Type of the counter to be used.
@@ -178,40 +215,49 @@ getNeighborhood(
 )
 {
   std::vector<std::string> varNames(reader->varNames());
-  auto counter = CounterType<>::create(n, m, std::begin(reader->data()));
-  reader.reset();
   std::vector<std::string> nbrVars;
   if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint8_t>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, maxSize<uint8_t>()>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, maxSize<uint8_t>()>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>::capacity()) {
+    auto counter = createCounter<CounterType, std::integral_constant<int, maxSize<uint16_t>()>>(n, m, std::begin(reader->data()));
     nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>(counter, varNames, options, comm);
   }
   else {
@@ -227,8 +273,8 @@ myMPIErrorHandler(
   ...
 )
 {
-    // throw exception, enables gdb stack trace analysis
-    throw std::runtime_error("MPI Error");
+  // throw exception, enables gdb stack trace analysis
+  throw std::runtime_error("MPI Error");
 }
 
 void
@@ -345,6 +391,16 @@ main(
       counterFound = true;
     }
     ss << "ct";
+    if (options.counterType().compare("bv") == 0) {
+      nbrVars = getNeighborhood<BVCounter>(n, m, std::move(reader), options, comm);
+      counterFound = true;
+    }
+    ss << ",bv";
+    if (options.counterType().compare("rad") == 0) {
+      nbrVars = getNeighborhood<RadCounter>(n, m, std::move(reader), options, comm);
+      counterFound = true;
+    }
+    ss << ",rad";
     if (!counterFound) {
       throw std::runtime_error("Requested counter not found. Supported counter types are: {" + ss.str() + "}");
     }

@@ -21,9 +21,9 @@
 #define DETAIL_GSQUARE_HPP_
 
 #include "utils/Logging.hpp"
+#include "BVCounter.hpp"
 #include "CTCounter.hpp"
-
-#include <cmath>
+#include "RadCounter.hpp"
 
 
 /**
@@ -84,6 +84,129 @@ private:
   std::vector<State> m_state;
   bool m_valid;
 }; // class StateIterator
+
+/**
+ * @brief Computes the G^2 statistic using the SABNAtk counters.
+ */
+template <template <typename...> class CounterType, typename Var, typename Set, typename... CounterArgs>
+std::pair<uint32_t, double>
+computeGSquareSABNAtk(
+  const CounterType<CounterArgs...>& counter,
+  const Var x,
+  const Var y,
+  const Set& given
+)
+{
+  using data_type = typename CounterType<CounterArgs...>::data_type;
+
+  auto r_x = counter.r(x);
+  auto r_y = counter.r(y);
+
+  uint32_t df = (r_x - 1) * (r_y - 1);
+  LOG_MESSAGE(trace, "r_x = %d, r_y = %d", r_x, r_y);
+
+  std::vector<data_type> r(given.size());
+  std::vector<int> pa(given.size());
+  auto k = 0u;
+  for (auto xk = given.begin(); xk != given.end(); ++xk, ++k) {
+    pa[k] = *xk;
+    r[k] = counter.r(*xk);
+    df *= r[k];
+  }
+
+  double gSquare = 0.0;
+  for (auto c = StateIterator<data_type>(r); c.valid(); c.next()) {
+    auto base = counter.common(pa, c.state());
+    auto sk = counter.count(base);
+    if (sk == 0) {
+      continue;
+    }
+    for (data_type a = 0; a < r_x; ++a) {
+      auto count_x = counter.common(base, static_cast<int>(x), a);
+      auto sik = counter.count(count_x);
+      if (sik == 0) {
+        continue;
+      }
+      for (data_type b = 0; b < r_y; ++b) {
+        auto sjk = counter.count(counter.common(base, static_cast<int>(y), b));
+        auto s = counter.count(counter.common(count_x, static_cast<int>(y), b));
+        if (s * sjk != 0) {
+          LOG_MESSAGE(trace, "a = %d, b = %d", static_cast<int>(a), static_cast<int>(b));
+          LOG_MESSAGE(trace, "sk = %d, sik = %d, sjk = %d, s = %d", sk, sik, sjk, s);
+          if (s * sk != sik * sjk) {
+            auto component = s * (log(s) + log(sk) - log(sik) - log(sjk));
+            gSquare += component;
+            LOG_MESSAGE(trace, "component = %g", component);
+          }
+          else {
+            LOG_MESSAGE(trace, "component = 0.0");
+          }
+        }
+      }
+    }
+  }
+  gSquare *= 2.0;
+  LOG_MESSAGE(debug, "df = %d, G-square = %g", df, gSquare);
+  return std::make_pair(df, gSquare);
+}
+
+/**
+ * @brief Computes the G^2 statistic for the variables, given the conditioning set,
+ *        and the corresponding degree of freedom using radix counters.
+ *
+ * @tparam CounterType Type of the counter to be used.
+ * @tparam Var Type of the variables (expected to be an integral type).
+ * @tparam Set The type of the container used for indices of the given variables.
+ * @tparam CounterArgs Type of the arguments list for the counter type.
+ * @param x The index of the first variable.
+ * @param y The index of the second variable.
+ * @param given The indices of the variables to be conditioned on.
+ *
+ * @return Pair of degree of freedom and the computed G^2 value.
+ */
+template <template <typename...> class CounterType, typename Var, typename Set, typename... CounterArgs>
+typename std::enable_if<
+  std::is_same<CounterType<CounterArgs...>, RadCounter<CounterArgs...>>::value,
+  std::pair<uint32_t, double>
+>::type
+computeGSquare(
+  const CounterType<CounterArgs...>& counter,
+  const Var x,
+  const Var y,
+  const Set& given
+)
+{
+  return computeGSquareSABNAtk(counter, x, y, given);
+}
+
+/**
+ * @brief Computes the G^2 statistic for the variables, given the conditioning set,
+ *        and the corresponding degree of freedom using bitvector counters.
+ *
+ * @tparam CounterType Type of the counter to be used.
+ * @tparam Var Type of the variables (expected to be an integral type).
+ * @tparam Set The type of the container used for indices of the given variables.
+ * @tparam CounterArgs Type of the arguments list for the counter type.
+ * @param x The index of the first variable.
+ * @param y The index of the second variable.
+ * @param given The indices of the variables to be conditioned on.
+ *
+ * @return Pair of degree of freedom and the computed G^2 value.
+ */
+template <template <typename...> class CounterType, typename Var, typename Set, typename... CounterArgs>
+typename std::enable_if<
+  std::is_same<CounterType<CounterArgs...>, BVCounter<CounterArgs...>>::value,
+  std::pair<uint32_t, double>
+>::type
+computeGSquare(
+  const CounterType<CounterArgs...>& counter,
+  const Var x,
+  const Var y,
+  const Set& given
+)
+{
+  return computeGSquareSABNAtk(counter, x, y, given);
+}
 
 /**
  * @brief Compute marginal G^2 statistic using contingency tables.
@@ -275,19 +398,20 @@ conditionalGSquare(
  * @tparam CounterType Type of the counter to be used.
  * @tparam Var Type of the variables (expected to be an integral type).
  * @tparam Set The type of the container used for indices of the given variables.
+ * @tparam CounterArgs Type of the arguments list for the counter type.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  *
  * @return Pair of degree of freedom and the computed G^2 value.
  */
-template <template <typename...> class CounterType, typename Var, typename Set>
+template <template <typename...> class CounterType, typename Var, typename Set, typename... CounterArgs> //, typename std::enable_if<sizeof...(CounterArgs) == 1, bool>::type = true>
 typename std::enable_if<
-  std::is_same<CounterType<>, CTCounter<>>::value,
+  std::is_same<CounterType<CounterArgs...>, CTCounter<CounterArgs...>>::value,
   std::pair<uint32_t, double>
 >::type
 computeGSquare(
-  const CounterType<>& counter,
+  const CounterType<CounterArgs...>& counter,
   const Var x,
   const Var y,
   const Set& given
