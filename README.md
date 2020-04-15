@@ -70,13 +70,6 @@ This class of algorithms first finds the Markov blanket (MB) of the variable to 
 * `iamb` corresponds to the [Incremental Association MB (IAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) algorithm by Tsamardinos et al.
 * `inter.iamb` corresponds to the [Interleaved Incremental Association MB (InterIAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) by Tsamardinos et al.
 
-### Direct Learning
-This class of algorithms directly finds the PC sets of nodes.
-* `mmpc` corresponds to the [Max-Min PC (MMPC)](https://link.springer.com/article/10.1007/s10994-006-6889-7) algorithm by Tsamardinos et al. and corrected by Pena et al.
-* `hiton`corresponds to the [HITON-PC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1480117/) algorithm by Aliferis et al. and corrected by Pena et al.
-* `si.hiton.pc` corresponds to the [Semi-interleaved HITON-PC](http://www.jmlr.org/papers/v11/aliferis10a.html) algorithm by Aliferis et al.
-* `getpc` corresponds to the [Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
-
 ## Licensing
 Our code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE)).
 The licensing does not apply to the `ext` folder. Please refer to the individual files in the folder for their licensing terms.
