@@ -9,6 +9,8 @@ This repository implements multiple constraint-based algorithms for structure le
 _This project has been tested only on Linux platform, using version [9.2.0](https://gcc.gnu.org/gcc-9/changes.html)._
 * **[Boost](http://boost.org/)** libraries are used for parsing the command line options, logging, and a few other purposes.  
 _Tested with version [1.70.0](https://www.boost.org/users/history/version_1_70_0.html)._
+* **[MPI](https://www.mpi-forum.org/docs/mpi-3.1/mpi31-report/mpi31-report.htm)** libraries are used for execution in parallel.  
+_Tested with [MVAPICH2 version 2.3.3](http://mvapich.cse.ohio-state.edu/static/media/mvapich/mvapich2-2.3.3-userguide.html)._
 * **[SCons](http://scons.org/)** is required for building the project.  
 _Tested with version [3.1.2](https://scons.org/doc/3.1.2/HTML/scons-user.html)._
 * The following repositories are used as submodules:
