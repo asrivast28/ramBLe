@@ -61,6 +61,10 @@ all_algorithms = [
     'gs',
     'iamb',
     'inter.iamb',
+    'mmpc',
+    'hiton',
+    'si.hiton.pc',
+    'getpc',
     ]
 
 all_processes = [

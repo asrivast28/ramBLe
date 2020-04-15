@@ -22,6 +22,7 @@
 #include "Environment.hpp"
 #include "DataTests.hpp"
 #include "BlanketLearningTests.hpp"
+#include "DirectLearningTests.hpp"
 #include "DirectedNetworkTests.hpp"
 
 #include "mxx/comm.hpp"

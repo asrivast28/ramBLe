@@ -20,6 +20,7 @@
  */
 #include "DataReader.hpp"
 #include "BlanketLearning.hpp"
+#include "DirectLearning.hpp"
 #include "DiscreteData.hpp"
 #include "ProgramOptions.hpp"
 #include "UintSet.hpp"
@@ -73,6 +74,22 @@ getAlgorithm(
     return std::make_unique<InterIAMB<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << ",inter.iamb";
+  if (algoName.compare("mmpc") == 0) {
+    return std::make_unique<MMPC<Data, Var, Set>>(comm, data, maxConditioning);
+  }
+  ss << ",mmpc";
+  if (algoName.compare("hiton") == 0) {
+    return std::make_unique<HITON<Data, Var, Set>>(comm, data, maxConditioning);
+  }
+  ss << ",hiton";
+  if (algoName.compare("si.hiton.pc") == 0) {
+    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(comm, data, maxConditioning);
+  }
+  ss << ",si.hiton.pc";
+  if (algoName.compare("getpc") == 0) {
+    return std::make_unique<GetPC<Data, Var, Set>>(comm, data, maxConditioning);
+  }
+  ss << ",getpc";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
   return std::unique_ptr<ConstraintBasedLearning<Data, Var, Set>>();
 }
