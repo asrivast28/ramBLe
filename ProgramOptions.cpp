@@ -60,26 +60,26 @@ ProgramOptions::ProgramOptions(
     ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "The file contains variable names.")
     ("indices,i", po::bool_switch(&m_obsIndices)->default_value(false), "The file contains observation indices.")
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("gs"), "Name of the algorithm to be used.")
-    ("target,t", po::value<std::string>(&m_targetVar), "Name of the target variable.")
-    ("blanket,b", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
-    ("learn,l", po::bool_switch(&m_learnNetwork)->default_value(false), "Force learn the network.")
-    ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
     ("directed,d", po::bool_switch(&m_directEdges)->default_value(false), "Orient the edges in the learned network.")
+    ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written.")
     ;
 
   po::options_description advanced("Advanced options");
   advanced.add_options()
     ("alpha,p", po::value<double>(&m_alpha)->default_value(0.05), "Threshold p-value.")
     ("conditioning,g", po::value<uint32_t>(&m_maxConditioning)->default_value(std::numeric_limits<uint32_t>::max()), "Maximum size of conditioning sets.")
-    ("imbalance", po::value<double>(&m_imbalanceThreshold)->default_value(2.0), "Correct any imbalance in skeleton discovery more than the given threshold.")
-    ("counter", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
-    ("warmup", po::bool_switch(&m_warmupMPI)->default_value(false), "Warmup the MPI_Alltoall(v) functions before starting execution.")
+    ("imbalance,b", po::value<double>(&m_imbalanceThreshold)->default_value(2.0), "Correct any imbalance in skeleton discovery more than the given threshold.")
+    ("counter,t", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
+    ("warmup,w", po::bool_switch(&m_warmupMPI)->default_value(false), "Warmup the MPI_Alltoall(v) functions before starting execution.")
     ;
 
   po::options_description developer("Developer options");
   developer.add_options()
     ("parallel", po::bool_switch(&m_forceParallel)->default_value(false), "Use the parallel implementation even for p=1.")
     ("hostnames", po::bool_switch(&m_hostNames)->default_value(false), "Print out the hostname for every process.")
+    ("target", po::value<std::string>(&m_targetVar), "Find PC for the target variable.")
+    ("blanket", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
+    ("learn", po::bool_switch(&m_learnNetwork)->default_value(false), "Force learn the network.")
 #ifdef LOGGING
     ("log", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
 #endif
