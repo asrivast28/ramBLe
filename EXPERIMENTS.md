@@ -34,7 +34,7 @@ For example, in order to measure the performance of our network for learning the
 </code></pre>
 
 #### Running _bnlearn_
-We have also provided an [Rscript](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/Rscript), [csl_bnlearn.R](scripts/csl_bnlearn.R), for running [_bnlearn_](https://www.bnlearn.com/) with the same arguments as our executable.  
+We have also provided an [Rscript](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/Rscript), [`csl_bnlearn.R`](scripts/csl_bnlearn.R), for running [_bnlearn_](https://www.bnlearn.com/) with the same arguments as our executable.  
 For example, the performance of _bnlearn_ in learning the network from the _S. cerevisiae_ data set using the _GS_ algorithm can be measured by executing:
 <pre><code>scripts/csl_bnlearn.R -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
 </code></pre>
@@ -45,7 +45,7 @@ The performance of our executable when run in parallel using MPI can be measured
 </code></pre>
 
 ### Scalability Experiments
-We have provided a utility script, [run_experiments.py](scripts/run_experiments.py), for running the scalability experiments using our executable.  
+We have provided a utility script, [`run_experiments.py`](scripts/run_experiments.py), for running the scalability experiments using our executable.  
 By default, this script runs the scalability experiments for all three data sets while varying the number of processors between 1 and 1024 and records the measured times in a CSV file.
 The runs can be customized using different arguments to the script, which can be seen by executing:
 <pre><code>scripts/run_experiments.py -h
