@@ -84,7 +84,7 @@ def parse_args():
     parser.add_argument('--ppn', metavar='PPN', type=int, nargs='*', default=[list(ppn_mappings.keys())[0]], help='Number of processes per node to be used.')
     parser.add_argument('-r', '--repeat', metavar='N', type=int, default=NUM_REPEATS, help='Number of times the experiments should be repeated.')
     parser.add_argument('--bnlearn', action='store_true', help='Flag for running bnlearn instead of our implementation.')
-    parser.add_argument('--results', metavar = 'FILE', type=str, default='results_%s' % os.environ['PBS_JOBID'])
+    parser.add_argument('--results', metavar = 'FILE', type=str, default='results_%s' % os.environ.get('PBS_JOBID', 0))
     args = parser.parse_args()
     return args
 
