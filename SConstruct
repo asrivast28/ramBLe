@@ -23,8 +23,8 @@ topDir = os.path.abspath(os.getcwd())
 extDir = os.path.join(topDir, 'ext')
 cpp = None
 buildDir = None
-targetName = 'csl'
-testName = 'testcsl'
+targetName = 'ramble'
+testName = 'testramble'
 
 
 cppPaths = [

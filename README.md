@@ -25,7 +25,7 @@ _Tested with version [1.10.0](https://github.com/google/googletest/releases/tag/
 After the dependencies have been installed, the project can be built as:  
 <pre><code>scons
 </code></pre>  
-This will create an executable named `csl`, which can be used for constraint-based structure learning.  
+This will create an executable named `ramble`, which can be used for constraint-based structure learning.  
 By default, all the paths from the environment in `CPATH` and `LIBRARY_PATH` variables are used as include paths and library paths.  
 Path to external includes and libraries at non-default locations can also be specified as:  
 <pre><code>scons LOCALINCLUDES=&lt;comma-delimited list of paths&gt; LOCALLIBS=&lt;comma-delimited list of paths&gt;
@@ -40,7 +40,7 @@ The unit tests are built by default. The following can be executed for building 
 For building the debug version of the executable, the following can be executed:
 <pre><code>scons DEBUG=1
 </code></pre>  
-Debug version of the executable is named `csl_debug`.
+Debug version of the executable is named `ramble_debug`.
 
 #### Logging
 By default, logging is disabled in the release build and enabled in the debug build.
@@ -54,13 +54,13 @@ Timing of high-level operations can be enabled by passing `TIMER=1` argument to 
 
 ## Execution
 Once the project has been built, the executable can be used for learning BN as follows:
-<pre><code>./csl -f test/coronary.csv -n 6 -m 1841 -d -o test/coronary.dot
+<pre><code>./ramble -f test/coronary.csv -n 6 -m 1841 -d -o test/coronary.dot
 </code></pre>  
 For running in parallel, the following can be executed:
-<pre><code> mpirun -np 8 ./csl -f test/coronary.csv -n 6 -m 1841 -d -o test/coronary.dot
+<pre><code> mpirun -np 8 ./ramble -f test/coronary.csv -n 6 -m 1841 -d -o test/coronary.dot
 </code></pre>  
 Please execute the following for more information on all the options that the executable accepts:
-<pre><code>./csl --help
+<pre><code>./ramble --help
 </code></pre>
 
 ## Algorithms
@@ -71,6 +71,9 @@ This class of algorithms first finds the Markov blanket (MB) of the variable to 
 * `gs` corresponds to the [Grow-Shrink (GS)](https://papers.nips.cc/paper/1685-bayesian-network-induction-via-local-neighborhoods) algorithm by Margaritis & Thrun.
 * `iamb` corresponds to the [Incremental Association MB (IAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) algorithm by Tsamardinos et al.
 * `inter.iamb` corresponds to the [Interleaved Incremental Association MB (InterIAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) by Tsamardinos et al.
+
+## Publication
+_Currently under double-blind review._
 
 ## Licensing
 Our code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE)).

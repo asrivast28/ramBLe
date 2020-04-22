@@ -49,4 +49,4 @@ jobs:
     - name: Unit tests
       run: |
         cd test
-        ./testcsl
+        ./testramble

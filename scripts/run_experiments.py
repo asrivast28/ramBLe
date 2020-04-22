@@ -91,8 +91,8 @@ def parse_args():
 
 def get_executable_configurations(basedir, datasets, algorithms, bnlearn):
     boolean_args = ['-c', '-v', '-i']
-    default_csl_args = ['-r', '--warmup', '--hostnames']
-    executable = join(basedir, 'csl') if not bnlearn else join(basedir, 'scripts/csl_bnlearn.R')
+    default_ramble_args = ['-r', '--warmup', '--hostnames']
+    executable = join(basedir, 'ramble') if not bnlearn else join(basedir, 'scripts/ramble_bnlearn.R')
     configurations = []
     for name, algorithm in product(datasets, algorithms):
         dataset_args = all_datasets[name]
@@ -101,7 +101,7 @@ def get_executable_configurations(basedir, datasets, algorithms, bnlearn):
         script_args.append('-n %d -m %d -s \'%s\'' % tuple(dataset_args[1:4]))
         script_args.extend(b for i, b in enumerate(boolean_args) if dataset_args[4 + i])
         if not bnlearn:
-            script_args.extend(default_csl_args)
+            script_args.extend(default_ramble_args)
         configurations.append((name, algorithm, ' '.join(script_args)))
     return configurations
 

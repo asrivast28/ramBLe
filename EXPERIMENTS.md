@@ -30,18 +30,18 @@ is available at [`hive_environment.log`](scripts/hive_environment.log)
 ### Sequential Execution
 The code can be used for learning the Bayesian network, using any of the [supported algorithms](README.md#algorithms), as described in [`README.md`](README.md#execution)  
 For example, in order to measure the performance of our network for learning the network from the _S. cerevisiae_ data set using the _GS_ algorithm, the following can be executed:
-<pre><code>./csl -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
+<pre><code>./ramble -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
 </code></pre>
 
 #### Running _bnlearn_
-We have also provided an [Rscript](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/Rscript), [`csl_bnlearn.R`](scripts/csl_bnlearn.R), for running [_bnlearn_](https://www.bnlearn.com/) with the same arguments as our executable.  
+We have also provided an [Rscript](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/Rscript), [`ramble_bnlearn.R`](scripts/ramble_bnlearn.R), for running [_bnlearn_](https://www.bnlearn.com/) with the same arguments as our executable.  
 For example, the performance of _bnlearn_ in learning the network from the _S. cerevisiae_ data set using the _GS_ algorithm can be measured by executing:
-<pre><code>scripts/csl_bnlearn.R -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
+<pre><code>scripts/ramble_bnlearn.R -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
 </code></pre>
 
 ### Parallel Execution
 The performance of our executable when run in parallel using MPI can be measured as follows:
-<pre><code>mpirun -np 16 ./csl -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
+<pre><code>mpirun -np 16 ./ramble -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
 </code></pre>
 
 ### Scalability Experiments

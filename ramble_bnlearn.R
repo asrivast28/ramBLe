@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 ##
-# @file csl_bnlearn.R
-# @brief Script for running bnlearn with the same options as csl.
+# @file ramble_bnlearn.R
+# @brief Script for running bnlearn with the same options as ramble.
 # @author Ankit Srivastava <asrivast@gatech.edu>
 #
 # Copyright 2020 Georgia Institute of Technology

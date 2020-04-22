@@ -31,7 +31,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Submit custom script using PBS')
     parser.add_argument('-s', '--script', type=str, metavar='FILE', required=True, help='Name of the script to be submitted.')
-    parser.add_argument('-n', '--name', type=str, default='benchmark-csl', metavar='JOB', help='Name of the job.')
+    parser.add_argument('-n', '--name', type=str, default='benchmark-ramble', metavar='JOB', help='Name of the job.')
     parser.add_argument('-t', '--time', type=str, default='12:00:00', metavar='HH:MM:SS', help='Duration of the job.')
     parser.add_argument('-N', '--nodes', type=int, default=1, metavar='NODES', help='Number of required nodes.')
     parser.add_argument('-p', '--procs', type=int, default=multiprocessing.cpu_count(), metavar='PROCS', help='Number of processes per node.')

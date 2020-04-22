@@ -1,7 +1,7 @@
 /builds/
 /datasets/
-/csl*
-/test/testcsl*
+/ramble*
+/test/testramble*
 /scripts/compare_dot
 /.sconsign.dblite
 /.sconf_temp/
