@@ -63,6 +63,7 @@ ppn_mappings = OrderedDict([
     (18, '1:2:3:4:5:6:7:8:9:13:14:15:16:17:18:19:20:21'),
     (20, '1:2:3:4:5:6:7:8:9:10:13:14:15:16:17:18:19:20:21:22'),
     (22, '1:2:3:4:5:6:7:8:9:10:11:13:14:15:16:17:18:19:20:21:22:23'),
+    (24, '0:1:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20:21:22:23'),
     ])
 
 NUM_REPEATS = 5
@@ -76,7 +77,7 @@ def parse_args():
     from os.path import expanduser, realpath
 
     parser = argparse.ArgumentParser(description='Run scaling experiments')
-    parser.add_argument('-b', '--basedir', metavar='DIR', type=str, default=realpath(join(expanduser('~'), 'discover-mb')), help='Base directory for running the experiments.')
+    parser.add_argument('-b', '--basedir', metavar='DIR', type=str, default=realpath(join(expanduser('~'), 'ramBLe')), help='Base directory for running the experiments.')
     parser.add_argument('-s', '--scratch', metavar='DIR', type=str, default=realpath(join(expanduser('~'), 'scratch')), help='Scratch directory, visible to all the nodes.')
     parser.add_argument('-d', '--dataset', metavar='NAME', type=str, nargs='*', default=list(big_datasets.keys()), help='Datasets to be used.')
     parser.add_argument('-a', '--algorithm', metavar='NAME', type=str, nargs='*', default=all_algorithms, help='Algorithms to be used.')
