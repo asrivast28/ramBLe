@@ -155,11 +155,12 @@ def parse_runtimes(output):
     neighbors = get_runtime('getting the neighbors', output, required=False)
     direction = get_runtime('directing the edges', output, required=False)
     gsquare = get_runtime('G-square computations', output, required=False)
+    mxx = get_runtime('mxx calls', output, required=False)
     # required runtimes
     reading = get_runtime('reading the file', output, required=True)
     network = get_runtime('getting the network', output, required=True)
     writing = get_runtime('writing the network', output, required=True)
-    return [warmup, reading, redistributing, blankets, symmetry, sync, neighbors, direction, gsquare, network, writing]
+    return [warmup, reading, redistributing, blankets, symmetry, sync, neighbors, direction, mxx, gsquare, network, writing]
 
 
 def run_experiment(basedir, scratch, config, repeat, bnlearn):
@@ -196,7 +197,7 @@ def main():
         mpi_configs = get_mpi_configurations(args.scratch, args.process, args.ppn)
         all_configs = list((executable[0], executable[1], mpi[0], mpi[-1] + ' ' + executable[-1]) for executable, mpi in product(all_configs, mpi_configs))
     with open(args.results, 'w') as results:
-        results.write('# warmup,reading,redistributing,blankets,symmetry,sync,neighbors,direction,gsquare,network,writing\n')
+        results.write('# warmup,reading,redistributing,blankets,symmetry,sync,neighbors,direction,mxx,gsquare,network,writing\n')
         for config in all_configs:
             if not args.bnlearn:
                 results.write('# our runtime for dataset=%s using algorithm=%s on processors=%d\n' % tuple(config[:3]))
