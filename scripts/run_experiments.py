@@ -192,7 +192,7 @@ def main():
     Main function.
     '''
     args = parse_args()
-    all_configs = get_executable_configurations(args.basedir, args.dataset, args.algorithm, args.bnlearn)
+    all_configs = get_executable_configurations(args.basedir, args.dataset, args.algorithm, args.bnlearn, args.suffix)
     if not args.bnlearn:
         mpi_configs = get_mpi_configurations(args.scratch, args.process, args.ppn)
         all_configs = list((executable[0], executable[1], mpi[0], mpi[-1] + ' ' + executable[-1]) for executable, mpi in product(all_configs, mpi_configs))
