@@ -85,15 +85,16 @@ def parse_args():
     parser.add_argument('--ppn', metavar='PPN', type=int, nargs='*', default=[list(ppn_mappings.keys())[0]], help='Number of processes per node to be used.')
     parser.add_argument('-r', '--repeat', metavar='N', type=int, default=NUM_REPEATS, help='Number of times the experiments should be repeated.')
     parser.add_argument('--bnlearn', action='store_true', help='Flag for running bnlearn instead of our implementation.')
-    parser.add_argument('--results', metavar = 'FILE', type=str, default='results_%s' % os.environ.get('PBS_JOBID', 0))
+    parser.add_argument('--results', metavar = 'FILE', type=str, default='results_%s' % os.environ.get('PBS_JOBID', 0), help='Name of the csv file to which results will be written.')
+    parser.add_argument('--suffix', type=str, default='', help='Suffix to add to the executable.')
     args = parser.parse_args()
     return args
 
 
-def get_executable_configurations(basedir, datasets, algorithms, bnlearn):
+def get_executable_configurations(basedir, datasets, algorithms, bnlearn, suffix):
     boolean_args = ['-c', '-v', '-i']
     default_ramble_args = ['-r', '--warmup', '--hostnames']
-    executable = join(basedir, 'ramble') if not bnlearn else join(basedir, 'scripts/ramble_bnlearn.R')
+    executable = join(basedir, 'ramble' + suffix) if not bnlearn else join(basedir, 'scripts/ramble_bnlearn.R')
     configurations = []
     for name, algorithm in product(datasets, algorithms):
         dataset_args = all_datasets[name]
@@ -142,6 +143,7 @@ def get_runtime(action, output, required=True):
         return float(match.group(1))
     else:
         return float(match.group(1) if match is not None else 0)
+
 
 def parse_runtimes(output):
     # optional runtimes
@@ -197,7 +199,7 @@ def main():
         results.write('# warmup,reading,redistributing,blankets,symmetry,sync,neighbors,direction,gsquare,network,writing\n')
         for config in all_configs:
             if not args.bnlearn:
-                results.write('# our runtime for dataset=%s using algorithm=%s on processors=%d \n' % tuple(config[:3]))
+                results.write('# our runtime for dataset=%s using algorithm=%s on processors=%d\n' % tuple(config[:3]))
             else:
                 results.write('# bnlearn\'s runtime for dataset=%s using algorithm=%s \n' % tuple(config[:2]))
             for rt in run_experiment(args.basedir, args.scratch, config, args.repeat, args.bnlearn):
