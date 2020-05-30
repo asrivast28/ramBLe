@@ -39,7 +39,7 @@ def parse_args():
     return args
 
 
-def read(name, sep, colobs, varnames, indices):
+def read_dataset(name, sep, colobs, varnames, indices):
     '''
     Read the dataset from the given CSV file.
     '''
@@ -97,7 +97,7 @@ def discretize(dataset):
     return discretized
 
 
-def write(dataset, name, sep, colobs, varnames, indices):
+def write_dataset(dataset, name, sep, colobs, varnames, indices):
     '''
     Write the dataset as a CSV file.
     '''
@@ -112,9 +112,9 @@ def main():
     '''
     args = parse_args()
 
-    dataset = read(args.file, args.separator, args.colobs, args.varnames, args.indices)
+    dataset = read_dataset(args.file, args.separator, args.colobs, args.varnames, args.indices)
     discretized = discretize(dataset)
-    write(discretized, args.out, args.separator, args.colobs, args.varnames, args.indices)
+    write_dataset(discretized, args.out, args.separator, args.colobs, args.varnames, args.indices)
 
 
 if __name__ == '__main__':
