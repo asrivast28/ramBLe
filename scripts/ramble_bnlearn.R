@@ -20,6 +20,7 @@
 # limitations under the License.
 
 cat('Using bnlearn from', find.package('bnlearn'), '\n')
+library('parallel')
 library('bnlearn')
 library('optparse')
 
@@ -45,11 +46,27 @@ parser <- add_option(parser, c('--directed', '-d'), action='store_true', default
 parser <- add_option(parser, c('--alpha', '-p'), type='double', default=0.05, help='Threshold p-value.')
 parser <- add_option(parser, c('--conditioning', '-g'), type='integer', help='Maximum size of conditioning sets.')
 parser <- add_option(parser, c('--log'), type='character', help='Level of logging.')
+parser <- add_option(parser, c('--nprocs'), type='integer', default=1, help='Number of processes to use.')
+parser <- add_option(parser, c('--ppn'), type='integer', default=16, help='Number of processes per node to use.')
 args <- parse_args(parser, args=argv)
 
 if (!args$learn && is.null(args$target) && is.null(args$output)) {
         cat("At least one of --target, --learn, or --output should be specified.\n")
         quit(status=1)
+}
+
+cl <- NULL
+if (args$nprocs > 1) {
+        if (args$nprocs < detectCores()) {
+                cl <- makeCluster(args$nprocs)
+        }
+        else {
+                nf <- Sys.getenv('PBS_NODEFILE')
+                nodes <- readLines(nf)
+                nodes <- sort(rep(unique(nodes), times=args$ppn))
+                cl <- makePSOCKcluster(nodes)
+        }
+        show(cl)
 }
 
 tRead <- proc.time()
@@ -74,7 +91,7 @@ network <- NULL
 tNetwork <- NULL
 if (args$learn || !is.null(args$target) || !is.null(args$output)) {
         tNetwork <- proc.time()
-        network <- eval(parse(text=args$algorithm))(data, alpha=args$alpha, max.sx=args$conditioning, debug=!is.null(args$log), undirected=!args$directed)
+        network <- eval(parse(text=args$algorithm))(data, alpha=args$alpha, max.sx=args$conditioning, debug=!is.null(args$log), undirected=!args$directed, cluster=cl)
         tNetwork <- proc.time() - tNetwork
 }
 

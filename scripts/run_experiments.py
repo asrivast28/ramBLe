@@ -235,13 +235,16 @@ def main():
                     i_m += 1
         else:
             all_configs = list((executable[0], executable[1], mpi[0], mpi[-1] + ' ' + executable[-1]) for executable, mpi in product(exec_configs, mpi_configs))
+    else:
+        all_configs = []
+        for config, p, ppn in product(exec_configs, args.process, args.ppn):
+            par_config = '--nprocs %d --ppn %d' % (p, ppn)
+            all_configs.append(tuple(list(config[:-1]) + [p, config[-1] + ' ' + par_config]))
     with open(args.results, 'w') as results:
         results.write('# warmup,reading,redistributing,blankets,symmetry,sync,neighbors,direction,mxx,gsquare,network,writing\n')
         for config in all_configs:
-            if not args.bnlearn:
-                results.write('# our runtime for dataset=%s using algorithm=%s on processors=%d\n' % tuple(config[:3]))
-            else:
-                results.write('# bnlearn\'s runtime for dataset=%s using algorithm=%s \n' % tuple(config[:2]))
+            comment = 'runtime for dataset=%s using algorithm=%s on processors=%d' % tuple(config[:3])
+            results.write('# %s %s\n' % ('our' if not args.bnlearn else 'bnlearn', comment))
             for rt in run_experiment(args.basedir, args.scratch, config, args.repeat, args.bnlearn, not (args.weak or args.bnlearn)):
                 results.write(','.join(str(t) for t in rt) + '\n')
                 results.flush()
