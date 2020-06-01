@@ -170,24 +170,37 @@ def parse_runtimes(output):
 def run_experiment(basedir, scratch, config, repeat, bnlearn, compare):
     import subprocess
 
+    MAX_RETRIES = 1
     runtimes = []
     dotfile = join(scratch, '%s_%s' % (config[0], config[1]))
     if bnlearn:
         dotfile += '_bnlearn'
     dotfile += '.dot'
     outfile = dotfile if not os.path.exists(dotfile) else NamedTemporaryFile(suffix='.dot', dir=scratch, delete=False).name
-    for r in range(repeat):
+    r = 0
+    t = 0
+    while r < repeat:
         arguments = config[-1] + ' -o %s' % outfile
         print(arguments)
         sys.stdout.flush()
-        output = subprocess.check_output(arguments, shell=True).decode('utf-8')
-        print(output)
+        try:
+            output = subprocess.check_output(arguments, shell=True).decode('utf-8')
+            print(output)
+        except subprocess.CalledProcessError:
+            t += 1
+            if t == MAX_RETRIES:
+                raise
+            print('Run failed. Retrying.')
+            continue
+        else:
+            t = 0
         sys.stdout.flush()
         if compare:
             print('Comparing generated file %s with %s' % (outfile, dotfile))
             sys.stdout.flush()
             subprocess.check_call(' '.join([join(basedir, 'scripts', 'compare_dot'), dotfile, outfile, '-d']), shell=True)
         runtimes.append(parse_runtimes(output))
+        r += 1
     return runtimes
 
 
