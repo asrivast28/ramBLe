@@ -57,16 +57,25 @@ if (!args$learn && is.null(args$target) && is.null(args$output)) {
 
 cl <- NULL
 if (args$nprocs > 1) {
-        if (args$nprocs < detectCores()) {
+        tCluster <- proc.time()
+        if (ceiling(args$nprocs / args$ppn) == 1) {
                 cl <- makeCluster(args$nprocs)
         }
         else {
                 nf <- Sys.getenv('PBS_NODEFILE')
                 nodes <- readLines(nf)
-                nodes <- sort(rep(unique(nodes), times=args$ppn))
-                cl <- makePSOCKcluster(nodes)
+                nnodes <- floor(args$nprocs / args$ppn)
+                procs <- sort(rep(head(unique(nodes), n=nnodes), times=args$ppn))
+                remaining <- args$nprocs - length(procs)
+                if (remaining > 0) {
+                        nodes <- c(nodes, rep(unique(nodes)[nnodes], times=remaining))
+                }
+                cat('Creating a PSOCK cluster with', length(procs), 'processes\n')
+                cl <- makePSOCKcluster(procs)
         }
-        show(cl)
+        tCluster <- proc.time() - tCluster
+        cat('Created', show(cl), '\n')
+        cat('Time taken in creating the cluster:', tCluster['elapsed'], '\n')
 }
 
 tRead <- proc.time()
