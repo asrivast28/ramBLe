@@ -1,6 +1,8 @@
 # ramBLe - A Parallel Framework for Bayesian Learning
 [![](https://github.com/asrivast28/ramBLe/workflows/Build%20and%20Unit%20Tests/badge.svg)](https://github.com/asrivast28/ramBLe/actions)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3874986.svg)](https://doi.org/10.5281/zenodo.3874986)
+
 
 ramBLe (A Parallel F**ram**ework for **B**ayesian **Le**arning) supports multiple constraint-based algorithms for structure learning from data in parallel.
 
