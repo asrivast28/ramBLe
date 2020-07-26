@@ -101,9 +101,20 @@ def write_dataset(dataset, name, sep, colobs, varnames, indices):
     '''
     Write the dataset as a CSV file.
     '''
+    header = False
+    index = False
     if colobs:
         dataset = dataset.T
-    dataset.to_csv(name, sep=sep, header=varnames, index=indices)
+        if indices:
+            header = True
+        if varnames:
+            index = True
+    else:
+        if varnames:
+            header = True
+        if indices:
+            index = True
+    dataset.to_csv(name, sep=sep, header=header, index=index)
 
 
 def main():

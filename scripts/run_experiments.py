@@ -47,7 +47,15 @@ big_datasets = OrderedDict([
     ('complete'   , ('data/athaliana/athaliana_complete_discretized.tsv', 18380, 16838, ' ', True, True, True)),
     ])
 
-all_datasets = OrderedDict(list(small_datasets.items()) + list(big_datasets.items()))
+simulated_datasets = OrderedDict([
+    #(name, (-f, -n, -m, -s, -c, -v, -i)),
+    ('s1' , ('data/simulated/n30000_p0.00005_m10000_discretized.tsv', 30000, 10000, ' ', True, True, False)),
+    ('s2' , ('data/simulated/n30000_p0.0001_m10000_discretized.tsv', 30000, 10000, ' ', True, True, False)),
+    ('s3' , ('data/simulated/n30000_p0.0005_m10000_discretized.tsv', 30000, 10000, ' ', True, True, False)),
+    ('s4' , ('data/simulated/n30000_p0.001_m10000_discretized.tsv', 30000, 10000, ' ', True, True, False)),
+    ])
+
+all_datasets = OrderedDict(list(small_datasets.items()) + list(big_datasets.items()) + list(simulated_datasets.items()))
 
 all_algorithms = [
     'gs',
