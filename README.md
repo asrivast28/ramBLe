@@ -74,7 +74,7 @@ This class of algorithms first finds the Markov blanket (MB) of the variable to 
 * `inter.iamb` corresponds to the [Interleaved Incremental Association MB (InterIAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) by Tsamardinos et al.
 
 ## Publication
-_Currently under double-blind review._
+**Ankit Srivastava, Sriram Chockalingam, and Srinivas Aluru.** "A Parallel Framework for Constraint-Based Bayesian Network Learning via Markov Blanket Discovery." _Accepted to appear in Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis_, IEEE, 2020.
 
 ## Licensing
 Our code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE)).
