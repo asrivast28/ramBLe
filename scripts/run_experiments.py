@@ -36,7 +36,7 @@ small_datasets = OrderedDict([
     ('asia'       , ('test/asia.csv', 8, 5000, ',', False, True, False)),
     ('child'      , ('test/child.csv', 20, 10000, ' ', True, False, False)),
     ('insurance'  , ('test/insurance.csv', 27, 10000, ' ', True, False, False)),
-    ('mildew'     , ('test/mildew.csv', 30, 10000, ' ', True, False, False)),
+    ('mildew'     , ('test/mildew.csv', 35, 10000, ' ', True, False, False)),
     ('alarm'      , ('test/alarm.csv', 37, 10000, ' ', True, False, False)),
     ])
 
@@ -91,6 +91,7 @@ def parse_args():
     parser.add_argument('-s', '--scratch', metavar='DIR', type=str, default=realpath(join(expanduser('~'), 'scratch')), help='Scratch directory, visible to all the nodes.')
     parser.add_argument('-d', '--dataset', metavar='NAME', type=str, nargs='*', default=list(big_datasets.keys()), help='Datasets to be used.')
     parser.add_argument('-a', '--algorithm', metavar='NAME', type=str, nargs='*', default=all_algorithms, help='Algorithms to be used.')
+    parser.add_argument('-u', '--undirected', action='store_true', help='Flag for generating undirected networks.')
     parser.add_argument('-p', '--process', metavar='P', type=int, nargs='*', default=all_processes, help='Processes to be used.')
     parser.add_argument('--ppn', metavar='PPN', type=int, nargs='*', default=[list(ppn_mappings.keys())[0]], help='Number of processes per node to be used.')
     parser.add_argument('-r', '--repeat', metavar='N', type=int, default=NUM_REPEATS, help='Number of times the experiments should be repeated.')
@@ -104,13 +105,13 @@ def parse_args():
     return args
 
 
-def get_executable_configurations(executable, datasets, algorithms, bnlearn):
+def get_executable_configurations(executable, datasets, algorithms, undirected, bnlearn):
     boolean_args = ['-c', '-v', '-i']
     default_ramble_args = ['-r', '--warmup', '--hostnames']
     configurations = []
     for name, algorithm in product(datasets, algorithms):
         dataset_args = all_datasets[name]
-        script_args = [executable, '-d']
+        script_args = [executable] + (['-d'] if not undirected else [])
         script_args.append('-a %s' % algorithm)
         script_args.append('-f %s -n %d -m %d -s \'%s\'' % tuple(dataset_args[:4]))
         script_args.extend(b for i, b in enumerate(boolean_args) if dataset_args[4 + i])
@@ -175,7 +176,7 @@ def parse_runtimes(output):
     return [warmup, reading, redistributing, blankets, symmetry, sync, neighbors, direction, mxx, gsquare, network, writing]
 
 
-def run_experiment(basedir, scratch, config, repeat, bnlearn, compare):
+def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compare):
     import subprocess
 
     MAX_RETRIES = 1
@@ -206,7 +207,8 @@ def run_experiment(basedir, scratch, config, repeat, bnlearn, compare):
         if compare:
             print('Comparing generated file %s with %s' % (outfile, dotfile))
             sys.stdout.flush()
-            subprocess.check_call(' '.join([join(basedir, 'scripts', 'compare_dot'), dotfile, outfile, '-d']), shell=True)
+            compare_args = [join(basedir, 'scripts', 'compare_dot'), outfile, dotfile] + (['-d'] if not undirected else [])
+            subprocess.check_call(' '.join(compare_args), shell=True)
         runtimes.append(parse_runtimes(output))
         r += 1
     return runtimes
@@ -242,7 +244,7 @@ def main():
             ds = list(all_datasets[dataset])
             all_datasets[dataset] = tuple([join(args.basedir, ds[0])] + ds[1:])
     executable = join(args.basedir, 'ramble' + args.suffix) if not args.bnlearn else join(args.basedir, 'scripts/ramble_bnlearn.R')
-    exec_configs = get_executable_configurations(executable, datasets, args.algorithm, args.bnlearn)
+    exec_configs = get_executable_configurations(executable, datasets, args.algorithm, args.undirected, args.bnlearn)
     if not args.bnlearn:
         mpi_configs = get_mpi_configurations(args.scratch, args.process, args.ppn)
         if args.weak:
@@ -266,7 +268,7 @@ def main():
         for config in all_configs:
             comment = 'runtime for dataset=%s using algorithm=%s on processors=%d' % tuple(config[:3])
             results.write('# %s %s\n' % ('our' if not args.bnlearn else 'bnlearn', comment))
-            for rt in run_experiment(args.basedir, args.scratch, config, args.repeat, args.bnlearn, not (args.weak or args.bnlearn)):
+            for rt in run_experiment(args.basedir, args.scratch, config, args.undirected, args.repeat, args.bnlearn, not (args.weak or args.bnlearn)):
                 results.write(','.join(str(t) for t in rt) + '\n')
                 results.flush()
 
