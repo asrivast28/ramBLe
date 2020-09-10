@@ -302,12 +302,8 @@ DiscreteData<Counter, Var>::maxPValue(
   const Var maxSize
 ) const
 {
-  auto seedPV = this->pValue(x, y, seed);
-  auto maxPV = std::numeric_limits<double>::lowest();
-  if (this->isIndependent(seedPV) || given.empty()) {
-    maxPV = seedPV;
-  }
-  else {
+  auto maxPV = this->pValue(x, y, seed);
+  if (!(this->isIndependent(maxPV) || given.empty())) {
     auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
     for (auto i = 1u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
       for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {

@@ -120,10 +120,9 @@ TEST_P(InsuranceData, DirectedNetwork) {
   expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(9));
   expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(13));
   expectedBN.addEdge(static_cast<uint8_t>(3), static_cast<uint8_t>(18));
+  expectedBN.addEdge(static_cast<uint8_t>(4), static_cast<uint8_t>(6));
   expectedBN.addEdge(static_cast<uint8_t>(4), static_cast<uint8_t>(11));
   expectedBN.addEdge(static_cast<uint8_t>(5), static_cast<uint8_t>(7));
-  expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(4));
-  expectedBN.addEdge(static_cast<uint8_t>(6), static_cast<uint8_t>(8));
   expectedBN.addEdge(static_cast<uint8_t>(7), static_cast<uint8_t>(5));
   expectedBN.addEdge(static_cast<uint8_t>(8), static_cast<uint8_t>(2));
   expectedBN.addEdge(static_cast<uint8_t>(8), static_cast<uint8_t>(6));
