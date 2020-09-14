@@ -286,6 +286,15 @@ UintSet<Element, Size>::erase(
 }
 
 template <typename Element, typename Size>
+void
+UintSet<Element, Size>::clear(
+)
+{
+  m_set = set_empty<Impl>();
+  m_size = 0;
+}
+
+template <typename Element, typename Size>
 Element
 UintSet<Element, Size>::max(
 ) const

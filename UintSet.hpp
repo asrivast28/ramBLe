@@ -98,6 +98,9 @@ public:
   void
   erase(const Element);
 
+  void
+  clear();
+
   Element
   max() const;
 
