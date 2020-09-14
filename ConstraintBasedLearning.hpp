@@ -71,6 +71,21 @@ protected:
   BayesianNetwork<Var>
   getSkeleton_sequential() const;
 
+  void
+  parallelInitialize(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
+  std::vector<std::pair<Var, Var>>
+  symmetryCorrect(const std::unordered_map<Var, Set>&&, const std::set<std::pair<Var, Var>>&&) const;
+
+  void
+  syncSets(std::unordered_map<Var, Set>&) const;
+
+  void
+  syncMissingSets(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
+  bool
+  fixImbalance(std::vector<std::tuple<Var, Var, double>>&, const double) const;
+
   virtual
   BayesianNetwork<Var>
   getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const;

@@ -22,9 +22,6 @@
 
 #include "../SetUtils.hpp"
 
-#include "mxx/distribution.hpp"
-#include "mxx/reduction.hpp"
-#include "mxx/sort.hpp"
 #include "utils/Logging.hpp"
 
 #include <numeric>
@@ -278,76 +275,6 @@ BlanketLearning<Data, Var, Set>::shrinkAll(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Function that synchronizes the candidate blankets by taking a
- *        union of the blankets across all the processors.
- *
- * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
- */
-void
-BlanketLearning<Data, Var, Set>::syncBlankets(
-  std::unordered_map<Var, Set>& myBlankets
-) const
-{
-  set_allunion_indexed(myBlankets, this->m_allVars, this->m_data.numVars(), this->m_comm);
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief Function that fixes the imbalance in the p-value list across processors.
- *
- * @param myPV A list of the p-values corresponding to all the local pairs.
- * @param imbalanceThreshold The amount of imbalance that can be tolerated.
- *
- * @return true if the list was redistributed to fix the imbalance.
- */
-bool
-BlanketLearning<Data, Var, Set>::fixImbalance(
-  std::vector<std::tuple<Var, Var, double>>& myPV,
-  const double imbalanceThreshold
-) const
-{
-  bool fixed = false;
-  const auto minSize = mxx::allreduce(myPV.size(), mxx::min<size_t>(), this->m_comm);
-  const auto maxSize = mxx::allreduce(myPV.size(), mxx::max<size_t>(), this->m_comm);
-  if (minSize * imbalanceThreshold < static_cast<double>(maxSize)) {
-    // Redistribute the pairs to fix the imbalance
-    mxx::stable_distribute_inplace(myPV, this->m_comm);
-    fixed = true;
-  }
-  return fixed;
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief Function that gets the missing candidate blankets for the
- *        primary variables on this processor.
- *
- * @param myPV A list of the p-values corresponding to all the local pairs.
- * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
- */
-void
-BlanketLearning<Data, Var, Set>::syncMissingBlankets(
-  const std::vector<std::tuple<Var, Var, double>>& myPV,
-  std::unordered_map<Var, Set>& myBlankets
-) const
-{
-  for (const auto& mpv : myPV) {
-    const auto primary = std::get<0>(mpv);
-    if (myBlankets.find(primary) == myBlankets.end()) {
-      // This primary variable's blanket was not available on this processor
-      // Initialize the blanket for the new primary variable
-      myBlankets.insert(std::make_pair(primary, set_init(Set(), this->m_data.numVars())));
-    }
-  }
-  // Synchronize all the blankets
-  // XXX: We do not need to synchronize all the blankets. However, some performance testing
-  // shows that tracking which blankets should be synced does not result in better performance.
-  // Therefore, going with the easier way for now
-  this->syncBlankets(myBlankets);
-}
-
-template <typename Data, typename Var, typename Set>
-/**
  * @brief Function that performs grow-shrink for multiple candidate MBs.
  *
  * @param myPV A list of the p-values corresponding to all the local pairs.
@@ -392,12 +319,12 @@ BlanketLearning<Data, Var, Set>::growShrink(
                                                  { return (added.find(mpv) != added.end()) ||
                                                           !changes.contains(std::get<0>(mpv)); };
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
-      myPV.resize(std::distance(myPV.begin(), newEnd));
+      myPV.erase(newEnd, myPV.end());
       if (imbalanceThreshold > 1.0) {
         TIMER_START(this->m_tDist);
         if (this->fixImbalance(myPV, imbalanceThreshold)) {
           TIMER_START(this->m_tSync);
-          this->syncMissingBlankets(myPV, myBlankets);
+          this->syncMissingSets(myPV, myBlankets);
           TIMER_PAUSE(this->m_tSync);
         }
         TIMER_PAUSE(this->m_tDist);
@@ -408,7 +335,7 @@ BlanketLearning<Data, Var, Set>::growShrink(
     }
   }
   TIMER_START(this->m_tSync);
-  this->syncBlankets(myBlankets);
+  this->syncSets(myBlankets);
   TIMER_PAUSE(this->m_tSync);
   TIMER_PAUSE(this->m_tGrow);
   if (this->m_comm.is_first()) {
@@ -420,96 +347,6 @@ BlanketLearning<Data, Var, Set>::growShrink(
   this->shrinkAll(myBlankets);
   TIMER_PAUSE(this->m_tShrink);
   /* End of Shrink Phase */
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief Function that performs symmetry correction for all the candidate MBs.
- *
- * @param myBlankets A map with the candidate MBs of the primary variables on this processor.
- * @param myAdded A list of tuples corresponding to the local candidate MB pairs.
- *
- * @return The pairs assigned to this processor after the symmetry correction.
- */
-std::vector<std::pair<Var, Var>>
-BlanketLearning<Data, Var, Set>::symmetryCorrect(
-  const std::unordered_map<Var, Set>&& myBlankets,
-  const std::set<std::pair<Var, Var>>&& myAdded
-) const
-{
-  std::vector<std::pair<Var, Var>> myPairs(myAdded.size());
-  auto i = 0u;
-  for (const auto& mb : myBlankets) {
-    for (const auto secondary : mb.second) {
-      // Create an ordered pair corresponding to this pair only
-      // if it was a pair which was added on this processor
-      if (myAdded.find(std::make_pair(mb.first, secondary)) != myAdded.end()) {
-        if (mb.first < secondary) {
-          myPairs[i] = std::make_pair(mb.first, secondary);
-        }
-        else {
-          myPairs[i] = std::make_pair(secondary, mb.first);
-        }
-        ++i;
-      }
-    }
-  }
-  myPairs.resize(i);
-  // Redistribute and sort the list across all the processors
-  mxx::stable_distribute_inplace(myPairs, this->m_comm);
-  mxx::sort(myPairs.begin(), myPairs.end(), this->m_comm);
-  // There should be a duplicate for every ordered pair,
-  // otherwise symmetry correction is required
-  std::vector<bool> remove(myPairs.size(), true);
-  // First check local pairs
-  auto it = myPairs.begin();
-  while (it != myPairs.end()) {
-    it = std::adjacent_find(it, myPairs.end());
-    if (it != myPairs.end()) {
-      auto d = std::distance(myPairs.begin(), it);
-      remove[d] = false;
-      remove[d+1] = false;
-      it += 2;
-    }
-  }
-  // Now, check the boundary pairs
-  auto elem = std::make_pair(static_cast<Var>(0), static_cast<Var>(0));
-  // First, check if the first pair on this processor matches the
-  // last pair on the previous processor
-  if (myPairs.size() > 0) {
-    elem = *myPairs.rbegin();
-  }
-  auto left = mxx::right_shift(elem, this->m_comm);
-  if (*remove.begin() && (left == *myPairs.begin())) {
-    *remove.begin() = false;
-  }
-  // Then, check if the last pair on this processor matches the
-  // first pair on the next processor
-  if (myPairs.size() > 0) {
-    elem = *myPairs.begin();
-  }
-  auto right = mxx::left_shift(elem, this->m_comm);
-  if (*remove.rbegin() && (right == *myPairs.rbegin())) {
-    *remove.rbegin() = false;
-  }
-  // Remove the pairs which did not have duplicates
-  it = myPairs.begin();
-  for (const auto r : remove) {
-    if (r) {
-      LOG_MESSAGE(info, "- Removing %s from the MB of %s (asymmetry)",
-                        this->m_data.varName(it->second), this->m_data.varName(it->first));
-      it = myPairs.erase(it);
-    }
-    else {
-      ++it;
-    }
-  }
-  // Only retain unique elements now
-  it = std::unique(myPairs.begin(), it);
-  myPairs.resize(std::distance(myPairs.begin(), it));
-  mxx::stable_distribute_inplace(myPairs, this->m_comm);
-
-  return myPairs;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -526,38 +363,9 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
 ) const
 {
   TIMER_START(this->m_tBlankets);
-  // First, block decompose all the variable pairs on all the processors
-  auto n = this->m_allVars.size();
-  auto totalPairs = n * (n - 1);
-  auto batchSize = (totalPairs / this->m_comm.size()) + ((totalPairs % this->m_comm.size() != 0) ? 1 : 0);
-  auto myOffset = std::min(this->m_comm.rank() * batchSize, totalPairs);
-  auto mySize = static_cast<uint32_t>(std::min(batchSize, totalPairs - myOffset));
-
-  auto vars = std::vector<Var>(this->m_allVars.begin(), this->m_allVars.end());
-  auto primary = vars.begin() + (myOffset / (n - 1));
-  auto secondary = vars.begin() + (myOffset % (n - 1));
-  if (primary == secondary) {
-    ++secondary;
-  }
-
-  std::vector<std::tuple<Var, Var, double>> myPV(mySize);
+  std::vector<std::tuple<Var, Var, double>> myPV;
   std::unordered_map<Var, Set> myBlankets;
-  myBlankets.insert(std::make_pair(*primary, set_init(Set(), this->m_data.numVars())));
-  for (auto i = 0u; i < mySize; ++i, ++secondary) {
-    if (secondary == vars.end()) {
-      // Start a new primary variable if the secondary variable is exhausted
-      secondary = vars.begin();
-      ++primary;
-      myBlankets.insert(std::make_pair(*primary, set_init(Set(), this->m_data.numVars())));
-    }
-    if (secondary == primary) {
-      // Increment secondary variable once more if it is the same as the primary variable
-      ++secondary;
-    }
-    // Initialize the p-values
-    myPV[i] = std::make_tuple(*primary, *secondary, std::numeric_limits<double>::max());
-  }
-
+  this->parallelInitialize(myPV, myBlankets);
   // Remember all the local MB ordered pairs
   std::set<std::pair<Var, Var>> myAdded;
   this->growShrink(std::move(myPV), myBlankets, myAdded, imbalanceThreshold);
@@ -581,7 +389,7 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
   }
   // Sync all the blankets across all the processors
   TIMER_START(this->m_tSync);
-  this->syncBlankets(allBlankets);
+  this->syncSets(allBlankets);
   TIMER_PAUSE(this->m_tSync);
 
   // Get neighbors for the variables on this processor
@@ -842,7 +650,7 @@ InterIAMB<Data, Var, Set>::growShrink(
     TIMER_PAUSE(this->m_tGrow);
     /* End of Grow Phase */
     TIMER_START(this->m_tSync);
-    this->syncBlankets(myBlankets);
+    this->syncSets(myBlankets);
     TIMER_PAUSE(this->m_tSync);
     /* Shrink Phase */
     TIMER_START(this->m_tShrink);
@@ -905,7 +713,7 @@ InterIAMB<Data, Var, Set>::growShrink(
           // We need to get the missing blankets if the p-value list was redistributed in this iteration
           // This can happen if the imbalance was fixed OR if the list was sorted because of an addition
           TIMER_START(this->m_tSync);
-          this->syncMissingBlankets(myPV, myBlankets);
+          this->syncMissingSets(myPV, myBlankets);
           TIMER_PAUSE(this->m_tSync);
           redistributed = true;
         }

@@ -58,15 +58,6 @@ protected:
   std::set<std::pair<Var, Var>>
   shrinkAll(std::unordered_map<Var, Set>&) const;
 
-  void
-  syncBlankets(std::unordered_map<Var, Set>&) const;
-
-  bool
-  fixImbalance(std::vector<std::tuple<Var, Var, double>>&, const double) const;
-
-  void
-  syncMissingBlankets(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
-
   virtual
   void
   growShrink(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const;
@@ -77,9 +68,6 @@ private:
 
   bool
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
-
-  std::vector<std::pair<Var, Var>>
-  symmetryCorrect(const std::unordered_map<Var, Set>&&, const std::set<std::pair<Var, Var>>&&) const;
 
   BayesianNetwork<Var>
   getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
