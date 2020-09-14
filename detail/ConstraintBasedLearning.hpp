@@ -287,7 +287,7 @@ ConstraintBasedLearning<Data, Var, Set>::parallelInitialize(
       ++secondary;
     }
     // Initialize the p-values
-    myPV[i] = std::make_tuple(*primary, *secondary, std::numeric_limits<double>::max());
+    myPV[i] = std::make_tuple(*primary, *secondary, 0.0);
   }
 }
 
@@ -565,7 +565,7 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   const double imbalanceThreshold
 ) const
 {
-  auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold, m_cachedMB, m_cachedPC) : this->getSkeleton_sequential();
+  auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold, m_cachedPC, m_cachedMB) : this->getSkeleton_sequential();
   if (isParallel) {
     // Parallel skeleton returns symmetry corrected sets
     for (const auto x : m_allVars) {

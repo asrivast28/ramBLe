@@ -39,6 +39,29 @@ DirectLearning<Data, Var, Set>::DirectLearning(
   const Var maxConditioning
 ) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
+  TIMER_RESET(m_tForward);
+  TIMER_RESET(m_tBackward);
+  TIMER_RESET(m_tDist);
+  TIMER_RESET(m_tSymmetry);
+  TIMER_RESET(m_tSync);
+  TIMER_RESET(m_tNeighbors);
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Default destructor that prints out timing information.
+ */
+DirectLearning<Data, Var, Set>::~DirectLearning(
+)
+{
+  if (this->m_comm.is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in adding candidate neighbors: ", m_tForward);
+    TIMER_ELAPSED_NONZERO("Time taken in removing false positive neighbors: ", m_tBackward);
+    TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", m_tDist);
+    TIMER_ELAPSED_NONZERO("Time taken in symmetry correcting the neighbors: ", m_tSymmetry);
+    TIMER_ELAPSED_NONZERO("Time taken in synchronizing the neighbors: ", m_tSync);
+    TIMER_ELAPSED_NONZERO("Time taken in getting the neighbors: ", m_tNeighbors);
+  }
 }
 
 template <typename Data, typename Var, typename Set>
@@ -71,6 +94,35 @@ DirectLearning<Data, Var, Set>::removeFalsePC(
     cpc.insert(x);
   }
   cpc = set_difference(cpc, removed);
+  return removed;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Removes false positives from the given candidate PC set
+ *        for the given target variable.
+ *
+ * @param target The index of the target variable.
+ * @param cpc The set containing the indices of all the variables in
+ *            the candidate PC set.
+ *
+ * @return A set containing the indices of all the variables removed
+ *         from the candidate PC set.
+ */
+std::set<std::pair<Var, Var>>
+DirectLearning<Data, Var, Set>::backwardPhase(
+  std::unordered_map<Var, Set>& myNeighbors
+) const
+{
+  std::set<std::pair<Var, Var>> removed;
+  // Remove false positive candidates from the PC sets
+  // of all the local primary variables
+  for (auto& neighbors : myNeighbors) {
+    auto falsePC = this->removeFalsePC(neighbors.first, neighbors.second);
+    for (const auto x : falsePC) {
+      removed.insert(std::make_pair(neighbors.first, x));
+    }
+  }
   return removed;
 }
 
@@ -160,6 +212,147 @@ DirectLearning<Data, Var, Set>::updateMaxPValues(
 }
 
 template <typename Data, typename Var, typename Set>
+/**
+ * @brief Utility function for updating the p-values in the local pairs
+ *        candidates for addition to the PC sets of the primary variables.
+ *
+ * @param myPV A list of the p-values corresponding to all the local pairs.
+ * @param myNeighbors A map with the candidate PCs of the primary variables on this processor.
+ * @param nextAdditions A map containing the index of the next variable to be added
+ *                      to the candidate PC set of every primary variable on this processor
+ *                      (expected to contain exactly one element).
+ */
+void
+DirectLearning<Data, Var, Set>::updateMyPValues(
+  std::vector<std::tuple<Var, Var, double>>& myPV,
+  const std::unordered_map<Var, Set>& myNeighbors,
+  const std::unordered_map<Var, Set>& nextAdditions
+) const
+{
+  for (auto& pv : myPV) {
+    auto target = std::get<0>(pv);
+    auto y = std::get<1>(pv);
+    auto pvY = std::get<2>(pv);
+    pvY = std::max(pvY, this->m_data.maxPValue(target, y, myNeighbors.at(target), nextAdditions.at(target), this->m_maxConditioning));
+    LOG_MESSAGE(debug, "%s is ", this->m_data.isIndependent(pvY) ? "independent of" : "dependent on",
+                       " the target %s (updated p-value = %g)",
+                       this->m_data.varName(y), this->m_data.varName(target), pvY);
+    std::get<2>(pv) = pvY;
+  }
+  // Remove the independent elements to retain only the plausible candidates
+  auto last = std::remove_if(myPV.begin(), myPV.end(), [this] (const std::tuple<Var, Var, double>& mpv)
+                                                              { return this->m_data.isIndependent(std::get<2>(mpv)); });
+  myPV.erase(last, myPV.end());
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function that grows candidate PCs of the primary variables on this processor.
+ *
+ * @param myPV A list of the p-values corresponding to all the local pairs.
+ * @param comparePV A function for choosing the p-value using prefix scan.
+ * @param reverse If the prefix scan should be performed in reverse as well.
+ *                This is set to false if the first value in the segment should be picked.
+ * @param myNeighbors A map with the candidate PCs of the primary variables on this processor.
+ *
+ * @return Set of all the tuples which were added to the candidate PCs on this processor.
+ */
+template <typename Compare>
+std::set<std::tuple<Var, Var, double>>
+DirectLearning<Data, Var, Set>::forwardPhase(
+  const std::vector<std::tuple<Var, Var, double>>& myPV,
+  const Compare& comparePV,
+  const bool reverse,
+  std::unordered_map<Var, Set>& myNeighbors
+) const
+{
+  std::set<std::tuple<Var, Var, double>> added;
+  std::vector<std::tuple<Var, Var, double>> minPV(myPV.size());
+  // First, do a forward segmented parallel prefix with primary variable defining the segment boundaries
+  // This will get the secondary variable with the minimum p-value to the corresponding primary variable boundary
+  mxx::global_scan(myPV.begin(), myPV.end(), minPV.begin(), comparePV, false, this->m_comm);
+  if (reverse) {
+    // Then, do a reverse segmented parallel prefix with the same segments as before
+    // This will effectively broadcast the secondary variable with the minimum p-value within the segments
+    mxx::global_scan_inplace(minPV.rbegin(), minPV.rend(), comparePV, false, this->m_comm.reverse());
+  }
+  // There might be multiple local copies of the minimum p-value corresponding to every segment
+  // Retain only one per segment
+  auto comparePrimary = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
+                           { return std::get<0>(a) == std::get<0>(b); };
+  auto uniqueEnd = std::unique(minPV.begin(), minPV.end(), comparePrimary);
+  for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
+    if (!this->m_data.isIndependent(std::get<2>(*it))) {
+      // Add y to the blanket of x
+      LOG_MESSAGE(info, "%d: + Adding %s to the PC of %s (p-value = %g)", this->m_comm.rank(),
+                  this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
+      myNeighbors[std::get<0>(*it)].insert(std::get<1>(*it));
+      added.insert(*it);
+    }
+  }
+  return added;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function for getting the undirected skeleton network in parallel.
+ *
+ * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
+ * @param allNeighbors Contains the PC sets for all the variables.
+ */
+BayesianNetwork<Var>
+DirectLearning<Data, Var, Set>::getSkeleton_parallel(
+  const double imbalanceThreshold,
+  std::unordered_map<Var, Set>& allNeighbors,
+  std::unordered_map<Var, Set>&
+) const
+{
+  TIMER_START(this->m_tNeighbors);
+  std::vector<std::tuple<Var, Var, double>> myPV;
+  std::unordered_map<Var, Set> myNeighbors;
+  this->parallelInitialize(myPV, myNeighbors);
+  // Remember all the local MB ordered pairs
+  std::set<std::pair<Var, Var>> myAdded;
+  this->forwardBackward(std::move(myPV), myNeighbors, myAdded, imbalanceThreshold);
+
+  /* Symmetry correction */
+  this->m_comm.barrier();
+  TIMER_START(this->m_tSymmetry);
+  auto myPairs = this->symmetryCorrect(std::move(myNeighbors), std::move(myAdded));
+  this->m_comm.barrier();
+  TIMER_PAUSE(this->m_tSymmetry);
+  /* End of Symmetry Correction */
+
+  TIMER_START(this->m_tNeighbors);
+  for (const auto x : this->m_allVars) {
+    allNeighbors[x] = set_init(Set(), this->m_data.numVars());
+  }
+  for (const auto& p : myPairs) {
+    allNeighbors[p.first].insert(p.second);
+    allNeighbors[p.second].insert(p.first);
+  }
+  // Sync all the neighbors across all the processors
+  TIMER_START(this->m_tSync);
+  this->syncSets(allNeighbors);
+  TIMER_PAUSE(this->m_tSync);
+
+  // We can now create the Bayesian network independently on every processor
+  auto varNames = this->m_data.varNames(this->m_allVars);
+  BayesianNetwork<Var> bn(varNames);
+  for (const auto x : this->m_allVars) {
+    for (const auto y : allNeighbors.at(x)) {
+      if (x < y) {
+        LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
+                       this->m_data.varName(x), this->m_data.varName(y));
+        bn.addEdge(x, y);
+        bn.addEdge(y, x);
+      }
+    }
+  }
+  return bn;
+}
+
+template <typename Data, typename Var, typename Set>
 MMPC<Data, Var, Set>::MMPC(
   const mxx::comm& comm,
   const Data& data,
@@ -202,6 +395,89 @@ MMPC<Data, Var, Set>::getCandidatePC(
   this->removeFalsePC(target, cpc);
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
+}
+
+template <typename Data, typename Var, typename Set>
+void
+MMPC<Data, Var, Set>::forwardBackward(
+  std::vector<std::tuple<Var, Var, double>>&& myPV,
+  std::unordered_map<Var, Set>& myNeighbors,
+  std::set<std::pair<Var, Var>>& myAdded,
+  const double imbalanceThreshold
+) const
+{
+  /* Forward Phase */
+  TIMER_START(this->m_tForward);
+  auto comparePV = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
+                      { return (std::get<0>(a) == std::get<0>(b)) ?
+                               (std::islessequal(std::get<2>(a), std::get<2>(b)) ? a : b) : b; };
+  bool changed = true;
+  auto nextAdditions = myNeighbors;
+  for (auto& na : nextAdditions) {
+    na.second.clear();
+  }
+  while (changed) {
+    this->updateMyPValues(myPV, myNeighbors, nextAdditions);
+    for (auto& na : nextAdditions) {
+      if (!na.second.empty()) {
+        myNeighbors[na.first] = set_union(myNeighbors.at(na.first), na.second);
+        na.second.clear();
+      }
+    }
+    auto added = this->forwardPhase(myPV, comparePV, true, nextAdditions);
+    // Track candidate PC changes for all the primary variables across processors
+    auto changes = set_init(Set(), this->m_data.numVars());
+    for (const auto& as : added) {
+      changes.insert(std::get<0>(as));
+    }
+    set_allunion(changes, this->m_comm);
+    if (!changes.empty()) {
+      if (!added.empty()) {
+        // Record the added tuples belonging to this processor
+        for (const auto& mpv : myPV) {
+          if (added.find(mpv) != added.end()) {
+            myAdded.insert(std::make_pair(std::get<0>(mpv), std::get<1>(mpv)));
+          }
+        }
+      }
+      // Remove added tuples from future consideration, if they were on this processor
+      // Also remove the tuples corresponding to primary variables whose MB did not change
+      auto addedOrUnchanged = [&added, &changes] (const std::tuple<Var, Var, double>& mpv)
+                                                 { return (added.find(mpv) != added.end()) ||
+                                                          !changes.contains(std::get<0>(mpv)); };
+      auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
+      myPV.erase(newEnd, myPV.end());
+      if (imbalanceThreshold > 1.0) {
+        TIMER_START(this->m_tDist);
+        if (this->fixImbalance(myPV, imbalanceThreshold)) {
+          TIMER_START(this->m_tSync);
+          this->syncMissingSets(myPV, myNeighbors);
+          for (const auto& mn : myNeighbors) {
+            if (nextAdditions.find(mn.first) == nextAdditions.end()) {
+              nextAdditions.insert(std::make_pair(mn.first, set_init(Set(), this->m_data.numVars())));
+            }
+          }
+          this->syncSets(nextAdditions);
+          TIMER_PAUSE(this->m_tSync);
+        }
+        TIMER_PAUSE(this->m_tDist);
+      }
+    }
+    else {
+      changed = false;
+    }
+  }
+  TIMER_START(this->m_tSync);
+  this->syncSets(myNeighbors);
+  TIMER_PAUSE(this->m_tSync);
+  TIMER_PAUSE(this->m_tForward);
+  /* End of Forward Phase */
+
+  /* Backward Phase */
+  TIMER_START(this->m_tBackward);
+  this->backwardPhase(myNeighbors);
+  TIMER_PAUSE(this->m_tBackward);
+  /* End of Backward Phase */
 }
 
 template <typename Data, typename Var, typename Set>
@@ -289,6 +565,97 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
   this->removeFalsePC(target, cpc);
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
+}
+
+template <typename Data, typename Var, typename Set>
+void
+SemiInterleavedHITON<Data, Var, Set>::forwardBackward(
+  std::vector<std::tuple<Var, Var, double>>&& myPV,
+  std::unordered_map<Var, Set>& myNeighbors,
+  std::set<std::pair<Var, Var>>& myAdded,
+  const double imbalanceThreshold
+) const
+{
+  /* Forward Phase */
+  TIMER_START(this->m_tForward);
+  bool changed = true;
+  auto nextAdditions = myNeighbors;
+  for (auto& na : nextAdditions) {
+    na.second.clear();
+  }
+  // First, arrange the candidates for every primary variables
+  // in the order of decreasing marginal associativity (or increasing p-values)
+  // This is the order in which the sequential algorithm considers the candidates
+  this->updateMyPValues(myPV, myNeighbors, nextAdditions);
+  auto sortPV = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
+                   { return (std::get<0>(a) == std::get<0>(b)) ?
+                            (std::islessgreater(std::get<2>(a), std::get<2>(b)) ? std::isless(std::get<2>(a), std::get<2>(b)) : (std::get<1>(a) < std::get<1>(b))) :
+                            (std::get<0>(a) < std::get<0>(b)); };
+  mxx::sort(myPV.begin(), myPV.end(), sortPV, this->m_comm);
+  auto comparePV = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
+                      { return (std::get<0>(a) == std::get<0>(b)) ? a : b; };
+  while (changed) {
+    auto added = this->forwardPhase(myPV, comparePV, false, nextAdditions);
+    // Track candidate PC changes for all the primary variables across processors
+    auto changes = set_init(Set(), this->m_data.numVars());
+    for (const auto& as : added) {
+      changes.insert(std::get<0>(as));
+    }
+    set_allunion(changes, this->m_comm);
+    if (!changes.empty()) {
+      if (!added.empty()) {
+        // Record the added tuples belonging to this processor
+        for (const auto& mpv : myPV) {
+          if (added.find(mpv) != added.end()) {
+            myAdded.insert(std::make_pair(std::get<0>(mpv), std::get<1>(mpv)));
+          }
+        }
+      }
+      // Remove added tuples from future consideration, if they were on this processor
+      // Also remove the tuples corresponding to primary variables whose MB did not change
+      auto addedOrUnchanged = [&added, &changes] (const std::tuple<Var, Var, double>& mpv)
+                                                 { return (added.find(mpv) != added.end()) ||
+                                                          !changes.contains(std::get<0>(mpv)); };
+      auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
+      myPV.erase(newEnd, myPV.end());
+      if (imbalanceThreshold > 1.0) {
+        TIMER_START(this->m_tDist);
+        if (this->fixImbalance(myPV, imbalanceThreshold)) {
+          TIMER_START(this->m_tSync);
+          this->syncMissingSets(myPV, myNeighbors);
+          for (const auto& mn : myNeighbors) {
+            if (nextAdditions.find(mn.first) == nextAdditions.end()) {
+              nextAdditions.insert(std::make_pair(mn.first, set_init(Set(), this->m_data.numVars())));
+            }
+          }
+          this->syncSets(nextAdditions);
+          TIMER_PAUSE(this->m_tSync);
+        }
+        TIMER_PAUSE(this->m_tDist);
+      }
+      this->updateMyPValues(myPV, myNeighbors, nextAdditions);
+      for (auto& na : nextAdditions) {
+        if (!na.second.empty()) {
+          myNeighbors[na.first] = set_union(myNeighbors.at(na.first), na.second);
+          na.second.clear();
+        }
+      }
+    }
+    else {
+      changed = false;
+    }
+  }
+  TIMER_START(this->m_tSync);
+  this->syncSets(myNeighbors);
+  TIMER_PAUSE(this->m_tSync);
+  TIMER_PAUSE(this->m_tForward);
+  /* End of Forward Phase */
+
+  /* Backward Phase */
+  TIMER_START(this->m_tBackward);
+  this->backwardPhase(myNeighbors);
+  TIMER_PAUSE(this->m_tBackward);
+  /* End of Backward Phase */
 }
 
 template <typename Data, typename Var, typename Set>

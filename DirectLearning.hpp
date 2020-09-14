@@ -42,11 +42,37 @@ public:
   getCandidateMB(const Var, Set&&) const override;
 
   virtual
-  ~DirectLearning() { }
+  ~DirectLearning();
 
 protected:
   void
   updateMaxPValues(const Var, std::vector<std::pair<double, Var>>&, const Set&, const Set&) const;
+
+  void
+  updateMyPValues(std::vector<std::tuple<Var, Var, double>>&, const std::unordered_map<Var, Set>&, const std::unordered_map<Var, Set>&) const;
+
+  template <typename Compare>
+  std::set<std::tuple<Var, Var, double>>
+  forwardPhase(const std::vector<std::tuple<Var, Var, double>>&, const Compare&, const bool, std::unordered_map<Var, Set>&) const;
+
+  std::set<std::pair<Var, Var>>
+  backwardPhase(std::unordered_map<Var, Set>&) const;
+
+  virtual
+  void
+  forwardBackward(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const { };
+
+private:
+  BayesianNetwork<Var>
+  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
+
+protected:
+  TIMER_DECLARE(m_tForward, mutable);
+  TIMER_DECLARE(m_tBackward, mutable);
+  TIMER_DECLARE(m_tDist, mutable);
+  TIMER_DECLARE(m_tSymmetry, mutable);
+  TIMER_DECLARE(m_tSync, mutable);
+  TIMER_DECLARE(m_tNeighbors, mutable);
 }; // class DirectLearning
 
 
@@ -65,6 +91,10 @@ public:
 
   Set
   getCandidatePC(const Var, Set&&) const override;
+
+private:
+  void
+  forwardBackward(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;
 }; // class MMPC
 
 /**
@@ -101,6 +131,9 @@ public:
 private:
   Set
   getCandidatePC(const Var, Set&&) const override;
+
+  void
+  forwardBackward(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;
 }; // class SemiInterleavedHITON
 
 /**

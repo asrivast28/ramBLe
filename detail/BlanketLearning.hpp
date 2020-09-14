@@ -352,12 +352,14 @@ template <typename Data, typename Var, typename Set>
  * @brief Function for getting the undirected skeleton network in parallel.
  *
  * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
+ * @param allNeighbors Contains the PC sets for all the variables.
+ * @param allBlankets Contains the MB sets for all the variables.
  */
 BayesianNetwork<Var>
 BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
   const double imbalanceThreshold,
-  std::unordered_map<Var, Set>& allBlankets,
-  std::unordered_map<Var, Set>& allNeighbors
+  std::unordered_map<Var, Set>& allNeighbors,
+  std::unordered_map<Var, Set>& allBlankets
 ) const
 {
   TIMER_START(this->m_tBlankets);
