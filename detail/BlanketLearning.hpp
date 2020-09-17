@@ -706,7 +706,13 @@ InterIAMB<Data, Var, Set>::growShrink(
         if ((redistributed || fixed) && mxx::any_of(sortPV, this->m_comm)) {
           // If the p-value list was redistributed in any of the previous iterations AND
           // there are newly added elements in the list, then we need to globally sort the list
-          mxx::sort(myPV.begin(), myPV.end(), this->m_comm);
+          mxx::comm nonzero_comm(static_cast<MPI_Comm>(this->m_comm));
+          if (mxx::any_of(myPV.size() == 0, this->m_comm)) {
+            nonzero_comm = this->m_comm.split(myPV.size() > 0);
+          }
+          if (myPV.size() > 0) {
+            mxx::sort(myPV.begin(), myPV.end(), nonzero_comm);
+          }
           sorted = true;
         }
         if (fixed || sorted) {

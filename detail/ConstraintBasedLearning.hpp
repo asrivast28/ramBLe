@@ -327,56 +327,57 @@ ConstraintBasedLearning<Data, Var, Set>::symmetryCorrect(
   myPairs.resize(i);
   // Redistribute and sort the list across all the processors
   mxx::stable_distribute_inplace(myPairs, this->m_comm);
-  mxx::sort(myPairs.begin(), myPairs.end(), this->m_comm);
-  // There should be a duplicate for every ordered pair,
-  // otherwise symmetry correction is required
-  std::vector<bool> remove(myPairs.size(), true);
-  // First check local pairs
-  auto it = myPairs.begin();
-  while (it != myPairs.end()) {
-    it = std::adjacent_find(it, myPairs.end());
-    if (it != myPairs.end()) {
-      auto d = std::distance(myPairs.begin(), it);
-      remove[d] = false;
-      remove[d+1] = false;
-      it += 2;
+  mxx::comm nonzero_comm(static_cast<MPI_Comm>(this->m_comm));
+  if (mxx::any_of(myPairs.size() == 0, this->m_comm)) {
+    nonzero_comm = this->m_comm.split(myPairs.size() > 0);
+  }
+  if (myPairs.size() > 0) {
+    mxx::sort(myPairs.begin(), myPairs.end(), nonzero_comm);
+    // There should be a duplicate for every ordered pair,
+    // otherwise symmetry correction is required
+    std::vector<bool> remove(myPairs.size(), true);
+    // First check local pairs
+    auto it = myPairs.begin();
+    while (it != myPairs.end()) {
+      it = std::adjacent_find(it, myPairs.end());
+      if (it != myPairs.end()) {
+        auto d = std::distance(myPairs.begin(), it);
+        remove[d] = false;
+        remove[d+1] = false;
+        it += 2;
+      }
     }
-  }
-  // Now, check the boundary pairs
-  auto elem = std::make_pair(static_cast<Var>(0), static_cast<Var>(0));
-  // First, check if the first pair on this processor matches the
-  // last pair on the previous processor
-  if (myPairs.size() > 0) {
-    elem = *myPairs.rbegin();
-  }
-  auto left = mxx::right_shift(elem, this->m_comm);
-  if (*remove.begin() && (left == *myPairs.begin())) {
-    *remove.begin() = false;
-  }
-  // Then, check if the last pair on this processor matches the
-  // first pair on the next processor
-  if (myPairs.size() > 0) {
+    // Now, check the boundary pairs
+    // First, check if the first pair on this processor matches the
+    // last pair on the previous processor
+    auto elem = *myPairs.rbegin();
+    auto left = mxx::right_shift(elem, nonzero_comm);
+    if (*remove.begin() && (left == *myPairs.begin())) {
+      *remove.begin() = false;
+    }
+    // Then, check if the last pair on this processor matches the
+    // first pair on the next processor
     elem = *myPairs.begin();
-  }
-  auto right = mxx::left_shift(elem, this->m_comm);
-  if (*remove.rbegin() && (right == *myPairs.rbegin())) {
-    *remove.rbegin() = false;
-  }
-  // Remove the pairs which did not have duplicates
-  it = myPairs.begin();
-  for (const auto r : remove) {
-    if (r) {
-      LOG_MESSAGE(info, "- Removing %s from the candidate set of %s (asymmetry)",
-                        this->m_data.varName(it->second), this->m_data.varName(it->first));
-      it = myPairs.erase(it);
+    auto right = mxx::left_shift(elem, nonzero_comm);
+    if (*remove.rbegin() && (right == *myPairs.rbegin())) {
+      *remove.rbegin() = false;
     }
-    else {
-      ++it;
+    // Remove the pairs which did not have duplicates
+    it = myPairs.begin();
+    for (const auto r : remove) {
+      if (r) {
+        LOG_MESSAGE(info, "- Removing %s from the candidate set of %s (asymmetry)",
+                          this->m_data.varName(it->second), this->m_data.varName(it->first));
+        it = myPairs.erase(it);
+      }
+      else {
+        ++it;
+      }
     }
+    // Only retain unique elements now
+    it = std::unique(myPairs.begin(), it);
+    myPairs.resize(std::distance(myPairs.begin(), it));
   }
-  // Only retain unique elements now
-  it = std::unique(myPairs.begin(), it);
-  myPairs.resize(std::distance(myPairs.begin(), it));
   mxx::stable_distribute_inplace(myPairs, this->m_comm);
 
   return myPairs;
