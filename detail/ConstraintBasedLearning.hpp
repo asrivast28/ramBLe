@@ -269,7 +269,7 @@ ConstraintBasedLearning<Data, Var, Set>::parallelInitialize(
   auto vars = std::vector<Var>(this->m_allVars.begin(), this->m_allVars.end());
   auto primary = vars.begin() + (myOffset / (n - 1));
   auto secondary = vars.begin() + (myOffset % (n - 1));
-  if (primary == secondary) {
+  if (secondary >= primary) {
     ++secondary;
   }
 
