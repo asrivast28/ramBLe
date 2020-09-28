@@ -338,8 +338,6 @@ BlanketLearning<Data, Var, Set>::growShrink(
   this->syncSets(myBlankets);
   TIMER_PAUSE(this->m_tSync);
   TIMER_PAUSE(this->m_tGrow);
-  if (this->m_comm.is_first()) {
-  }
   /* End of Grow Phase */
 
   /* Shrink Phase */
