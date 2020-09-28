@@ -26,6 +26,7 @@
 #include "DirectedNetworkTests.hpp"
 
 #include "mxx/comm.hpp"
+#include "mxx/env.hpp"
 #include "utils/Logging.hpp"
 
 
@@ -40,7 +41,8 @@ main(
   if (argc >= 2) {
     logLevel = argv[1];
   }
-  MPI_Init(&argc, &argv);
+  mxx::env e(argc, argv);
+  mxx::env::set_exception_on_error();
   mxx::comm comm;
   if (comm.size() > 1) {
     if (comm.is_first()) {
@@ -54,7 +56,6 @@ main(
   testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
   testing::AddGlobalTestEnvironment(new AsiaEnvironment);
   auto result = RUN_ALL_TESTS();
-  MPI_Finalize();
 
   return result;
 }

@@ -26,6 +26,7 @@
 #include "UintSet.hpp"
 
 #include "mxx/comm.hpp"
+#include "mxx/env.hpp"
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
 #include "BVCounter.hpp"
@@ -33,7 +34,6 @@
 #include "RadCounter.hpp"
 
 #include <boost/asio/ip/host_name.hpp>
-#include <mpi.h>
 
 #include <iostream>
 #include <memory>
@@ -267,17 +267,6 @@ getNeighborhood(
 }
 
 void
-myMPIErrorHandler(
-  MPI_Comm*,
-  int*
-  ...
-)
-{
-  // throw exception, enables gdb stack trace analysis
-  throw std::runtime_error("MPI Error");
-}
-
-void
 warmupMPI(
   const mxx::comm& comm
 )
@@ -303,13 +292,10 @@ main(
 {
   // Set up MPI
   TIMER_DECLARE(tInit);
-  MPI_Init(&argc, &argv);
 
+  mxx::env e(argc, argv);
+  mxx::env::set_exception_on_error();
   mxx::comm comm;
-  // Set custom error handler (for debugging with working stack-trace on gdb)
-  MPI_Errhandler handler;
-  MPI_Errhandler_create(&myMPIErrorHandler, &handler);
-  MPI_Errhandler_set(comm, handler);
   comm.barrier();
   if (comm.is_first()) {
     TIMER_ELAPSED("Time taken in initializing MPI: ", tInit);
@@ -419,7 +405,5 @@ main(
     return 1;
   }
 
-  // Finalize MPI
-  MPI_Finalize();
   return 0;
 }
