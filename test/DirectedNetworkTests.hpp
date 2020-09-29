@@ -87,8 +87,8 @@ TEST_P(ChildData_GS, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, ChildData_GS, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, ChildData_GS, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, ChildData_GS, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, ChildData_GS, testing::Values(true));
 
 class ChildData_MMPC : public ChildData<MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                        public testing::WithParamInterface<bool> {
@@ -128,8 +128,8 @@ TEST_P(ChildData_MMPC, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, ChildData_MMPC, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, ChildData_MMPC, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, ChildData_MMPC, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, ChildData_MMPC, testing::Values(true));
 
 
 template <typename Algorithm>
@@ -190,8 +190,8 @@ TEST_P(InsuranceData_GS, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, InsuranceData_GS, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, InsuranceData_GS, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, InsuranceData_GS, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, InsuranceData_GS, testing::Values(true));
 
 class InsuranceData_MMPC : public InsuranceData<MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                            public testing::WithParamInterface<bool> {
@@ -242,8 +242,8 @@ TEST_P(InsuranceData_MMPC, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, InsuranceData_MMPC, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, InsuranceData_MMPC, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, InsuranceData_MMPC, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, InsuranceData_MMPC, testing::Values(true));
 
 
 template <typename Algorithm>
@@ -296,8 +296,8 @@ TEST_P(MildewData_GS, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, MildewData_GS, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, MildewData_GS, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, MildewData_GS, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, MildewData_GS, testing::Values(true));
 
 class MildewData_MMPC : public MildewData<MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                         public testing::WithParamInterface<bool> {
@@ -335,8 +335,8 @@ TEST_P(MildewData_MMPC, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, MildewData_MMPC, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, MildewData_MMPC, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, MildewData_MMPC, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, MildewData_MMPC, testing::Values(true));
 
 
 template <typename Algorithm>
@@ -410,8 +410,8 @@ TEST_P(AlarmData_GS, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, AlarmData_GS, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, AlarmData_GS, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, AlarmData_GS, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, AlarmData_GS, testing::Values(true));
 
 class AlarmData_MMPC : public AlarmData<MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                        public testing::WithParamInterface<bool> {
@@ -473,7 +473,7 @@ TEST_P(AlarmData_MMPC, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_SUITE_P(Sequential, AlarmData_MMPC, testing::Values(false));
-INSTANTIATE_TEST_SUITE_P(Parallel, AlarmData_MMPC, testing::Values(true));
+INSTANTIATE_TEST_CASE_P(Sequential, AlarmData_MMPC, testing::Values(false));
+INSTANTIATE_TEST_CASE_P(Parallel, AlarmData_MMPC, testing::Values(true));
 
 #endif // TEST_DIRECTEDNETWORK_HPP_

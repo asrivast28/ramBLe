@@ -44,7 +44,7 @@ protected:
 typedef testing::Types<std::set<uint8_t>, std::set<uint16_t>,
                        UintSet<uint8_t>, UintSet<uint16_t>> SetTypes;
 
-TYPED_TEST_SUITE(SetUtilsTests, SetTypes);
+TYPED_TEST_CASE(SetUtilsTests, SetTypes);
 
 TYPED_TEST(SetUtilsTests, SetUnion) {
   std::vector<typename TypeParam::value_type> v(3);

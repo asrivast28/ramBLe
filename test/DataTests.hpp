@@ -60,7 +60,7 @@ protected:
 }; // class NeapolitanData
 
 
-TYPED_TEST_SUITE(NeapolitanData, AllCounters);
+TYPED_TEST_CASE(NeapolitanData, AllCounters);
 
 TYPED_TEST(NeapolitanData, MarginalPValue) {
   auto neapolitan1 = this->data[0]->pValue(0, 1);
@@ -94,7 +94,7 @@ protected:
   DiscreteData<Counter, uint8_t>* data;
 }; // class LizardsData
 
-TYPED_TEST_SUITE(LizardsData, AllCounters);
+TYPED_TEST_CASE(LizardsData, AllCounters);
 
 TYPED_TEST(LizardsData, MarginalPValue) {
   auto spec_diam  = this->data->pValue(0, 1);
@@ -142,7 +142,7 @@ protected:
   DiscreteData<Counter, uint8_t>* data;
 }; // class CoronaryData
 
-TYPED_TEST_SUITE(CoronaryData, AllCounters);
+TYPED_TEST_CASE(CoronaryData, AllCounters);
 
 TYPED_TEST(CoronaryData, MarginalPValue) {
   auto mwork_pwork  = this->data->pValue(1, 2);

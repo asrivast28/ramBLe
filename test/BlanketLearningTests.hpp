@@ -57,7 +57,7 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_SUITE(CoronaryBlanketLearning, BlanketLearningAlgorithms);
+TYPED_TEST_CASE(CoronaryBlanketLearning, BlanketLearningAlgorithms);
 
 TYPED_TEST(CoronaryBlanketLearning, MarkovBlanket) {
   auto target = this->data->varIndex("Smoking");
@@ -175,7 +175,7 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_SUITE(AsiaBlanketLearning, BlanketLearningAlgorithms);
+TYPED_TEST_CASE(AsiaBlanketLearning, BlanketLearningAlgorithms);
 
 TYPED_TEST(AsiaBlanketLearning, MarkovBlanket) {
   auto target = this->data->varIndex("asia");
