@@ -55,7 +55,7 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_SUITE(CoronaryDirectLearning, DirectLearningAlgorithms);
+TYPED_TEST_CASE(CoronaryDirectLearning, DirectLearningAlgorithms);
 
 TYPED_TEST(CoronaryDirectLearning, ParentsChildren) {
   auto target = this->data->varIndex("Smoking");
@@ -140,7 +140,7 @@ protected:
   Algorithm* algo;
 };
 
-TYPED_TEST_SUITE(AsiaDirectLearning, DirectLearningAlgorithms);
+TYPED_TEST_CASE(AsiaDirectLearning, DirectLearningAlgorithms);
 
 TYPED_TEST(AsiaDirectLearning, ParentsChildren) {
   auto target = this->data->varIndex("asia");
