@@ -156,13 +156,13 @@ compareVertices(
  *         exclusive edges.
  */
 template <typename Graph>
-std::set<std::pair<std::string, std::string>>
+std::set<std::tuple<std::string, std::string, std::string>>
 edgeDifference(
   const Graph& first,
   const Graph& second
 )
 {
-  std::set<std::pair<std::string, std::string>> edgeDiff;
+  std::set<std::tuple<std::string, std::string, std::string>> edgeDiff;
   const auto& secondVertices = boost::get(boost::vertex_name, second);
   std::unordered_map<std::string, typename boost::graph_traits<Graph>::vertex_descriptor> secondNameDescriptorMap;
   typename boost::graph_traits<Graph>::vertex_iterator vit, vend;
@@ -170,12 +170,14 @@ edgeDifference(
     secondNameDescriptorMap.insert(std::make_pair(secondVertices[*vit], *vit));
   }
   const auto& firstVertices = boost::get(boost::vertex_name, first);
+  const auto& firstEdgeDirs = boost::get(boost::edge_dir, first);
   typename boost::graph_traits<Graph>::edge_iterator eit, eend;
   for (boost::tie(eit, eend) = boost::edges(first); eit != eend; ++eit) {
     auto secondSource = secondNameDescriptorMap.at(firstVertices[boost::source(*eit, first)]);
     auto secondTarget = secondNameDescriptorMap.at(firstVertices[boost::target(*eit, first)]);
     if (!boost::edge(secondSource, secondTarget, second).second) {
-      edgeDiff.insert(std::make_pair(firstVertices[boost::source(*eit, first)], firstVertices[boost::target(*eit, first)]));
+      auto separator = (firstEdgeDirs[*eit] == "forward") ? " -> " : " -- ";
+      edgeDiff.insert(std::make_tuple(firstVertices[boost::source(*eit, first)], separator, firstVertices[boost::target(*eit, first)]));
     }
   }
   return edgeDiff;
@@ -200,13 +202,12 @@ compareEdges(
   const bool verbose
 )
 {
-  auto separator = std::is_same<Graph, DirectedGraph>::value ? " -> " : " -- ";
   auto firstOnly = edgeDifference(first, second);
   if (!firstOnly.empty()) {
     if (verbose) {
       std::cerr << "Edges found only in the first graph: " << std::endl;
       for (const auto& e : firstOnly) {
-        std::cerr << "(" << e.first << separator << e.second << ")" << std::endl;
+        std::cerr << "(" << std::get<0>(e) << std::get<1>(e) << std::get<2>(e) << ")" << std::endl;
       }
     }
   }
@@ -216,7 +217,7 @@ compareEdges(
     if (verbose) {
       std::cerr << "Edges found only in the second graph: " << std::endl;
       for (const auto& e : secondOnly) {
-        std::cerr << "(" << e.first << separator << e.second << ")" << std::endl;
+        std::cerr << "(" << std::get<0>(e) << std::get<1>(e) << std::get<2>(e) << ")" << std::endl;
       }
     }
   }
