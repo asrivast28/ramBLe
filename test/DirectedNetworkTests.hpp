@@ -81,8 +81,8 @@ TEST_P(ChildData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_CASE_P(Sequential, ChildData, testing::Values(false));
-INSTANTIATE_TEST_CASE_P(Parallel, ChildData, testing::Values(true));
+INSTANTIATE_TEST_SUITE_P(Sequential, ChildData, testing::Values(false));
+INSTANTIATE_TEST_SUITE_P(Parallel, ChildData, testing::Values(true));
 
 
 class InsuranceData : public testing::TestWithParam<bool> {
@@ -138,8 +138,8 @@ TEST_P(InsuranceData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_CASE_P(Sequential, InsuranceData, testing::Values(false));
-INSTANTIATE_TEST_CASE_P(Parallel, InsuranceData, testing::Values(true));
+INSTANTIATE_TEST_SUITE_P(Sequential, InsuranceData, testing::Values(false));
+INSTANTIATE_TEST_SUITE_P(Parallel, InsuranceData, testing::Values(true));
 
 
 class MildewData : public testing::TestWithParam<bool> {
@@ -187,8 +187,8 @@ TEST_P(MildewData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_CASE_P(Sequential, MildewData, testing::Values(false));
-INSTANTIATE_TEST_CASE_P(Parallel, MildewData, testing::Values(true));
+INSTANTIATE_TEST_SUITE_P(Sequential, MildewData, testing::Values(false));
+INSTANTIATE_TEST_SUITE_P(Parallel, MildewData, testing::Values(true));
 
 
 class AlarmData : public testing::TestWithParam<bool> {
@@ -257,7 +257,7 @@ TEST_P(AlarmData, DirectedNetwork) {
   EXPECT_EQ(expectedBN, computedBN);
 }
 
-INSTANTIATE_TEST_CASE_P(Sequential, AlarmData, testing::Values(false));
-INSTANTIATE_TEST_CASE_P(Parallel, AlarmData, testing::Values(true));
+INSTANTIATE_TEST_SUITE_P(Sequential, AlarmData, testing::Values(false));
+INSTANTIATE_TEST_SUITE_P(Parallel, AlarmData, testing::Values(true));
 
 #endif // TEST_DIRECTEDNETWORK_HPP_
