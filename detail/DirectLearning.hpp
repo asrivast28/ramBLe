@@ -222,23 +222,24 @@ HITON<Data, Var, Set>::getCandidatePC(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "HITON-PC: Getting PC for %s", this->m_data.varName(target));
-  std::vector<std::pair<double, Var>> maxPValues(candidates.size());
-  std::transform(candidates.begin(), candidates.end(), maxPValues.begin(),
-                 [] (const Var y) { return std::make_pair(0.0, y); });
-  auto setEmpty = set_init(Set(), this->m_data.numVars());
   auto cpc = set_init(Set(), this->m_data.numVars());
-  this->updateMaxPValues(target, maxPValues, cpc, setEmpty);
-  // Sort the maxPValues array before iterating over it
-  std::sort(maxPValues.begin(), maxPValues.end());
-  for (const auto& mpv : maxPValues) {
-    // Choose the variables in the ascending order of marginal p-value with the target
-    // as a proxy for decreasing associativity
-    auto x = mpv.second;
+  while (candidates.size() > 0) {
+    // Find the variable which minimizes the marginal p-value with the target
+    Var x = this->m_data.numVars();
+    double pvX = std::numeric_limits<double>::max();
+    for (const Var y : candidates) {
+      LOG_MESSAGE(debug, "HITON-PC: Evaluating %s for addition to the PC", this->m_data.varName(y));
+      double pvY = this->m_data.pValue(target, y);
+      if (std::isgreater(pvX, pvY)) {
+        x = y;
+        pvX = pvY;
+      }
+    }
     LOG_MESSAGE(debug, "HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC
-    LOG_MESSAGE(info, "+ Adding %s to the candidate PC of %s (p-value = %g)",
-                      this->m_data.varName(x), this->m_data.varName(target), mpv.first);
+    LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
     cpc.insert(x);
+    candidates.erase(x);
     // Remove false positives from the candidate PC
     this->removeFalsePC(target, cpc);
   }
@@ -308,26 +309,45 @@ GetPC<Data, Var, Set>::getCandidatePC(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "GetPC: Getting PC for %s", this->m_data.varName(target));
-  std::vector<std::pair<double, Var>> maxPValues(candidates.size());
-  std::transform(candidates.begin(), candidates.end(), maxPValues.begin(),
-                 [] (const Var y) { return std::make_pair(0.0, y); });
-  auto setNext = set_init(Set(), this->m_data.numVars());
   auto cpc = set_init(Set(), this->m_data.numVars());
-  this->updateMaxPValues(target, maxPValues, cpc, setNext);
-  while (!maxPValues.empty()) {
-    // Choose the variable which minimizes the maximum p-value with the target,
+  bool changed = true;
+  while ((candidates.size() > 0) && changed) {
+    changed = false;
+    // Find the variable which minimizes the maximum p-value with the target,
     // given any subset of the current candidate PC
-    auto mpv = std::min_element(maxPValues.begin(), maxPValues.end());
-    auto x = mpv->second;
-    LOG_MESSAGE(info, "+ Adding %s to the PC of %s (p-value = %g)",
-                      this->m_data.varName(x), this->m_data.varName(target), mpv->first);
-    setNext.insert(x);
-    // Remove the min element by replacing it with the last element
-    *mpv = maxPValues.back();
-    maxPValues.pop_back();
-    this->updateMaxPValues(target, maxPValues, cpc, setNext);
-    cpc.insert(x);
-    setNext.erase(x);
+    Var x = this->m_data.numVars();
+    double pvX = std::numeric_limits<double>::max();
+    auto remove = set_init(Set(), this->m_data.numVars());
+    for (const Var y : candidates) {
+      LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
+      auto pvY = this->m_data.maxPValue(target, y, cpc, this->m_maxConditioning);
+      if (this->m_data.isIndependent(pvY)) {
+        LOG_MESSAGE(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
+        // Can not be added to the candidate PC, mark for removal
+        remove.insert(y);
+        continue;
+      }
+      if (std::isgreater(pvX, pvY)) {
+        x = y;
+        pvX = pvY;
+      }
+    }
+    // Remove all the candidates which can not be added
+    for (const Var y : remove) {
+      candidates.erase(y);
+    }
+    if (candidates.empty()) {
+      continue;
+    }
+    LOG_MESSAGE(debug, "GetPC: %s chosen as the best candidate", this->m_data.varName(x));
+    // Add the variable to the candidate PC if it is not
+    // independedent of the target
+    if (!this->m_data.isIndependent(pvX)) {
+      LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
+      cpc.insert(x);
+      changed = true;
+    }
+    candidates.erase(x);
     // Remove false positives from the candidate PC
     this->removeFalsePC(target, cpc);
   }
