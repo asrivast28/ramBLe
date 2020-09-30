@@ -52,6 +52,9 @@ public:
   BayesianNetwork<Var>
   getNetwork(const bool, const bool, const double = 0.0) const;
 
+  void
+  clearCache() const;
+
   virtual
   ~ConstraintBasedLearning() { }
 

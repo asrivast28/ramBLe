@@ -37,6 +37,7 @@ TYPED_TEST_CASE(ChildData, ParallelLearningAlgorithms);
 
 TYPED_TEST(ChildData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
+  this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
   if (this->comm.is_first()) {
     EXPECT_EQ(sequentialBN, parallelBN);
@@ -48,6 +49,7 @@ TYPED_TEST_CASE(InsuranceData, ParallelLearningAlgorithms);
 
 TYPED_TEST(InsuranceData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
+  this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
   if (this->comm.is_first()) {
     EXPECT_EQ(sequentialBN, parallelBN);
@@ -59,6 +61,7 @@ TYPED_TEST_CASE(MildewData, ParallelLearningAlgorithms);
 
 TYPED_TEST(MildewData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
+  this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
   if (this->comm.is_first()) {
     EXPECT_EQ(sequentialBN, parallelBN);
@@ -70,6 +73,7 @@ TYPED_TEST_CASE(AlarmData, ParallelLearningAlgorithms);
 
 TYPED_TEST(AlarmData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
+  this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
   if (this->comm.is_first()) {
     EXPECT_EQ(sequentialBN, parallelBN);

@@ -593,4 +593,19 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   return bn;
 }
 
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Clears the cached MB and PC sets.
+ */
+void
+ConstraintBasedLearning<Data, Var, Set>::clearCache(
+) const
+{
+  m_cachedPC.clear();
+  m_cachedMB.clear();
+  m_cachedPCSymmetric.clear();
+  m_cachedMBSymmetric.clear();
+}
+
+
 #endif // DETAIL_CONSTRAINTBASEDLEARNING_HPP_
