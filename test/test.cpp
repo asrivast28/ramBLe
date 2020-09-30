@@ -48,22 +48,17 @@ main(
   mxx::comm comm;
   INIT_LOGGING(logLevel);
   int result = 0;
-  // We always add one new test filter
-  // Separate it from the user-provided ones
-  if (testing::GTEST_FLAG(filter) == "*") {
-    // This is the default test filter; reset it
-    testing::GTEST_FLAG(filter) = "";
-  }
-  else {
-    testing::GTEST_FLAG(filter) += ":";
-  }
   if (comm.size() > 1) {
     // set up wrapped test listener
     testing::TestEventListeners& listeners = testing::UnitTest::GetInstance()->listeners();
     testing::TestEventListener* default_listener = listeners.Release(listeners.default_result_printer());
     listeners.Append(new mxx_gtest::MpiTestEventListener(comm.rank(), default_listener));
     testing::GTEST_FLAG(color) = "yes";
-    testing::GTEST_FLAG(filter) += "*ParallelNetwork*";
+    if (testing::GTEST_FLAG(filter) == "*") {
+      // This is the default test filter
+      // Reset it to only run parallel unit tests
+      testing::GTEST_FLAG(filter) = "*ParallelNetwork*";
+    }
     result = RUN_ALL_TESTS();
     if (!comm.is_first()) {
       result = 0;
@@ -74,7 +69,11 @@ main(
     testing::AddGlobalTestEnvironment(new LizardsEnvironment);
     testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
     testing::AddGlobalTestEnvironment(new AsiaEnvironment);
-    testing::GTEST_FLAG(filter) += "-*ParallelNetwork*";
+    if (testing::GTEST_FLAG(filter) == "*") {
+      // This is the default test filter
+      // Reset it to exclude parallel unit tests
+      testing::GTEST_FLAG(filter) = "-*ParallelNetwork*";
+    }
     result = RUN_ALL_TESTS();
   }
 
