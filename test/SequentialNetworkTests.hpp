@@ -1,6 +1,6 @@
 /**
- * @file DirectedNetworkTests.hpp
- * @brief Unit tests for the directed network.
+ * @file SequentialNetworkTests.hpp
+ * @brief Unit tests for learning network sequentially.
  * @author Ankit Srivastava <asrivast@gatech.edu>
  *
  * Copyright 2020 Georgia Institute of Technology
@@ -17,42 +17,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TEST_DIRECTEDNETWORK_HPP_
-#define TEST_DIRECTEDNETWORK_HPP_
+#ifndef TEST_SEQUENTIALNETWORK_HPP_
+#define TEST_SEQUENTIALNETWORK_HPP_
 
 #include "BlanketLearning.hpp"
 #include "DirectLearning.hpp"
-#include "CTCounter.hpp"
-#include "DiscreteData.hpp"
-#include "UintSet.hpp"
+#include "NetworkData.hpp"
 
-
-using Counter = CTCounter<>;
-
-
-template <typename Algorithm>
-class ChildData : public testing::Test {
-protected:
-  void
-  SetUp() override {
-    uint32_t n = 20;
-    uint32_t m = 10000;
-    ColumnObservationReader<uint8_t> reader("child.csv", n, m, ' ', false, false, true);
-    auto counter = Counter::create(n, m, std::begin(reader.data()));
-    data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(comm, *data);
-  }
-
-  void
-  TearDown() override {
-    delete algo;
-    delete data;
-  }
-
-  mxx::comm comm;
-  DiscreteData<Counter, uint8_t>* data;
-  Algorithm* algo;
-};
 
 class ChildData_GS : public ChildData<GS<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                      public testing::WithParamInterface<bool> {
@@ -131,30 +102,6 @@ TEST_P(ChildData_MMPC, DirectedNetwork) {
 INSTANTIATE_TEST_CASE_P(Sequential, ChildData_MMPC, testing::Values(false));
 INSTANTIATE_TEST_CASE_P(Parallel, ChildData_MMPC, testing::Values(true));
 
-
-template <typename Algorithm>
-class InsuranceData : public testing::Test {
-protected:
-  void
-  SetUp() override {
-    uint32_t n = 27;
-    uint32_t m = 10000;
-    ColumnObservationReader<uint8_t> reader("insurance.csv", n, m, ' ', false, false, true);
-    auto counter = Counter::create(n, m, std::begin(reader.data()));
-    data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(comm, *data);
-  }
-
-  void
-  TearDown() override {
-    delete algo;
-    delete data;
-  }
-
-  mxx::comm comm;
-  DiscreteData<Counter, uint8_t>* data;
-  Algorithm* algo;
-};
 
 class InsuranceData_GS : public InsuranceData<GS<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                          public testing::WithParamInterface<bool> {
@@ -246,30 +193,6 @@ INSTANTIATE_TEST_CASE_P(Sequential, InsuranceData_MMPC, testing::Values(false));
 INSTANTIATE_TEST_CASE_P(Parallel, InsuranceData_MMPC, testing::Values(true));
 
 
-template <typename Algorithm>
-class MildewData : public testing::Test {
-protected:
-  void
-  SetUp() override {
-    uint32_t n = 35;
-    uint32_t m = 10000;
-    ColumnObservationReader<uint8_t> reader("mildew.csv", n, m, ' ', false, false, true);
-    auto counter = Counter::create(n, m, std::begin(reader.data()));
-    data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(comm, *data);
-  }
-
-  void
-  TearDown() override {
-    delete algo;
-    delete data;
-  }
-
-  mxx::comm comm;
-  DiscreteData<Counter, uint8_t>* data;
-  Algorithm* algo;
-};
-
 class MildewData_GS : public MildewData<GS<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                       public testing::WithParamInterface<bool> {
 };
@@ -338,30 +261,6 @@ TEST_P(MildewData_MMPC, DirectedNetwork) {
 INSTANTIATE_TEST_CASE_P(Sequential, MildewData_MMPC, testing::Values(false));
 INSTANTIATE_TEST_CASE_P(Parallel, MildewData_MMPC, testing::Values(true));
 
-
-template <typename Algorithm>
-class AlarmData : public testing::Test {
-protected:
-  void
-  SetUp() override {
-    uint32_t n = 37;
-    uint32_t m = 10000;
-    ColumnObservationReader<uint8_t> reader("alarm.csv", n, m, ' ', false, false, true);
-    auto counter = Counter::create(n, m, std::begin(reader.data()));
-    data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
-    algo = new Algorithm(comm, *data);
-  }
-
-  void
-  TearDown() override {
-    delete algo;
-    delete data;
-  }
-
-  mxx::comm comm;
-  DiscreteData<Counter, uint8_t>* data;
-  Algorithm* algo;
-};
 
 class AlarmData_GS : public AlarmData<GS<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>,
                      public testing::WithParamInterface<bool> {
@@ -476,4 +375,4 @@ TEST_P(AlarmData_MMPC, DirectedNetwork) {
 INSTANTIATE_TEST_CASE_P(Sequential, AlarmData_MMPC, testing::Values(false));
 INSTANTIATE_TEST_CASE_P(Parallel, AlarmData_MMPC, testing::Values(true));
 
-#endif // TEST_DIRECTEDNETWORK_HPP_
+#endif // TEST_SEQUENTIALNETWORK_HPP_

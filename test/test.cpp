@@ -23,10 +23,12 @@
 #include "DataTests.hpp"
 #include "BlanketLearningTests.hpp"
 #include "DirectLearningTests.hpp"
-#include "DirectedNetworkTests.hpp"
+#include "SequentialNetworkTests.hpp"
+#include "ParallelNetworkTests.hpp"
 
 #include "mxx/comm.hpp"
 #include "mxx/env.hpp"
+#include "mxx_eventlistener.hpp"
 #include "utils/Logging.hpp"
 
 
@@ -44,18 +46,37 @@ main(
   mxx::env e(argc, argv);
   mxx::env::set_exception_on_error();
   mxx::comm comm;
-  if (comm.size() > 1) {
-    if (comm.is_first()) {
-      std::cerr << "ERROR: Multi-processor testing is not supported yet." << std::endl;
-    }
-    return 1;
-  }
   INIT_LOGGING(logLevel);
-  testing::AddGlobalTestEnvironment(new NeapolitanEnvironment);
-  testing::AddGlobalTestEnvironment(new LizardsEnvironment);
-  testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
-  testing::AddGlobalTestEnvironment(new AsiaEnvironment);
-  auto result = RUN_ALL_TESTS();
+  int result = 0;
+  // We always add one new test filter
+  // Separate it from the user-provided ones
+  if (testing::GTEST_FLAG(filter) == "*") {
+    // This is the default test filter; reset it
+    testing::GTEST_FLAG(filter) = "";
+  }
+  else {
+    testing::GTEST_FLAG(filter) += ":";
+  }
+  if (comm.size() > 1) {
+    // set up wrapped test listener
+    testing::TestEventListeners& listeners = testing::UnitTest::GetInstance()->listeners();
+    testing::TestEventListener* default_listener = listeners.Release(listeners.default_result_printer());
+    listeners.Append(new mxx_gtest::MpiTestEventListener(comm.rank(), default_listener));
+    testing::GTEST_FLAG(color) = "yes";
+    testing::GTEST_FLAG(filter) += "*ParallelNetwork*";
+    result = RUN_ALL_TESTS();
+    if (!comm.is_first()) {
+      result = 0;
+    }
+  }
+  else {
+    testing::AddGlobalTestEnvironment(new NeapolitanEnvironment);
+    testing::AddGlobalTestEnvironment(new LizardsEnvironment);
+    testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
+    testing::AddGlobalTestEnvironment(new AsiaEnvironment);
+    testing::GTEST_FLAG(filter) += "-*ParallelNetwork*";
+    result = RUN_ALL_TESTS();
+  }
 
   return result;
 }
