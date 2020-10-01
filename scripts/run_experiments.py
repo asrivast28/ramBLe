@@ -211,7 +211,7 @@ def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compar
         if compare:
             print('Comparing generated file %s with %s' % (outfile, dotfile))
             sys.stdout.flush()
-            compare_args = [join(basedir, 'scripts', 'compare_dot'), outfile, dotfile] + (['-d'] if not undirected else [])
+            compare_args = [join(basedir, 'scripts', 'compare_dot'), outfile, dotfile]
             subprocess.check_call(' '.join(compare_args), shell=True)
         runtimes.append(parse_runtimes(output))
         r += 1

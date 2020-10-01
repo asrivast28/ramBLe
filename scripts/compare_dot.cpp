@@ -268,30 +268,31 @@ main(
 )
 {
   if (argc < 3) {
-    std::cerr << "Usage: ./compare_dot <first> <second> [-d] [-v]" << std::endl;
+    std::cerr << "Usage: ./compare_dot <first> <second> [-v]" << std::endl;
     return 1;
   }
-  auto directed = false;
   auto verbose = false;
-  if (argc >= 5) {
+  if ((argc >= 4) && (strcmp(argv[3], "-v") == 0)) {
     verbose = true;
-    directed = true;
-  }
-  else if (argc >= 4) {
-    if (strcmp(argv[3], "-v") == 0) {
-      verbose = true;
-    }
-    else {
-      directed = true;
-    }
   }
 
   auto result = false;
-  if (directed) {
+  auto directed = true;
+  // First, assume both graphs are directed
+  try {
     result = compareGraphs<DirectedGraph>(argv[1], argv[2], verbose);
   }
-  else {
-    result = compareGraphs<UndirectedGraph>(argv[1], argv[2], verbose);
+  catch (const boost::undirected_graph_error&) {
+    directed = false;
+  }
+  if (!directed) {
+    // Then, assume both graphs are undirected
+    try {
+      result = compareGraphs<UndirectedGraph>(argv[1], argv[2], verbose);
+    }
+    catch (const boost::directed_graph_error&) {
+      std::cerr << "Error: Unable to compare directed and undirected graphs" << std::endl;
+    }
   }
   return static_cast<int>(!result);
 }
