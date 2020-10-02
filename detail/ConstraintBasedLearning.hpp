@@ -573,13 +573,13 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
       m_cachedPCSymmetric[x] = true;
     }
   }
-  if (this->m_comm.is_first() && directEdges) {
+  if (directEdges) {
     TIMER_DECLARE(tDirect);
     // First, orient the v-structures
     auto vStructures = this->findVStructures();
     bn.applyVStructures(std::move(vStructures));
     // Then, break any directed cycles in the network
-    LOG_MESSAGE_IF(bn.hasDirectedCycles(), info, "* The initial network contains directed cycles");
+    LOG_MESSAGE_IF(this->m_comm.is_first() && bn.hasDirectedCycles(), info, "* The initial network contains directed cycles");
     while (bn.hasDirectedCycles()) {
       bn.breakDirectedCycles();
     }
@@ -588,7 +588,9 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
     while (changed) {
       changed = bn.applyMeekRules();
     }
-    TIMER_ELAPSED("Time taken in directing the edges: ", tDirect);
+    if (this->m_comm.is_first()) {
+      TIMER_ELAPSED("Time taken in directing the edges: ", tDirect);
+    }
   }
   return bn;
 }
