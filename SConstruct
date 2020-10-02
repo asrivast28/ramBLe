@@ -101,7 +101,7 @@ else:
 if enableLogging:
   # logging libraries
   cppDefs.append('LOGGING')
-  allLibs.extend(['boost_log', 'boost_system', 'pthread'])
+  allLibs.extend(['boost_log', 'boost_log_setup', 'boost_system', 'boost_thread', 'pthread'])
 
 enableTimer = ARGUMENTS.get('TIMER', None)
 if enableTimer is not None:

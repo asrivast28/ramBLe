@@ -27,7 +27,8 @@ namespace fs = boost::filesystem;
 ProgramOptions::ProgramOptions(
 ) : m_desc("Constraint-Based BN Learning"),
     m_logLevel(),
-    m_fileName(),
+    m_logFile(),
+    m_dataFile(),
     m_algoName(),
     m_targetVar(),
     m_outputFile(),
@@ -53,7 +54,7 @@ ProgramOptions::ProgramOptions(
     ("help,h", "Print this message.")
     ("nvars,n", po::value<uint32_t>(&m_numVars), "Number of variables in the dataset.")
     ("nobs,m", po::value<uint32_t>(&m_numObs), "Number of observations in the dataset.")
-    ("file,f", po::value<std::string>(&m_fileName), "Name of the file from which dataset is to be read.")
+    ("file,f", po::value<std::string>(&m_dataFile), "Name of the file from which dataset is to be read.")
     ("readpar,r", po::bool_switch(&m_parallelRead)->default_value(false), "Read from the file in parallel.")
     ("colobs,c", po::bool_switch(&m_colObs)->default_value(false), "The file contains observations in columns.")
     ("separator,s", po::value<char>(&m_separator)->default_value(','), "Delimiting character in the file.")
@@ -81,7 +82,8 @@ ProgramOptions::ProgramOptions(
     ("blanket", po::bool_switch(&m_discoverMB)->default_value(false), "Find MB instead of PC for the target var.")
     ("learn", po::bool_switch(&m_learnNetwork)->default_value(false), "Force learn the network.")
 #ifdef LOGGING
-    ("log", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
+    ("loglevel", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging.")
+    ("logfile", po::value<std::string>(&m_logFile)->default_value(""), "File to which logs should be written.")
 #endif
     ;
 
@@ -106,7 +108,7 @@ ProgramOptions::parse(
   if ((vm.count("target") == 0) && (!m_learnNetwork) && (vm.count("output") == 0)) {
     throw po::error("At least one of --target, --learn, or --output should be specified.");
   }
-  if (!fs::exists(fs::path(m_fileName))) {
+  if (!fs::exists(fs::path(m_dataFile))) {
     throw po::error("Couldn't find the data file.");
   }
 }
@@ -126,10 +128,10 @@ ProgramOptions::numObs(
 }
 
 const std::string&
-ProgramOptions::fileName(
+ProgramOptions::dataFile(
 ) const
 {
-  return m_fileName;
+  return m_dataFile;
 }
 
 bool
@@ -263,6 +265,13 @@ ProgramOptions::logLevel(
 ) const
 {
   return m_logLevel;
+}
+
+const std::string&
+ProgramOptions::logFile(
+) const
+{
+  return m_logFile;
 }
 
 ProgramOptions::~ProgramOptions(

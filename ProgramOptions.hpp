@@ -43,7 +43,7 @@ public:
   numObs() const;
 
   const std::string&
-  fileName() const;
+  dataFile() const;
 
   bool
   parallelRead() const;
@@ -102,12 +102,16 @@ public:
   const std::string&
   logLevel() const;
 
+  const std::string&
+  logFile() const;
+
   ~ProgramOptions();
 
 private:
   po::options_description m_desc;
   std::string m_logLevel;
-  std::string m_fileName;
+  std::string m_logFile;
+  std::string m_dataFile;
   std::string m_algoName;
   std::string m_targetVar;
   std::string m_outputFile;

@@ -240,7 +240,7 @@ BlanketLearning<Data, Var, Set>::growAll(
   for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
     if (!this->m_data.isIndependent(std::get<2>(*it))) {
       // Add y to the blanket of x
-      LOG_MESSAGE(info, "%d: + Adding %s to the MB of %s (p-value = %g)", this->m_comm.rank(),
+      LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
                   this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
       myBlankets[std::get<0>(*it)].insert(std::get<1>(*it));
       added.insert(*it);

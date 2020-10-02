@@ -45,7 +45,7 @@ parser <- add_option(parser, c('--output', '-o'), type='character', help='Name o
 parser <- add_option(parser, c('--directed', '-d'), action='store_true', default=FALSE, help='Orient the edges in the learned network.')
 parser <- add_option(parser, c('--alpha', '-p'), type='double', default=0.05, help='Threshold p-value.')
 parser <- add_option(parser, c('--conditioning', '-g'), type='integer', help='Maximum size of conditioning sets.')
-parser <- add_option(parser, c('--log'), type='character', help='Level of logging.')
+parser <- add_option(parser, c('--loglevel'), type='character', help='Level of logging.')
 parser <- add_option(parser, c('--nprocs'), type='integer', default=1, help='Number of processes to use.')
 parser <- add_option(parser, c('--ppn'), type='integer', default=16, help='Number of processes per node to use.')
 args <- parse_args(parser, args=argv)

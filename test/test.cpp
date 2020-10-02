@@ -40,13 +40,20 @@ main(
 {
   testing::InitGoogleTest(&argc, argv);
   std::string logLevel = "error";
+  std::string logFile;
   if (argc >= 2) {
     logLevel = argv[1];
+  }
+  if (argc >= 3) {
+    logFile = argv[2];
   }
   mxx::env e(argc, argv);
   mxx::env::set_exception_on_error();
   mxx::comm comm;
-  INIT_LOGGING(logLevel);
+  if (!logFile.empty() && (comm.size() > 1)) {
+    logFile += ".p" + std::to_string(comm.rank());
+  }
+  INIT_LOGGING(logFile, comm.rank(), logLevel);
   int result = 0;
   if (comm.size() > 1) {
     // set up wrapped test listener

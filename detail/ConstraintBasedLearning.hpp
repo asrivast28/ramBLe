@@ -90,7 +90,7 @@ ConstraintBasedLearning<Data, Var, Set>::getCandidatePC_cache(
 {
   auto cacheIt = m_cachedPC.find(target);
   LOG_MESSAGE_IF(cacheIt != m_cachedPC.end(), trace, "* Found candidate PC for %s in the cache",
-                                                     this->m_data.varName(target))
+                                                     this->m_data.varName(target));
   if (cacheIt == m_cachedPC.end()) {
     auto cpc = this->getCandidatePC(target, std::move(candidates));
     cacheIt = m_cachedPC.insert(cacheIt, std::make_pair(target, cpc));

@@ -344,7 +344,11 @@ main(
   }
 
   try {
-    INIT_LOGGING(options.logLevel());
+    std::string logFile = options.logFile();
+    if (!logFile.empty() && (comm.size() > 1)) {
+      logFile += ".p" + std::to_string(comm.rank());
+    }
+    INIT_LOGGING(logFile, comm.rank(), options.logLevel());
     uint32_t n = options.numVars();
     uint32_t m = options.numObs();
     if (static_cast<double>(m) >= std::sqrt(std::numeric_limits<uint32_t>::max())) {
@@ -357,11 +361,11 @@ main(
     std::unique_ptr<DataReader<uint8_t>> reader;
     constexpr auto varMajor = true;
     if (options.colObs()) {
-      reader.reset(new ColumnObservationReader<uint8_t>(options.fileName(), n, m, options.separator(),
+      reader.reset(new ColumnObservationReader<uint8_t>(options.dataFile(), n, m, options.separator(),
                                                         options.varNames(), options.obsIndices(), varMajor, options.parallelRead()));
     }
     else {
-      reader.reset(new RowObservationReader<uint8_t>(options.fileName(), n, m, options.separator(),
+      reader.reset(new RowObservationReader<uint8_t>(options.dataFile(), n, m, options.separator(),
                                                      options.varNames(), options.obsIndices(), varMajor, options.parallelRead()));
     }
     comm.barrier();

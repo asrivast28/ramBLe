@@ -40,7 +40,7 @@ parser <- add_option(parser, c('--varnames', '-v'), action='store_true', default
 parser <- add_option(parser, c('--indices', '-i'), action='store_true', default=FALSE, help='The file contains observation indices.')
 parser <- add_option(parser, c('--algorithm', '-a'), type='character', default='gs', help='Name of the algorithm used for generating the graph.')
 parser <- add_option(parser, c('--alpha', '-p'), type='double', default=0.05, help='Threshold p-value used for generating the graph.')
-parser <- add_option(parser, c('--log'), type='character', help='Level of logging.')
+parser <- add_option(parser, c('--loglevel'), type='character', help='Level of logging.')
 args <- parse_args(parser, args=argv)
 
 lines <- scan(args$bn, what='character', sep='\n')

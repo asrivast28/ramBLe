@@ -200,7 +200,7 @@ DirectLearning<Data, Var, Set>::updateMaxPValues(
     auto y = mpv.second;
     LOG_MESSAGE(debug, "Updating max p-value for %s (previous p-value = %g)", this->m_data.varName(y), pvY);
     pvY = std::max(pvY, this->m_data.maxPValue(target, y, cpc, setNext, this->m_maxConditioning));
-    LOG_MESSAGE(debug, "%s is ", this->m_data.isIndependent(pvY) ? "independent of" : "dependent on",
+    LOG_MESSAGE(debug, "%s is " + std::string(this->m_data.isIndependent(pvY) ? "independent of" : "dependent on") +
                        " the target %s (updated p-value = %g)",
                        this->m_data.varName(y), this->m_data.varName(target), pvY);
     mpv.first = pvY;
@@ -234,7 +234,7 @@ DirectLearning<Data, Var, Set>::updateMyPValues(
     auto y = std::get<1>(pv);
     auto pvY = std::get<2>(pv);
     pvY = std::max(pvY, this->m_data.maxPValue(target, y, myNeighbors.at(target), nextAdditions.at(target), this->m_maxConditioning));
-    LOG_MESSAGE(debug, "%s is ", this->m_data.isIndependent(pvY) ? "independent of" : "dependent on",
+    LOG_MESSAGE(debug, "%s is " + std::string(this->m_data.isIndependent(pvY) ? "independent of" : "dependent on") +
                        " the target %s (updated p-value = %g)",
                        this->m_data.varName(y), this->m_data.varName(target), pvY);
     std::get<2>(pv) = pvY;
@@ -284,7 +284,7 @@ DirectLearning<Data, Var, Set>::forwardPhase(
   for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
     if (!this->m_data.isIndependent(std::get<2>(*it))) {
       // Add y to the blanket of x
-      LOG_MESSAGE(info, "%d: + Adding %s to the PC of %s (p-value = %g)", this->m_comm.rank(),
+      LOG_MESSAGE(info, "+ Adding %s to the PC of %s (p-value = %g)",
                   this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
       myNeighbors[std::get<0>(*it)].insert(std::get<1>(*it));
       added.insert(*it);
