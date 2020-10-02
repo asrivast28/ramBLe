@@ -39,9 +39,7 @@ TYPED_TEST(ChildData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
   this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
-  if (this->comm.is_first()) {
-    EXPECT_EQ(sequentialBN, parallelBN);
-  }
+  EXPECT_EQ(sequentialBN, parallelBN);
 }
 
 
@@ -51,9 +49,7 @@ TYPED_TEST(InsuranceData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
   this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
-  if (this->comm.is_first()) {
-    EXPECT_EQ(sequentialBN, parallelBN);
-  }
+  EXPECT_EQ(sequentialBN, parallelBN);
 }
 
 
@@ -63,9 +59,7 @@ TYPED_TEST(MildewData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
   this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
-  if (this->comm.is_first()) {
-    EXPECT_EQ(sequentialBN, parallelBN);
-  }
+  EXPECT_EQ(sequentialBN, parallelBN);
 }
 
 
@@ -75,9 +69,7 @@ TYPED_TEST(AlarmData, ParallelNetwork) {
   auto sequentialBN = this->algo->getNetwork(true, false);
   this->algo->clearCache();
   auto parallelBN = this->algo->getNetwork(true, true);
-  if (this->comm.is_first()) {
-    EXPECT_EQ(sequentialBN, parallelBN);
-  }
+  EXPECT_EQ(sequentialBN, parallelBN);
 }
 
 #endif // TEST_PARALLELNETWORK_HPP_
