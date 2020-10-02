@@ -235,8 +235,7 @@ ConstraintBasedLearning<Data, Var, Set>::getSkeleton_sequential(
     for (const auto y : pcX) {
       if (x < y) {
         LOG_MESSAGE(info, "+ Adding the edge %s <-> %s", this->m_data.varName(x), this->m_data.varName(y));
-        bn.addEdge(x, y);
-        bn.addEdge(y, x);
+        bn.addEdge(x, y, true);
       }
     }
   }

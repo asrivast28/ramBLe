@@ -47,6 +47,11 @@ private:
 public:
   BayesianNetwork(const std::vector<std::string>&);
 
+  using Graph<BidirectionalAdjacencyList, VertexLabel, Var>::addEdge;
+
+  void
+  addEdge(const Var, const Var, const bool);
+
   void
   applyVStructures(std::vector<std::tuple<double, Var, Var, Var>>&&);
 

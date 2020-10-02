@@ -119,6 +119,23 @@ BayesianNetwork<Var>::BayesianNetwork(
 
 template <typename Var>
 /**
+ * @brief Adds a directed or undirected edge between the vertices.
+ */
+void
+BayesianNetwork<Var>::addEdge(
+  const Var source,
+  const Var target,
+  const bool undirected
+)
+{
+  this->addEdge(source, target);
+  if (undirected) {
+    this->addEdge(target, source);
+  }
+}
+
+template <typename Var>
+/**
  * @brief Returns a filtered view of the current graph with the anti-parallel edges removed.
  */
 typename BayesianNetwork<Var>::FilteredGraph

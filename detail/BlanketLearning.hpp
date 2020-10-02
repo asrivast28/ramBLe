@@ -431,8 +431,7 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
       if (x < y) {
         LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
                        this->m_data.varName(x), this->m_data.varName(y));
-        bn.addEdge(x, y);
-        bn.addEdge(y, x);
+        bn.addEdge(x, y, true);
         // The neighbor set of y has x in it only if x > y
         // Therefore, we need to make it symmetric here before returning
         allNeighbors[y].insert(x);
