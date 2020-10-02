@@ -151,7 +151,7 @@ BlanketLearning<Data, Var, Set>::evaluateCandidatePC(
     mbTest.erase(x);
   }
 
-  return !this->m_data.isIndependentAnySubset(x, y, mbTest, this->m_maxConditioning, this->m_comm);
+  return !this->m_data.isIndependentAnySubset(x, y, mbTest, this->m_maxConditioning);
 }
 
 template <typename Data, typename Var, typename Set>
