@@ -29,6 +29,12 @@
 #include "utils/Timer.hpp"
 
 
+NotImplementedError::NotImplementedError(
+  const std::string& message
+) : std::logic_error(message)
+{
+}
+
 template <typename Data, typename Var, typename Set>
 /**
  * @brief Constructs the object with the given data.
@@ -452,21 +458,6 @@ ConstraintBasedLearning<Data, Var, Set>::fixImbalance(
     fixed = true;
   }
   return fixed;
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief Function for getting the undirected skeleton network in parallel.
- */
-BayesianNetwork<Var>
-ConstraintBasedLearning<Data, Var, Set>::getSkeleton_parallel(
-  const double,
-  std::unordered_map<Var, Set>&,
-  std::unordered_map<Var, Set>&
-) const
-{
-  throw std::runtime_error("Getting skeleton in parallel is not implemented for the given algorithm");
-  return BayesianNetwork<Var>(this->m_data.varNames(m_allVars));
 }
 
 template <typename Data, typename Var, typename Set>

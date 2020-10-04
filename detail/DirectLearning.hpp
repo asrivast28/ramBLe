@@ -523,6 +523,18 @@ HITON<Data, Var, Set>::getCandidatePC(
 }
 
 template <typename Data, typename Var, typename Set>
+BayesianNetwork<Var>
+HITON<Data, Var, Set>::getSkeleton_parallel(
+  const double,
+  std::unordered_map<Var, Set>&,
+  std::unordered_map<Var, Set>&
+) const
+{
+  throw NotImplementedError("HITON: Parallel algorithm is not implemented yet");
+  return BayesianNetwork<Var>(this->m_data.varNames(this->m_allVars));
+}
+
+template <typename Data, typename Var, typename Set>
 SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
   const mxx::comm& comm,
   const Data& data,
@@ -719,6 +731,18 @@ GetPC<Data, Var, Set>::getCandidatePC(
   }
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
+}
+
+template <typename Data, typename Var, typename Set>
+BayesianNetwork<Var>
+GetPC<Data, Var, Set>::getSkeleton_parallel(
+  const double,
+  std::unordered_map<Var, Set>&,
+  std::unordered_map<Var, Set>&
+) const
+{
+  throw NotImplementedError("GetPC: Parallel algorithm is not implemented yet");
+  return BayesianNetwork<Var>(this->m_data.varNames(this->m_allVars));
 }
 
 #endif // DETAIL_DIRECTLEARNING_HPP_

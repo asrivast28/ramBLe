@@ -25,8 +25,17 @@
 #include "mxx/comm.hpp"
 
 #include <map>
+#include <stdexcept>
 #include <unordered_map>
 
+
+/**
+ * @brief Exception to be used for not implemented functions.
+ */
+class NotImplementedError : public std::logic_error {
+public:
+  NotImplementedError(const std::string&);
+}; // class NotImplementedError
 
 /**
  * @brief Abstract base class for causal discovery using constraint-based learning.
@@ -91,7 +100,7 @@ protected:
 
   virtual
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const;
+  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const = 0;
 
 private:
   Set&

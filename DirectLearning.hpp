@@ -113,6 +113,9 @@ public:
 private:
   Set
   getCandidatePC(const Var, Set&&) const override;
+
+  BayesianNetwork<Var>
+  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
 }; // class HITON
 
 /**
@@ -152,6 +155,9 @@ public:
 private:
   Set
   getCandidatePC(const Var, Set&&) const override;
+
+  BayesianNetwork<Var>
+  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
 }; // class GetPC
 
 #include "detail/DirectLearning.hpp"

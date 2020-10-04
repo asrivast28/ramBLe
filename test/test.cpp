@@ -23,8 +23,7 @@
 #include "DataTests.hpp"
 #include "BlanketLearningTests.hpp"
 #include "DirectLearningTests.hpp"
-#include "SequentialNetworkTests.hpp"
-#include "ParallelNetworkTests.hpp"
+#include "NetworkTests.hpp"
 
 #include "mxx/comm.hpp"
 #include "mxx/env.hpp"
@@ -64,7 +63,7 @@ main(
     if (testing::GTEST_FLAG(filter) == "*") {
       // This is the default test filter
       // Reset it to only run parallel unit tests
-      testing::GTEST_FLAG(filter) = "*ParallelNetwork*";
+      testing::GTEST_FLAG(filter) = "Network*Parallel";
     }
     result = RUN_ALL_TESTS();
     if (!comm.is_first()) {
@@ -76,11 +75,6 @@ main(
     testing::AddGlobalTestEnvironment(new LizardsEnvironment);
     testing::AddGlobalTestEnvironment(new CoronaryEnvironment);
     testing::AddGlobalTestEnvironment(new AsiaEnvironment);
-    if (testing::GTEST_FLAG(filter) == "*") {
-      // This is the default test filter
-      // Reset it to exclude parallel unit tests
-      testing::GTEST_FLAG(filter) = "-*ParallelNetwork*";
-    }
     result = RUN_ALL_TESTS();
   }
 

@@ -37,7 +37,11 @@ protected:
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
     algo = new Algorithm(comm, *data);
+    expected = this->expectedBN();
   }
+
+  BayesianNetwork<uint8_t>*
+  expectedBN();
 
   void
   TearDown() override {
@@ -48,6 +52,7 @@ protected:
   mxx::comm comm;
   DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
+  BayesianNetwork<uint8_t>* expected;
 };
 
 
@@ -62,7 +67,11 @@ protected:
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
     algo = new Algorithm(comm, *data);
+    expected = this->expectedBN();
   }
+
+  BayesianNetwork<uint8_t>*
+  expectedBN();
 
   void
   TearDown() override {
@@ -73,6 +82,7 @@ protected:
   mxx::comm comm;
   DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
+  BayesianNetwork<uint8_t>* expected;
 };
 
 
@@ -87,7 +97,11 @@ protected:
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
     algo = new Algorithm(comm, *data);
+    expected = this->expectedBN();
   }
+
+  BayesianNetwork<uint8_t>*
+  expectedBN();
 
   void
   TearDown() override {
@@ -98,6 +112,7 @@ protected:
   mxx::comm comm;
   DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
+  BayesianNetwork<uint8_t>* expected;
 };
 
 
@@ -112,7 +127,11 @@ protected:
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
     algo = new Algorithm(comm, *data);
+    expected = this->expectedBN();
   }
+
+  BayesianNetwork<uint8_t>*
+  expectedBN();
 
   void
   TearDown() override {
@@ -123,6 +142,16 @@ protected:
   mxx::comm comm;
   DiscreteData<Counter, uint8_t>* data;
   Algorithm* algo;
+  BayesianNetwork<uint8_t>* expected;
 };
+
+
+#include "GSNetworks.hpp"
+#include "IAMBNetworks.hpp"
+#include "InterIAMBNetworks.hpp"
+#include "MMPCNetworks.hpp"
+#include "HITONNetworks.hpp"
+#include "SemiInterleavedHITONNetworks.hpp"
+#include "GetPCNetworks.hpp"
 
 #endif // TEST_NETWORKDATA_HPP_
