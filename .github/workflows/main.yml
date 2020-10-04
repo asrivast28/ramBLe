@@ -46,7 +46,11 @@ jobs:
       run: |
         scons
 
-    - name: Unit tests
+    - name: Sequential Unit tests
       run: |
         cd test
         ./testramble
+
+    - name: Parallel Unit tests
+      run: |
+        mpirun -np 4 ./testramble
