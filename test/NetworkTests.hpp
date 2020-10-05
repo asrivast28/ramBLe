@@ -60,11 +60,7 @@ TYPED_TEST_P(ChildData, Parallel) {
   }
   catch (const NotImplementedError& e) {
     if (this->comm.is_first()) {
-#ifdef GTEST_SKIP
       GTEST_SKIP() << e.what();
-#else
-      std::cerr << "[  SKIPPED ] " << e.what() << std::endl;
-#endif
     }
   }
 }
@@ -76,11 +72,7 @@ TYPED_TEST_P(InsuranceData, Parallel) {
   }
   catch (const NotImplementedError& e) {
     if (this->comm.is_first()) {
-#ifdef GTEST_SKIP
       GTEST_SKIP() << e.what();
-#else
-      std::cerr << "[  SKIPPED ] " << e.what() << std::endl;
-#endif
     }
   }
 }
@@ -92,11 +84,7 @@ TYPED_TEST_P(MildewData, Parallel) {
   }
   catch (const NotImplementedError& e) {
     if (this->comm.is_first()) {
-#ifdef GTEST_SKIP
       GTEST_SKIP() << e.what();
-#else
-      std::cerr << "[  SKIPPED ] " << e.what() << std::endl;
-#endif
     }
   }
 }
@@ -108,11 +96,7 @@ TYPED_TEST_P(AlarmData, Parallel) {
   }
   catch (const NotImplementedError& e) {
     if (this->comm.is_first()) {
-#ifdef GTEST_SKIP
       GTEST_SKIP() << e.what();
-#else
-      std::cerr << "[  SKIPPED ] " << e.what() << std::endl;
-#endif
     }
   }
 }

@@ -19,32 +19,36 @@ jobs:
     - name: Checkout submodules
       run: |
         git config --global url."https://github.com/".insteadOf "git@github.com:"
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
+        #git submodule update --init --force --recursive --depth=1
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Install dependencies
       if: runner.os == 'Linux'
       run: |
-        sudo add-apt-repository -n -y ppa:jonathonf/gcc-9.2
+        sudo add-apt-repository -n -y ppa:ubuntu-toolchain-r/test
         sudo add-apt-repository -n -y ppa:mhier/libboost-latest
         sudo apt-get update
-        sudo apt-get install -y gcc-9 g++-9 libopenmpi-dev scons libboost1.70-dev
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+        sudo apt-get install -y gcc-10 g++-10 libopenmpi-dev scons libboost1.74-dev
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 60 --slave /usr/bin/g++ g++ /usr/bin/g++-10
         mpic++ --version
 
     - name: Install googletest
       if: runner.os == 'Linux'
       run: |
-        sudo apt-get install -y libgtest-dev
-        cd /usr/src/googletest
-        sudo cmake .
-        sudo make && sudo make install
-        cd -
+        cd ~
+        wget https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+        tar -xzf release-1.10.0.tar.gz
+        cd googletest-release-1.10.0
+        mkdir build && cd build
+        cmake .. -DBUILD_SHARED_LIBS=ON -DINSTALL_GTEST=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr
+        make -j8
+        sudo make install
 
     - name: Build
       run: |
-        scons
+        scons SCRIPTS=0
 
     - name: Sequential Unit tests
       run: |
@@ -53,4 +57,5 @@ jobs:
 
     - name: Parallel Unit tests
       run: |
+        cd test
         mpirun -np 4 ./testramble
