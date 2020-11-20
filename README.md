@@ -81,7 +81,7 @@ This class of algorithms directly finds the PC sets of nodes.
 * `getpc` (_sequential only_) corresponds to the [Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
 
 ## Publication
-**Ankit Srivastava, Sriram Chockalingam, and Srinivas Aluru.** "A Parallel Framework for Constraint-Based Bayesian Network Learning via Markov Blanket Discovery." _Accepted to appear in Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis_, IEEE, 2020.
+[**Ankit Srivastava, Sriram Chockalingam, and Srinivas Aluru.** "A Parallel Framework for Constraint-Based Bayesian Network Learning via Markov Blanket Discovery." _In 2020 SC20: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)_, IEEE Computer Society, 2020.](https://dl.acm.org/doi/abs/10.5555/3433701.3433710)
 
 ## Licensing
 Our code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE)).
