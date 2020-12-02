@@ -209,6 +209,8 @@ def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compar
 
     MAX_TRIES = 5
     dotfile = join(scratch, '%s_%s' % (config[0], config[1]))
+    if undirected:
+        dotfile += '_undirected'
     if bnlearn:
         dotfile += '_bnlearn'
     dotfile += '.dot'
