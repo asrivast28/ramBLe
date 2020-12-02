@@ -136,18 +136,20 @@ template <typename Data, typename Var, typename Set>
  *        for the given target variable.
  *
  * @param target The index of the target variable.
+ * @param correct If the PC needs to be symmetry corrected.
  *
  * @return A set containing the indices of all the variables
  *         in the correct PC set of the target variable.
  */
 const Set&
 ConstraintBasedLearning<Data, Var, Set>::getPC(
-  const Var target
+  const Var target,
+  const bool correct
 ) const
 {
   auto candidates = this->getCandidates(target);
   auto& cpc = this->getCandidatePC_cache(target, std::move(candidates));
-  if (!m_cachedPCSymmetric.at(target)) {
+  if (correct && !m_cachedPCSymmetric.at(target)) {
     this->symmetryCorrectPC(target, cpc);
     m_cachedPCSymmetric[target] = true;
   }
@@ -212,15 +214,17 @@ template <typename Data, typename Var, typename Set>
  * @brief Top level function for getting the MB of the target variable.
  *
  * @param target The index of the target variable.
+ * @param correct If the MB needs to be symmetry corrected.
  */
 const Set&
 ConstraintBasedLearning<Data, Var, Set>::getMB(
-  const Var target
+  const Var target,
+  const bool correct
 ) const
 {
   auto candidates = this->getCandidates(target);
   auto& cmb = this->getCandidateMB_cache(target, std::move(candidates));
-  if (!m_cachedMBSymmetric.at(target)) {
+  if (correct && !m_cachedMBSymmetric.at(target)) {
     this->symmetryCorrectMB(target, cmb);
     m_cachedMBSymmetric[target] = true;
   }
@@ -475,12 +479,12 @@ ConstraintBasedLearning<Data, Var, Set>::colliderPValue(
                               { return (first.size() < second.size()) ? first : second; };
   auto setX = set_init(Set(), this->m_data.numVars());
   setX.insert(x);
-  auto mbY = this->getMB(y);
+  auto mbY = this->getMB(y, false);
   if (mbY.contains(z)) {
     mbY.erase(z);
   }
   mbY.erase(x);
-  auto mbZ = this->getMB(z);
+  auto mbZ = this->getMB(z, false);
   if (mbZ.contains(y)) {
     mbZ.erase(y);
   }

@@ -128,49 +128,26 @@ DirectLearning<Data, Var, Set>::backwardPhase(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief The top level function for getting the candidate MB for the given
- *        target variable, using the PC sets, as per the algorithm proposed
- *        by Pena et al.
+ * @brief The top level function for getting the superset of MB
+ *        for the given variable.
  *
  * @param target The index of the target variable.
- * @param candidates The indices of all the candidate variables.
  *
  * @return A set containing the indices of all the variables
- *         in the MB of the given target variable.
+ *         in the superset of MB of the given target variable.
  */
 Set
 DirectLearning<Data, Var, Set>::getCandidateMB(
   const Var target,
-  Set&& candidates
+  Set&&
 ) const
 {
-  LOG_MESSAGE(info, "Blankets: Getting MB from PC for %s", this->m_data.varName(target));
-  auto cmb = set_init(Set(), this->m_data.numVars());
   const auto& pc = this->getPC(target);
+  auto cmb = pc;
   for (const Var y : pc) {
-    LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)",
-                      this->m_data.varName(y), this->m_data.varName(target));
-    cmb.insert(y);
-    const auto& pcY = this->getPC(y);
-    for (const Var x : pcY) {
-      if ((x != target) && !set_contains(pc, x)) {
-        candidates.erase(x);
-        LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
-        auto ret = this->m_data.maxPValueSubset(target, x, candidates, this->m_maxConditioning);
-        if (this->m_data.isIndependent(ret.first)) {
-          LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
-          auto& z = ret.second;
-          z.insert(y);
-          if (!this->m_data.isIndependent(target, x, z)) {
-            LOG_MESSAGE(info, "+ Adding %s to the MB of %s (spouse)",
-                              this->m_data.varName(x), this->m_data.varName(target));
-            cmb.insert(x);
-          }
-        }
-        candidates.insert(x);
-      }
-    }
+    cmb = set_union(cmb, this->getPC(y));
   }
+  cmb.erase(target);
   return cmb;
 }
 
@@ -299,12 +276,13 @@ template <typename Data, typename Var, typename Set>
  *
  * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
  * @param allNeighbors Contains the PC sets for all the variables.
+ * @param allBlankets Contains a superset of the MB sets for all the variables.
  */
 BayesianNetwork<Var>
 DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   const double imbalanceThreshold,
   std::unordered_map<Var, Set>& allNeighbors,
-  std::unordered_map<Var, Set>&
+  std::unordered_map<Var, Set>& allBlankets
 ) const
 {
   TIMER_START(this->m_tNeighbors);
@@ -340,13 +318,20 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   auto varNames = this->m_data.varNames(this->m_allVars);
   BayesianNetwork<Var> bn(varNames);
   for (const auto x : this->m_allVars) {
+    auto cmbX = allNeighbors.at(x);
     for (const auto y : allNeighbors.at(x)) {
       if (x < y) {
         LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
                        this->m_data.varName(x), this->m_data.varName(y));
         bn.addEdge(x, y, true);
       }
+      cmbX = set_union(cmbX, allNeighbors.at(y));
     }
+    cmbX.erase(x);
+    // XXX: We only need a superset of the MB for every variable
+    // This is required for directing edges later
+    // Therefore, we set the MB of every variable to its two hop neighbors
+    allBlankets[x] = cmbX;
   }
   return bn;
 }

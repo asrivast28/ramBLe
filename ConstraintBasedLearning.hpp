@@ -50,10 +50,10 @@ public:
   ConstraintBasedLearning(const mxx::comm&, const Data&, const Var);
 
   const Set&
-  getPC(const Var) const;
+  getPC(const Var, const bool = true) const;
 
   const Set&
-  getMB(const Var) const;
+  getMB(const Var, const bool = true) const;
 
   std::vector<std::tuple<double, Var, Var, Var>>
   findVStructures(const Var) const;
