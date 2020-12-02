@@ -55,6 +55,12 @@ simulated_datasets = OrderedDict([
     ('s4' , ('data/simulated/n30000_p0.001_m10000_discretized.tsv', 30000, 10000, ' ', True, True, False)),
     ])
 
+dataset_groups = dict([
+    ('small',     small_datasets),
+    ('big',       big_datasets),
+    ('simulated', simulated_datasets),
+    ])
+
 all_datasets = OrderedDict(list(small_datasets.items()) + list(big_datasets.items()) + list(simulated_datasets.items()))
 
 all_algorithms = [
@@ -83,6 +89,23 @@ ppn_mappings = OrderedDict([
 NUM_REPEATS = 5
 
 
+def parse_datasets(args):
+    '''
+    Get datasets to be used for the experiments.
+    '''
+    experiment_datasets = []
+    if args.dataset is None:
+        args.dataset = list(big_datasets.keys())
+    for d in args.dataset:
+        if d in all_datasets:
+            experiment_datasets.append(d)
+        elif d in dataset_groups:
+            experiment_datasets.extend(list(dataset_groups[d].keys()))
+        else:
+            raise RuntimeError('Dataset %s is not recognized' % d)
+    args.dataset = experiment_datasets
+
+
 def parse_args():
     '''
     Parse command line arguments.
@@ -93,7 +116,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Run scaling experiments')
     parser.add_argument('-b', '--basedir', metavar='DIR', type=str, default=realpath(join(expanduser('~'), 'ramBLe')), help='Base directory for running the experiments.')
     parser.add_argument('-s', '--scratch', metavar='DIR', type=str, default=realpath(join(expanduser('~'), 'scratch')), help='Scratch directory, visible to all the nodes.')
-    parser.add_argument('-d', '--dataset', metavar='NAME', type=str, nargs='*', default=list(big_datasets.keys()), help='Datasets to be used.')
+    parser.add_argument('-d', '--dataset', metavar='NAME', type=str, nargs='*', help='Datasets (or groups of datasets) to be used.')
     parser.add_argument('-a', '--algorithm', metavar='NAME', type=str, nargs='*', default=all_algorithms, help='Algorithms to be used.')
     parser.add_argument('-u', '--undirected', action='store_true', help='Flag for generating undirected networks.')
     parser.add_argument('-p', '--process', metavar='P', type=int, nargs='*', default=all_processes, help='Processes to be used.')
@@ -104,6 +127,7 @@ def parse_args():
     parser.add_argument('--suffix', type=str, default='', help='Suffix to add to the executable.')
     parser.add_argument('--weak', metavar='N', type=int, nargs='*', help='Number of variables to be used on each processor.')
     args = parser.parse_args()
+    parse_datasets(args)
     if args.weak is not None and len(args.weak) != len(args.process):
         raise RuntimeError('Number of variables for weak scaling should be the same as the number of processes')
     return args
