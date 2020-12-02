@@ -66,6 +66,29 @@ DirectLearning<Data, Var, Set>::~DirectLearning(
 
 template <typename Data, typename Var, typename Set>
 /**
+ * @brief The top level function for getting and caching
+ *        the candidate PC sets.
+ *
+ * @param target The index of the target variable.
+ * @param candidates The indices of all the candidate variables.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the candidate PC of the given target variable.
+ */
+Set
+DirectLearning<Data, Var, Set>::getCandidatePC(
+  const Var target,
+  Set&& candidates
+) const
+{
+  const auto cpc = this->getCandidatePC_impl(target, std::move(candidates));
+  // Cache the candidate PCs, i.e., the PC sets before symmetry correction
+  m_cachedCandidatePC[target] = cpc;
+  return cpc;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
  * @brief Removes false positives from the given candidate PC set
  *        for the given target variable.
  *
@@ -142,10 +165,14 @@ DirectLearning<Data, Var, Set>::getCandidateMB(
   Set&&
 ) const
 {
-  const auto& pc = this->getPC(target);
-  auto cmb = pc;
-  for (const Var y : pc) {
-    cmb = set_union(cmb, this->getPC(y));
+  // Use the non symmetry corrected PC sets for getting
+  // the superset of MB sets for each variable
+  // XXX: We are assuming that all the PCs would have
+  //      already been learned by the time this gets called
+  const auto& cpc = m_cachedCandidatePC.at(target);
+  auto cmb = cpc;
+  for (const Var y : cpc) {
+    cmb = set_union(cmb, m_cachedCandidatePC.at(y));
   }
   cmb.erase(target);
   return cmb;
@@ -276,13 +303,12 @@ template <typename Data, typename Var, typename Set>
  *
  * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
  * @param allNeighbors Contains the PC sets for all the variables.
- * @param allBlankets Contains a superset of the MB sets for all the variables.
  */
 BayesianNetwork<Var>
 DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   const double imbalanceThreshold,
   std::unordered_map<Var, Set>& allNeighbors,
-  std::unordered_map<Var, Set>& allBlankets
+  std::unordered_map<Var, Set>&
 ) const
 {
   TIMER_START(this->m_tNeighbors);
@@ -292,6 +318,7 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   // Remember all the local MB ordered pairs
   std::set<std::pair<Var, Var>> myAdded;
   this->forwardBackward(std::move(myPV), myNeighbors, myAdded, imbalanceThreshold);
+  m_cachedCandidatePC = myNeighbors;
 
   /* Symmetry correction */
   this->m_comm.barrier();
@@ -304,6 +331,10 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   TIMER_START(this->m_tNeighbors);
   for (const auto x : this->m_allVars) {
     allNeighbors[x] = set_init(Set(), this->m_data.numVars());
+    // Initialize candidate sets for all the missing variables on this process
+    if (m_cachedCandidatePC.find(x) == m_cachedCandidatePC.end()) {
+      m_cachedCandidatePC[x] = set_init(Set(), this->m_data.numVars());
+    }
   }
   for (const auto& p : myPairs) {
     allNeighbors[p.first].insert(p.second);
@@ -311,6 +342,7 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   }
   // Sync all the neighbors across all the processors
   TIMER_START(this->m_tSync);
+  this->syncSets(m_cachedCandidatePC);
   this->syncSets(allNeighbors);
   TIMER_PAUSE(this->m_tSync);
 
@@ -318,20 +350,13 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   auto varNames = this->m_data.varNames(this->m_allVars);
   BayesianNetwork<Var> bn(varNames);
   for (const auto x : this->m_allVars) {
-    auto cmbX = allNeighbors.at(x);
     for (const auto y : allNeighbors.at(x)) {
       if (x < y) {
         LOG_MESSAGE_IF(this->m_comm.is_first(), info, "+ Adding the edge %s <-> %s",
                        this->m_data.varName(x), this->m_data.varName(y));
         bn.addEdge(x, y, true);
       }
-      cmbX = set_union(cmbX, allNeighbors.at(y));
     }
-    cmbX.erase(x);
-    // XXX: We only need a superset of the MB for every variable
-    // This is required for directing edges later
-    // Therefore, we set the MB of every variable to its two hop neighbors
-    allBlankets[x] = cmbX;
   }
   return bn;
 }
@@ -347,7 +372,7 @@ MMPC<Data, Var, Set>::MMPC(
 
 template <typename Data, typename Var, typename Set>
 Set
-MMPC<Data, Var, Set>::getCandidatePC(
+MMPC<Data, Var, Set>::getCandidatePC_impl(
   const Var target,
   Set&& candidates
 ) const
@@ -475,7 +500,7 @@ HITON<Data, Var, Set>::HITON(
 
 template <typename Data, typename Var, typename Set>
 Set
-HITON<Data, Var, Set>::getCandidatePC(
+HITON<Data, Var, Set>::getCandidatePC_impl(
   const Var target,
   Set&& candidates
 ) const
@@ -530,7 +555,7 @@ SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
 
 template <typename Data, typename Var, typename Set>
 Set
-SemiInterleavedHITON<Data, Var, Set>::getCandidatePC(
+SemiInterleavedHITON<Data, Var, Set>::getCandidatePC_impl(
   const Var target,
   Set&& candidates
 ) const
@@ -665,7 +690,7 @@ GetPC<Data, Var, Set>::GetPC(
 
 template <typename Data, typename Var, typename Set>
 Set
-GetPC<Data, Var, Set>::getCandidatePC(
+GetPC<Data, Var, Set>::getCandidatePC_impl(
   const Var target,
   Set&& candidates
 ) const

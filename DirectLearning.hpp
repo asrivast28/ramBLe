@@ -35,16 +35,17 @@ class DirectLearning : public ConstraintBasedLearning<Data, Var, Set> {
 public:
   DirectLearning(const mxx::comm&, const Data&, const Var);
 
-  Set
-  removeFalsePC(const Var, Set&) const;
-
-  Set
-  getCandidateMB(const Var, Set&&) const override;
-
   virtual
   ~DirectLearning();
 
 protected:
+  Set
+  removeFalsePC(const Var, Set&) const;
+
+  virtual
+  Set
+  getCandidatePC_impl(const Var, Set&&) const = 0;
+
   void
   updateMaxPValues(const Var, std::vector<std::pair<double, Var>>&, const Set&, const Set&) const;
 
@@ -63,6 +64,12 @@ protected:
   forwardBackward(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const { };
 
 private:
+  Set
+  getCandidatePC(const Var, Set&&) const override;
+
+  Set
+  getCandidateMB(const Var, Set&&) const override;
+
   BayesianNetwork<Var>
   getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
 
@@ -73,6 +80,9 @@ protected:
   TIMER_DECLARE(m_tSymmetry, mutable);
   TIMER_DECLARE(m_tSync, mutable);
   TIMER_DECLARE(m_tNeighbors, mutable);
+
+private:
+  mutable std::unordered_map<Var, Set> m_cachedCandidatePC;
 }; // class DirectLearning
 
 
@@ -89,10 +99,10 @@ class MMPC : public DirectLearning<Data, Var, Set> {
 public:
   MMPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
-  Set
-  getCandidatePC(const Var, Set&&) const override;
-
 private:
+  Set
+  getCandidatePC_impl(const Var, Set&&) const override;
+
   void
   forwardBackward(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;
 }; // class MMPC
@@ -112,7 +122,7 @@ public:
 
 private:
   Set
-  getCandidatePC(const Var, Set&&) const override;
+  getCandidatePC_impl(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
   getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
@@ -133,7 +143,7 @@ public:
 
 private:
   Set
-  getCandidatePC(const Var, Set&&) const override;
+  getCandidatePC_impl(const Var, Set&&) const override;
 
   void
   forwardBackward(std::vector<std::tuple<Var, Var, double>>&&, std::unordered_map<Var, Set>&, std::set<std::pair<Var, Var>>&, const double) const override;
@@ -154,7 +164,7 @@ public:
 
 private:
   Set
-  getCandidatePC(const Var, Set&&) const override;
+  getCandidatePC_impl(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
   getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;

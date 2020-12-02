@@ -187,23 +187,15 @@ TYPED_TEST(AsiaDirectLearning, ParentsChildren) {
 TYPED_TEST(AsiaDirectLearning, DirectedNetwork) {
   auto computedBN = this->algo->getNetwork(true, false);
 
-  auto smoke = this->data->varIndex("smoke");
-  auto tub = this->data->varIndex("tub");
-  auto lung = this->data->varIndex("lung");
-  auto bronc = this->data->varIndex("bronc");
-  auto either = this->data->varIndex("either");
-  auto dysp = this->data->varIndex("dysp");
-
   auto expectedBN = BayesianNetwork<uint8_t>(this->data->varNames());
-  expectedBN.addEdge(smoke, lung);
-  expectedBN.addEdge(smoke, bronc);
-  expectedBN.addEdge(tub, either);
-  expectedBN.addEdge(lung, smoke);
-  expectedBN.addEdge(lung, either);
+  expectedBN.addEdge(this->data->varIndex("smoke"), this->data->varIndex("lung"), true);
+  expectedBN.addEdge(this->data->varIndex("smoke"), this->data->varIndex("bronc"), true);
+  expectedBN.addEdge(this->data->varIndex("tub"), this->data->varIndex("either"), false);
+  expectedBN.addEdge(this->data->varIndex("lung"), this->data->varIndex("either"), false);
   // Check for false positives
   EXPECT_NE(expectedBN, computedBN);
 
-  expectedBN.addEdge(dysp, bronc);
+  expectedBN.addEdge(this->data->varIndex("bronc"), this->data->varIndex("dysp"), true);
   EXPECT_EQ(expectedBN, computedBN);
 }
 

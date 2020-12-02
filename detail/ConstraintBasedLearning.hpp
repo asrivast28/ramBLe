@@ -562,9 +562,11 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold, m_cachedPC, m_cachedMB) : this->getSkeleton_sequential();
   if (isParallel) {
     // Parallel skeleton returns symmetry corrected sets
-    for (const auto x : m_allVars) {
-      m_cachedMBSymmetric[x] = true;
-      m_cachedPCSymmetric[x] = true;
+    for (const auto x : m_cachedPC) {
+      m_cachedPCSymmetric[x.first] = true;
+    }
+    for (const auto x : m_cachedMB) {
+      m_cachedMBSymmetric[x.first] = true;
     }
   }
   if (directEdges) {

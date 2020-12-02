@@ -45,6 +45,7 @@ protected:
 
   void
   TearDown() override {
+    delete expected;
     delete algo;
     delete data;
   }
@@ -75,6 +76,7 @@ protected:
 
   void
   TearDown() override {
+    delete expected;
     delete algo;
     delete data;
   }
@@ -105,6 +107,7 @@ protected:
 
   void
   TearDown() override {
+    delete expected;
     delete algo;
     delete data;
   }
@@ -135,6 +138,7 @@ protected:
 
   void
   TearDown() override {
+    delete expected;
     delete algo;
     delete data;
   }
