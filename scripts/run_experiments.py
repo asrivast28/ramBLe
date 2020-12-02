@@ -183,7 +183,7 @@ def parse_runtimes(output):
 def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compare):
     import subprocess
 
-    MAX_RETRIES = 1
+    MAX_TRIES = 5
     runtimes = []
     dotfile = join(scratch, '%s_%s' % (config[0], config[1]))
     if bnlearn:
@@ -201,7 +201,7 @@ def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compar
             print(output)
         except subprocess.CalledProcessError:
             t += 1
-            if t == MAX_RETRIES:
+            if t == MAX_TRIES:
                 raise
             print('Run failed. Retrying.')
             continue
