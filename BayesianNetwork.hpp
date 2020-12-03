@@ -65,7 +65,7 @@ public:
   applyMeekRules();
 
   void
-  writeGraphviz(const std::string&, const bool) const;
+  writeGraphviz(const std::string&) const;
 
   ~BayesianNetwork() { }
 

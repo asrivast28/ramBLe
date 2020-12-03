@@ -400,15 +400,21 @@ template <typename Var>
  * @brief Top level function for writing the network in graphviz format.
  *
  * @param fileName Name of the file to which the network should be written.
- * @param directed Specify if the network should be written as a directed network.
  */
 void
 BayesianNetwork<Var>::writeGraphviz(
-  const std::string& fileName,
-  const bool directed
+  const std::string& fileName
 ) const
 {
   std::ofstream out(fileName);
+  // Check if there are any directed edges in the graph
+  // If not, write the graph as an undirected graph
+  auto directed = false;
+  for (const auto e : m_directed.edges()) {
+    std::ignore = e;
+    directed = true;
+    break;
+  }
   out << (directed ? "digraph" : "graph") << " {" << std::endl;
   for (const auto v : this->vertices()) {
     out << "  ";
