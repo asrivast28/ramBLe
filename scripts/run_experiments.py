@@ -208,7 +208,6 @@ def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compar
     import subprocess
 
     MAX_TRIES = 5
-    runtimes = []
     dotfile = join(scratch, '%s_%s' % (config[0], config[1]))
     if bnlearn:
         dotfile += '_bnlearn'
@@ -237,9 +236,8 @@ def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compar
             sys.stdout.flush()
             compare_args = [join(basedir, 'scripts', 'compare_dot'), outfile, dotfile]
             subprocess.check_call(' '.join(compare_args), shell=True)
-        runtimes.append(parse_runtimes(output))
+        yield parse_runtimes(output)
         r += 1
-    return runtimes
 
 
 def get_weak_scaling_datasets(basedir, datasets, weak, scratch):
