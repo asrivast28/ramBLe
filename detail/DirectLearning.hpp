@@ -379,6 +379,7 @@ MMPC<Data, Var, Set>::getCandidatePC_impl(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "MMPC: Getting PC for %s", this->m_data.varName(target));
+  TIMER_START(this->m_tForward);
   std::vector<std::pair<double, Var>> maxPValues(candidates.size());
   std::transform(candidates.begin(), candidates.end(), maxPValues.begin(),
                  [] (const Var y) { return std::make_pair(0.0, y); });
@@ -400,8 +401,11 @@ MMPC<Data, Var, Set>::getCandidatePC_impl(
     cpc.insert(x);
     setNext.erase(x);
   }
+  TIMER_PAUSE(this->m_tForward);
   // Remove false positives from the candidate PC
+  TIMER_START(this->m_tBackward);
   this->removeFalsePC(target, cpc);
+  TIMER_PAUSE(this->m_tBackward);
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
 }
@@ -562,28 +566,37 @@ SemiInterleavedHITON<Data, Var, Set>::getCandidatePC_impl(
 {
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   LOG_MESSAGE(info, "SI-HITON-PC: Getting PC for %s", this->m_data.varName(target));
+  TIMER_START(this->m_tForward);
   std::vector<std::pair<double, Var>> maxPValues(candidates.size());
   std::transform(candidates.begin(), candidates.end(), maxPValues.begin(),
                  [] (const Var y) { return std::make_pair(0.0, y); });
-  auto setEmpty = set_init(Set(), this->m_data.numVars());
+  auto setNext = set_init(Set(), this->m_data.numVars());
   auto cpc = set_init(Set(), this->m_data.numVars());
-  this->updateMaxPValues(target, maxPValues, cpc, setEmpty);
-  // Sort the maxPValues array before iterating over it
+  this->updateMaxPValues(target, maxPValues, cpc, setNext);
+  // Sort the maxPValues array before iterating over it since we want to
+  // consider the variables in the ascending order of marginal p-value with
+  // the target as a proxy for decreasing associativity
   std::sort(maxPValues.begin(), maxPValues.end());
-  for (const auto& mpv : maxPValues) {
-    // Choose the variables in the ascending order of marginal p-value with the target
-    // as a proxy for decreasing associativity
-    auto x = mpv.second;
-    LOG_MESSAGE(debug, "SI-HITON-PC: %s chosen as the best candidate", this->m_data.varName(x));
-    if (!this->m_data.isIndependentAnySubset(target, x, cpc, this->m_maxConditioning)) {
-      // Add the variable to the candidate PC
-      LOG_MESSAGE(info, "+ Adding %s to the candidate PC of %s (p-value = %g)",
-                        this->m_data.varName(x), this->m_data.varName(target), mpv.first);
-      cpc.insert(x);
-    }
+  while (!maxPValues.empty()) {
+    // Choose the first variable which is dependent on the target,
+    // given any subset of the current candidate PC
+    auto mpv = maxPValues.begin();
+    auto x = mpv->second;
+    // Add the variable to the candidate PC
+    LOG_MESSAGE(info, "+ Adding %s to the candidate PC of %s (p-value = %g)",
+                      this->m_data.varName(x), this->m_data.varName(target), mpv->first);
+    setNext.insert(x);
+    // Erase the selected element
+    maxPValues.erase(mpv);
+    this->updateMaxPValues(target, maxPValues, cpc, setNext);
+    cpc.insert(x);
+    setNext.erase(x);
   }
+  TIMER_PAUSE(this->m_tForward);
   // Remove false positives from the candidate PC
+  TIMER_START(this->m_tBackward);
   this->removeFalsePC(target, cpc);
+  TIMER_PAUSE(this->m_tBackward);
   LOG_MESSAGE(info, "%s", std::string(60, '-'));
   return cpc;
 }
