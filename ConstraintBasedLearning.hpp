@@ -51,9 +51,11 @@ class ConstraintBasedLearning {
 public:
   ConstraintBasedLearning(const mxx::comm&, const Data&, const Var);
 
+  virtual
   const Set&
   getPC(const Var) const = 0;
 
+  virtual
   const Set&
   getMB(const Var) const = 0;
 

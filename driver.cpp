@@ -22,6 +22,7 @@
 #include "BlanketLearning.hpp"
 #include "DirectLearning.hpp"
 #include "DiscreteData.hpp"
+#include "GlobalLearning.hpp"
 #include "ProgramOptions.hpp"
 #include "UintSet.hpp"
 
@@ -90,6 +91,10 @@ getAlgorithm(
     return std::make_unique<GetPC<Data, Var, Set>>(comm, data, maxConditioning);
   }
   ss << ",getpc";
+  if (algoName.compare("pc.stable") == 0) {
+    return std::make_unique<PCStable<Data, Var, Set>>(comm, data, maxConditioning);
+  }
+  ss << ",pc.stable";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
   return std::unique_ptr<ConstraintBasedLearning<Data, Var, Set>>();
 }

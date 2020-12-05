@@ -157,5 +157,6 @@ protected:
 #include "HITONNetworks.hpp"
 #include "SemiInterleavedHITONNetworks.hpp"
 #include "GetPCNetworks.hpp"
+#include "PCStableNetworks.hpp"
 
 #endif // TEST_NETWORKDATA_HPP_

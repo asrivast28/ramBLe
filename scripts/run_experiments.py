@@ -71,6 +71,7 @@ all_algorithms = [
     'hiton',
     'si.hiton.pc',
     'getpc',
+    'pc.stable',
     ]
 
 all_processes = [

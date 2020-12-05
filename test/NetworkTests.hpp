@@ -22,6 +22,7 @@
 
 #include "BlanketLearning.hpp"
 #include "DirectLearning.hpp"
+#include "GlobalLearning.hpp"
 #include "NetworkData.hpp"
 
 
@@ -114,7 +115,8 @@ using LearningAlgorithms = testing::Types<GS<DiscreteData<Counter, uint8_t>, uin
                                           MMPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
                                           HITON<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
                                           SemiInterleavedHITON<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
-                                          GetPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
+                                          GetPC<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>,
+                                          PCStable<DiscreteData<Counter, uint8_t>, uint8_t, UintSet<uint8_t>>>;
 
 // Instantiate all the type-parameterized tests for the learning algorithms
 INSTANTIATE_TYPED_TEST_CASE_P(Network, ChildData, LearningAlgorithms);

@@ -67,18 +67,25 @@ Please execute the following for more information on all the options that the ex
 ## Algorithms
 The algorithm for learning BNs can be chosen by specifying the desired algorithm as an option to the executable, using `-a` option. The currently supported algorithms are listed below.
 
-### Blanket Learning
+### Local-to-Global Learning
+The algorithms in this category first learn the local neighborhood of each variable separately and then combine these neighborhoods to get the complete network.
+
+#### Blanket Learning
 This class of algorithms first finds the Markov blanket (MB) of the variable to get the parents and the children (PC).
 * `gs` corresponds to the [Grow-Shrink (GS)](https://papers.nips.cc/paper/1685-bayesian-network-induction-via-local-neighborhoods) algorithm by Margaritis & Thrun.
 * `iamb` corresponds to the [Incremental Association MB (IAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) algorithm by Tsamardinos et al.
 * `inter.iamb` corresponds to the [Interleaved Incremental Association MB (InterIAMB)](https://www.aaai.org/Library/FLAIRS/2003/flairs03-073.php) by Tsamardinos et al.
 
-### Direct Learning
+#### Direct Learning
 This class of algorithms directly finds the PC sets of nodes.
 * `mmpc` corresponds to the [Max-Min PC (MMPC)](https://link.springer.com/article/10.1007/s10994-006-6889-7) algorithm by Tsamardinos et al. and corrected by Pena et al.
 * `si.hiton.pc` corresponds to the [Semi-interleaved HITON-PC](http://www.jmlr.org/papers/v11/aliferis10a.html) algorithm by Aliferis et al.
 * `hiton` (_sequential only_) corresponds to the [HITON-PC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1480117/) algorithm by Aliferis et al. and corrected by Pena et al.
 * `getpc` (_sequential only_) corresponds to the [Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
+
+### Global Learning
+This class of algorithms learn the network directly by iteratively eliminating edges between variables which are found to be independent.
+* `pc.stable` (_sequential only_) corresponds to the [PC-stable](https://www.jmlr.org/papers/v15/colombo14a.html) algorithm by Colombo et al.
 
 ## Publication
 [**Ankit Srivastava, Sriram Chockalingam, and Srinivas Aluru.** "A Parallel Framework for Constraint-Based Bayesian Network Learning via Markov Blanket Discovery." _In 2020 SC20: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)_, IEEE Computer Society, 2020.](https://dl.acm.org/doi/abs/10.5555/3433701.3433710)
