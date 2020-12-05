@@ -272,6 +272,9 @@ DiscreteData<Counter, Var>::maxPValue(
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       maxPV = std::max(thisPV, maxPV);
+      if (this->isIndependent(maxPV)) {
+        break;
+      }
     }
   }
   LOG_MESSAGE(debug, "max p-value = %g", maxPV);
@@ -311,6 +314,9 @@ DiscreteData<Counter, Var>::maxPValue(
         condition = set_union(condition, seed);
         auto thisPV = this->pValue(x, y, condition);
         maxPV = std::max(thisPV, maxPV);
+        if (this->isIndependent(maxPV)) {
+          break;
+        }
       }
     }
   }
@@ -349,6 +355,9 @@ DiscreteData<Counter, Var>::maxPValueSubset(
       if (std::isgreater(thisPV, maxPV)) {
         maxPV = thisPV;
         z = condition;
+      }
+      if (this->isIndependent(maxPV)) {
+        break;
       }
     }
   }
