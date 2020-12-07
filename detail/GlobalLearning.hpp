@@ -23,9 +23,6 @@
 #include "../SetUtils.hpp"
 
 #include "utils/Logging.hpp"
-#include "../prettyprint.hpp"
-
-#include <algorithm>
 
 
 template <typename Data, typename Var, typename Set>
