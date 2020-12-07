@@ -79,7 +79,7 @@ public:
 
   template <template <typename...> class SetType, typename... Args>
   double
-  maxPValue(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
+  maxPValue(const Var, const Var, const SetType<Var, Args...>&, const Var, const Var = 0u) const;
 
   template <template <typename...> class SetType, typename... Args>
   double
@@ -87,11 +87,11 @@ public:
 
   template <template <typename...> class SetType, typename... Args>
   std::pair<double, SetType<Var, Args...>>
-  maxPValueSubset(const Var, const Var, const SetType<Var, Args...>&, const Var) const;
+  maxPValueSubset(const Var, const Var, const SetType<Var, Args...>&, const Var, const Var = 0u) const;
 
   template <typename Set>
   bool
-  isIndependentAnySubset(const Var, const Var, const Set&, const Var) const;
+  isIndependentAnySubset(const Var, const Var, const Set&, const Var, const Var = 0u) const;
 
   template <template <typename...> class SetType, typename... Args>
   bool

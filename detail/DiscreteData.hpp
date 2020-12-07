@@ -254,6 +254,7 @@ template <typename Counter, typename Var>
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  * @param maxSize The maximum size of the subset to be tested.
+ * @param minSize The minimum size of the subset to be tested.
  *
  * @return The computed maximum p-value.
  */
@@ -263,12 +264,13 @@ DiscreteData<Counter, Var>::maxPValue(
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
-  const Var maxSize
+  const Var maxSize,
+  const Var minSize
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
-  for (auto i = 0u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
+  for (auto i = minSize; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       maxPV = std::max(thisPV, maxPV);
@@ -334,6 +336,7 @@ template <typename Counter, typename Var>
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  * @param maxSize The maximum size of the subset to be tested.
+ * @param minSize The minimum size of the subset to be tested.
  *
  * @return A pair with the computed maximum p-value and the corresponding subset.
  */
@@ -343,13 +346,14 @@ DiscreteData<Counter, Var>::maxPValueSubset(
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
-  const Var maxSize
+  const Var maxSize,
+  const Var minSize
 ) const
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
   auto z = set_init(SetType<Var, Args...>(), numVars());
-  for (auto i = 0u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
+  for (auto i = minSize; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       if (std::isgreater(thisPV, maxPV)) {
@@ -375,6 +379,7 @@ template <typename Counter, typename Var>
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  * @param maxSize The maximum size of the subset to be tested.
+ * @param minSize The minimum size of the subset to be tested.
  */
 template <typename Set>
 bool
@@ -382,10 +387,11 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var x,
   const Var y,
   const Set& given,
-  const Var maxSize
+  const Var maxSize,
+  const Var minSize
 ) const
 {
-  auto maxPV = this->maxPValue(x, y, given, maxSize);
+  auto maxPV = this->maxPValue(x, y, given, maxSize, minSize);
   return this->isIndependent(maxPV);
 }
 
