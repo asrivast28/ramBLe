@@ -20,7 +20,7 @@
 #ifndef DIRECTLEARNING_HPP_
 #define DIRECTLEARNING_HPP_
 
-#include "ConstraintBasedLearning.hpp"
+#include "LocalLearning.hpp"
 
 
 /**
@@ -31,7 +31,7 @@
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class DirectLearning : public ConstraintBasedLearning<Data, Var, Set> {
+class DirectLearning : public LocalLearning<Data, Var, Set> {
 public:
   DirectLearning(const mxx::comm&, const Data&, const Var);
 
@@ -68,10 +68,16 @@ private:
   getCandidatePC(const Var, Set&&) const override;
 
   Set
+  getMBSuperset(const Var) const;
+
+  Set
   getCandidateMB(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
+  getSkeleton_parallel(const double) const override;
+
+  std::pair<bool, double>
+  checkCollider(const Var, const Var, const Var) const override;
 
 protected:
   TIMER_DECLARE(m_tForward, mutable);
@@ -125,7 +131,7 @@ private:
   getCandidatePC_impl(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
+  getSkeleton_parallel(const double) const override;
 }; // class HITON
 
 /**
@@ -167,7 +173,7 @@ private:
   getCandidatePC_impl(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
+  getSkeleton_parallel(const double) const override;
 }; // class GetPC
 
 #include "detail/DirectLearning.hpp"

@@ -20,7 +20,7 @@
 #ifndef BLANKETLEARNING_HPP_
 #define BLANKETLEARNING_HPP_
 
-#include "ConstraintBasedLearning.hpp"
+#include "LocalLearning.hpp"
 
 #include "utils/Timer.hpp"
 
@@ -33,7 +33,7 @@
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class BlanketLearning : public ConstraintBasedLearning<Data, Var, Set> {
+class BlanketLearning : public LocalLearning<Data, Var, Set> {
 public:
   BlanketLearning(const mxx::comm&, const Data&, const Var);
 
@@ -70,7 +70,10 @@ private:
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const override;
+  getSkeleton_parallel(const double) const override;
+
+  std::pair<bool, double>
+  checkCollider(const Var, const Var, const Var) const override;
 
 protected:
   TIMER_DECLARE(m_tGrow, mutable);

@@ -37,7 +37,8 @@ DirectLearning<Data, Var, Set>::DirectLearning(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : LocalLearning<Data, Var, Set>(comm, data, maxConditioning),
+    m_cachedCandidatePC()
 {
   TIMER_RESET(m_tForward);
   TIMER_RESET(m_tBackward);
@@ -147,35 +148,6 @@ DirectLearning<Data, Var, Set>::backwardPhase(
     }
   }
   return removed;
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief The top level function for getting the superset of MB
- *        for the given variable.
- *
- * @param target The index of the target variable.
- *
- * @return A set containing the indices of all the variables
- *         in the superset of MB of the given target variable.
- */
-Set
-DirectLearning<Data, Var, Set>::getCandidateMB(
-  const Var target,
-  Set&&
-) const
-{
-  // Use the non symmetry corrected PC sets for getting
-  // the superset of MB sets for each variable
-  // XXX: We are assuming that all the PCs would have
-  //      already been learned by the time this gets called
-  const auto& cpc = m_cachedCandidatePC.at(target);
-  auto cmb = cpc;
-  for (const Var y : cpc) {
-    cmb = set_union(cmb, m_cachedCandidatePC.at(y));
-  }
-  cmb.erase(target);
-  return cmb;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -302,13 +274,10 @@ template <typename Data, typename Var, typename Set>
  * @brief Function for getting the undirected skeleton network in parallel.
  *
  * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
- * @param allNeighbors Contains the PC sets for all the variables.
  */
 BayesianNetwork<Var>
 DirectLearning<Data, Var, Set>::getSkeleton_parallel(
-  const double imbalanceThreshold,
-  std::unordered_map<Var, Set>& allNeighbors,
-  std::unordered_map<Var, Set>&
+  const double imbalanceThreshold
 ) const
 {
   TIMER_START(this->m_tNeighbors);
@@ -329,6 +298,7 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
   /* End of Symmetry Correction */
 
   TIMER_START(this->m_tNeighbors);
+  decltype(this->m_cachedPC) allNeighbors;
   for (const auto x : this->m_allVars) {
     allNeighbors[x] = set_init(Set(), this->m_data.numVars());
     // Initialize candidate sets for all the missing variables on this process
@@ -358,7 +328,124 @@ DirectLearning<Data, Var, Set>::getSkeleton_parallel(
       }
     }
   }
+  // Correctly set the cached version of all the PC sets
+  // All the sets have been symmetry corrected
+  for (const auto x : allNeighbors) {
+    this->m_cachedPCSymmetric[x.first] = true;
+  }
+  this->m_cachedPC = std::move(allNeighbors);
   return bn;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief The top level function for getting the superset of MB
+ *        for the given variable.
+ *
+ * @param target The index of the target variable.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the superset of MB of the given target variable.
+ */
+Set
+DirectLearning<Data, Var, Set>::getMBSuperset(
+  const Var target
+) const
+{
+  // Use the non symmetry corrected PC sets for getting
+  // the superset of MB sets for each variable
+  // XXX: We are assuming that all the PCs would have
+  //      already been learned by the time this gets called
+  const auto& cpc = m_cachedCandidatePC.at(target);
+  auto cmb = cpc;
+  for (const Var y : cpc) {
+    cmb = set_union(cmb, m_cachedCandidatePC.at(y));
+  }
+  cmb.erase(target);
+  return cmb;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief The top level function for getting the MB for the given
+ *        target variable, using the PC sets, as per the algorithm proposed
+ *        by Pena et al.
+ *
+ * @param target The index of the target variable.
+ *
+ * @return A set containing the indices of all the variables
+ *         in the MB of the given target variable.
+ */
+Set
+DirectLearning<Data, Var, Set>::getCandidateMB(
+  const Var target,
+  Set&& candidates
+) const
+{
+  LOG_MESSAGE(info, "Blankets: Getting MB from PC for %s", this->m_data.varName(target));
+  // Start with the superset of MB of the target,
+  // if it is available
+  if (m_cachedCandidatePC.find(target) != m_cachedCandidatePC.end()) {
+    candidates = this->getMBSuperset(target);
+  }
+  auto cmb = set_init(Set(), this->m_data.numVars());
+  const auto& pc = this->getPC(target);
+  for (const Var y : pc) {
+    LOG_MESSAGE(info, "+ Adding %s to the MB of %s (parent/child)",
+                      this->m_data.varName(y), this->m_data.varName(target));
+    cmb.insert(y);
+    const auto& pcY = this->getPC(y);
+    for (const Var x : pcY) {
+      if ((x != target) && !set_contains(pc, x)) {
+        candidates.erase(x);
+        LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
+        auto ret = this->m_data.maxPValueSubset(target, x, candidates, this->m_maxConditioning);
+        if (this->m_data.isIndependent(ret.first)) {
+          LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
+          auto& z = ret.second;
+          z.insert(y);
+          if (!this->m_data.isIndependent(target, x, z)) {
+            LOG_MESSAGE(info, "+ Adding %s to the MB of %s (spouse)",
+                              this->m_data.varName(x), this->m_data.varName(target));
+            cmb.insert(x);
+          }
+        }
+        candidates.insert(x);
+      }
+    }
+  }
+  return cmb;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Checks if the given v-structure (y-x-z) is a collider.
+ *        Also returns the p-value for the collider.
+ */
+std::pair<bool, double>
+DirectLearning<Data, Var, Set>::checkCollider(
+  const Var y,
+  const Var x,
+  const Var z
+) const
+{
+  static auto smallerSet = [] (const Set& first, const Set& second) -> const auto&
+                              { return (first.size() < second.size()) ? first : second; };
+  auto setX = set_init(Set(), this->m_data.numVars());
+  setX.insert(x);
+  auto mbY = this->getMBSuperset(y);
+  if (mbY.contains(z)) {
+    mbY.erase(z);
+  }
+  mbY.erase(x);
+  auto mbZ = this->getMBSuperset(z);
+  if (mbZ.contains(y)) {
+    mbZ.erase(y);
+  }
+  mbZ.erase(x);
+  auto pv = this->m_data.maxPValue(y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
+  auto collider = !this->m_data.isIndependent(pv);
+  return std::make_pair(collider, pv);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -539,9 +626,7 @@ HITON<Data, Var, Set>::getCandidatePC_impl(
 template <typename Data, typename Var, typename Set>
 BayesianNetwork<Var>
 HITON<Data, Var, Set>::getSkeleton_parallel(
-  const double,
-  std::unordered_map<Var, Set>&,
-  std::unordered_map<Var, Set>&
+  const double
 ) const
 {
   throw NotImplementedError("HITON: Parallel algorithm is not implemented yet");
@@ -759,9 +844,7 @@ GetPC<Data, Var, Set>::getCandidatePC_impl(
 template <typename Data, typename Var, typename Set>
 BayesianNetwork<Var>
 GetPC<Data, Var, Set>::getSkeleton_parallel(
-  const double,
-  std::unordered_map<Var, Set>&,
-  std::unordered_map<Var, Set>&
+  const double
 ) const
 {
   throw NotImplementedError("GetPC: Parallel algorithm is not implemented yet");

@@ -39,6 +39,8 @@ public:
 
 /**
  * @brief Abstract base class for causal discovery using constraint-based learning.
+ *        All the constraint-based learning algorithm implementations should be a
+ *        descendant of this class.
  *
  * @tparam Data Type of the object which is used for querying the data.
  * @tparam Var Type of variable indices (expected to be an integer type).
@@ -50,19 +52,16 @@ public:
   ConstraintBasedLearning(const mxx::comm&, const Data&, const Var);
 
   const Set&
-  getPC(const Var, const bool = true) const;
+  getPC(const Var) const = 0;
 
   const Set&
-  getMB(const Var, const bool = true) const;
+  getMB(const Var) const = 0;
 
   std::vector<std::tuple<double, Var, Var, Var>>
   findVStructures(const Var) const;
 
   BayesianNetwork<Var>
   getNetwork(const bool, const bool, const double = 0.0) const;
-
-  void
-  clearCache() const;
 
   virtual
   ~ConstraintBasedLearning() { }
@@ -72,22 +71,8 @@ protected:
   getCandidates(const Var) const;
 
   virtual
-  Set
-  getCandidatePC(const Var, Set&&) const = 0;
-
-  virtual
-  Set
-  getCandidateMB(const Var, Set&&) const = 0;
-
-  virtual
   BayesianNetwork<Var>
-  getSkeleton_sequential() const;
-
-  void
-  parallelInitialize(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
-
-  std::vector<std::pair<Var, Var>>
-  symmetryCorrect(const std::unordered_map<Var, Set>&&, const std::set<std::pair<Var, Var>>&&) const;
+  getSkeleton_sequential() const = 0;
 
   void
   syncSets(std::unordered_map<Var, Set>&) const;
@@ -100,24 +85,13 @@ protected:
 
   virtual
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const = 0;
+  getSkeleton_parallel(const double) const = 0;
+
+  virtual
+  std::pair<bool, double>
+  checkCollider(const Var, const Var, const Var) const = 0;
 
 private:
-  Set&
-  getCandidatePC_cache(const Var, Set&&) const;
-
-  void
-  symmetryCorrectPC(const Var, Set&) const;
-
-  Set&
-  getCandidateMB_cache(const Var, Set&&) const;
-
-  void
-  symmetryCorrectMB(const Var, Set&) const;
-
-  double
-  colliderPValue(const Var, const Var, const Var) const;
-
   std::vector<std::tuple<double, Var, Var, Var>>
   findVStructures() const;
 
@@ -126,12 +100,6 @@ protected:
   const Data m_data;
   Set m_allVars;
   const Var m_maxConditioning;
-
-private:
-  mutable std::unordered_map<Var, Set> m_cachedPC;
-  mutable std::unordered_map<Var, Set> m_cachedMB;
-  mutable std::unordered_map<Var, bool> m_cachedPCSymmetric;
-  mutable std::unordered_map<Var, bool> m_cachedMBSymmetric;
 }; // class ConstraintBasedLearning
 
 #include "detail/ConstraintBasedLearning.hpp"

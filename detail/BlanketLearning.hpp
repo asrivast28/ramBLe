@@ -37,7 +37,7 @@ BlanketLearning<Data, Var, Set>::BlanketLearning(
   const mxx::comm& comm,
   const Data& data,
   const Var maxConditioning
-) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : LocalLearning<Data, Var, Set>(comm, data, maxConditioning)
 {
   TIMER_RESET(m_tGrow);
   TIMER_RESET(m_tShrink);
@@ -352,14 +352,10 @@ template <typename Data, typename Var, typename Set>
  * @brief Function for getting the undirected skeleton network in parallel.
  *
  * @param imbalanceThreshold Specifies the amount of imbalance the algorithm should tolerate.
- * @param allNeighbors Contains the PC sets for all the variables.
- * @param allBlankets Contains the MB sets for all the variables.
  */
 BayesianNetwork<Var>
 BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
-  const double imbalanceThreshold,
-  std::unordered_map<Var, Set>& allNeighbors,
-  std::unordered_map<Var, Set>& allBlankets
+  const double imbalanceThreshold
 ) const
 {
   TIMER_START(this->m_tBlankets);
@@ -380,6 +376,7 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
   /* End of Symmetry Correction */
 
   TIMER_START(this->m_tNeighbors);
+  decltype(this->m_cachedMB) allBlankets;
   for (const auto x : this->m_allVars) {
     allBlankets[x] = set_init(Set(), this->m_data.numVars());
   }
@@ -393,6 +390,7 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
   TIMER_PAUSE(this->m_tSync);
 
   // Get neighbors for the variables on this processor
+  decltype(this->m_cachedPC) allNeighbors;
   for (const auto& p : myPairs) {
     const auto& mbFirst = allBlankets.at(p.first);
     const auto& mbSecond = allBlankets.at(p.second);
@@ -440,7 +438,48 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
   }
   this->m_comm.barrier();
   TIMER_PAUSE(this->m_tNeighbors);
+  // Correctly set the cached version of all the PC and MB sets
+  // All the sets have been symmetry corrected
+  for (const auto x : allNeighbors) {
+    this->m_cachedPCSymmetric[x.first] = true;
+  }
+  for (const auto x : allBlankets) {
+    this->m_cachedMBSymmetric[x.first] = true;
+  }
+  this->m_cachedPC = std::move(allNeighbors);
+  this->m_cachedMB = std::move(allBlankets);
   return bn;
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Checks if the given v-structure (y-x-z) is a collider.
+ *        Also returns the p-value for the collider.
+ */
+std::pair<bool, double>
+BlanketLearning<Data, Var, Set>::checkCollider(
+  const Var y,
+  const Var x,
+  const Var z
+) const
+{
+  static auto smallerSet = [] (const Set& first, const Set& second) -> const auto&
+                              { return (first.size() < second.size()) ? first : second; };
+  auto setX = set_init(Set(), this->m_data.numVars());
+  setX.insert(x);
+  auto mbY = this->getMB(y);
+  if (mbY.contains(z)) {
+    mbY.erase(z);
+  }
+  mbY.erase(x);
+  auto mbZ = this->getMB(z);
+  if (mbZ.contains(y)) {
+    mbZ.erase(y);
+  }
+  mbZ.erase(x);
+  auto pv = this->m_data.maxPValue(y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
+  auto collider = !this->m_data.isIndependent(pv);
+  return std::make_pair(collider, pv);
 }
 
 template <typename Data, typename Var, typename Set>
