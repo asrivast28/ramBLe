@@ -44,6 +44,19 @@ public:
   virtual
   ~GlobalLearning();
 
+protected:
+  void
+  initializeLearning(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
+  void
+  syncSets(std::unordered_map<Var, Set>&) const;
+
+  void
+  syncRemovedEdges(const std::vector<std::tuple<Var, Var, double>>&&, const std::vector<Set>&&) const;
+
+  BayesianNetwork<Var>
+  constructSkeleton() const;
+
 private:
   std::pair<bool, double>
   checkCollider(const Var, const Var, const Var) const override;
@@ -51,6 +64,9 @@ private:
 protected:
   mutable std::unordered_map<Var, Set> m_cachedNeighbors;
   mutable std::map<std::pair<Var, Var>, std::pair<double, Set>> m_removedEdges;
+  TIMER_DECLARE(m_tSync, mutable);
+  TIMER_DECLARE(m_tDist, mutable);
+  TIMER_DECLARE(m_tRemoved, mutable);
 }; // class GlobalLearning
 
 
@@ -68,11 +84,14 @@ public:
   PCStable(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
 
 private:
-  BayesianNetwork<Var>
-  getSkeleton_sequential() const override;
+  std::pair<double, Set>
+  checkEdge(const std::tuple<Var, Var, double>&, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>& removedNeighbors, const uint32_t) const;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const override;
+  getSkeleton_sequential(const bool) const override;
+
+  BayesianNetwork<Var>
+  getSkeleton_parallel(const bool, const double) const override;
 }; // class PCStable
 
 #include "detail/GlobalLearning.hpp"

@@ -355,6 +355,7 @@ template <typename Data, typename Var, typename Set>
  */
 BayesianNetwork<Var>
 BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
+  const bool,
   const double imbalanceThreshold
 ) const
 {

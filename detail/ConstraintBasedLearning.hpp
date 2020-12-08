@@ -74,71 +74,25 @@ ConstraintBasedLearning<Data, Var, Set>::getCandidates(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Function that synchronizes the candidate sets by taking a
- *        union of the sets across all the processors.
- *
- * @param mySets A map with the candidate MB or PC sets of the
- *               primary variables on this processor.
- */
-void
-ConstraintBasedLearning<Data, Var, Set>::syncSets(
-  std::unordered_map<Var, Set>& mySets
-) const
-{
-  set_allunion_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief Function that gets the missing candidate sets for the
- *        primary variables on this processor.
- *
- * @param myPV A list of the p-values corresponding to all the local pairs.
- * @param mySets A map with the candidate MB or PC sets of the
- *               primary variables on this processor.
- */
-void
-ConstraintBasedLearning<Data, Var, Set>::syncMissingSets(
-  const std::vector<std::tuple<Var, Var, double>>& myPV,
-  std::unordered_map<Var, Set>& mySets
-) const
-{
-  for (const auto& mpv : myPV) {
-    const auto primary = std::get<0>(mpv);
-    if (mySets.find(primary) == mySets.end()) {
-      // This primary variable's candidate set was not available on this processor
-      // Initialize the set for the new primary variable
-      mySets.insert(std::make_pair(primary, set_init(Set(), this->m_data.numVars())));
-    }
-  }
-  // Synchronize all the sets
-  // XXX: We do not need to synchronize all the sets. However, some performance testing
-  // shows that tracking which sets should be synced does not result in better performance.
-  // Therefore, going with the easier way for now
-  this->syncSets(mySets);
-}
-
-template <typename Data, typename Var, typename Set>
-/**
  * @brief Function that fixes the imbalance in the p-value list across processors.
  *
- * @param myPV A list of the p-values corresponding to all the local pairs.
+ * @param myPairs A list of tuples corresponding to all the local pairs.
  * @param imbalanceThreshold The amount of imbalance that can be tolerated.
  *
  * @return true if the list was redistributed to fix the imbalance.
  */
 bool
 ConstraintBasedLearning<Data, Var, Set>::fixImbalance(
-  std::vector<std::tuple<Var, Var, double>>& myPV,
+  std::vector<std::tuple<Var, Var, double>>& myPairs,
   const double imbalanceThreshold
 ) const
 {
   bool fixed = false;
-  const auto minSize = mxx::allreduce(myPV.size(), mxx::min<size_t>(), this->m_comm);
-  const auto maxSize = mxx::allreduce(myPV.size(), mxx::max<size_t>(), this->m_comm);
+  const auto minSize = mxx::allreduce(myPairs.size(), mxx::min<size_t>(), this->m_comm);
+  const auto maxSize = mxx::allreduce(myPairs.size(), mxx::max<size_t>(), this->m_comm);
   if (minSize * imbalanceThreshold < static_cast<double>(maxSize)) {
     // Redistribute the pairs to fix the imbalance
-    mxx::stable_distribute_inplace(myPV, this->m_comm);
+    mxx::stable_distribute_inplace(myPairs, this->m_comm);
     fixed = true;
   }
   return fixed;
@@ -213,7 +167,8 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   const double imbalanceThreshold
 ) const
 {
-  auto bn = isParallel ? this->getSkeleton_parallel(imbalanceThreshold) : this->getSkeleton_sequential();
+  auto bn = isParallel ? this->getSkeleton_parallel(directEdges, imbalanceThreshold) :
+                         this->getSkeleton_sequential(directEdges);
   if (directEdges) {
     TIMER_DECLARE(tDirect);
     // First, orient the v-structures

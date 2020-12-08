@@ -277,6 +277,7 @@ template <typename Data, typename Var, typename Set>
  */
 BayesianNetwork<Var>
 DirectLearning<Data, Var, Set>::getSkeleton_parallel(
+  const bool,
   const double imbalanceThreshold
 ) const
 {
@@ -626,6 +627,7 @@ HITON<Data, Var, Set>::getCandidatePC_impl(
 template <typename Data, typename Var, typename Set>
 BayesianNetwork<Var>
 HITON<Data, Var, Set>::getSkeleton_parallel(
+  const bool,
   const double
 ) const
 {
@@ -844,6 +846,7 @@ GetPC<Data, Var, Set>::getCandidatePC_impl(
 template <typename Data, typename Var, typename Set>
 BayesianNetwork<Var>
 GetPC<Data, Var, Set>::getSkeleton_parallel(
+  const bool,
   const double
 ) const
 {

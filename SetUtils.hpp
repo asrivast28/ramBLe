@@ -135,6 +135,21 @@ template <typename Set>
 void
 set_allintersect(Set&, const mxx::comm&);
 
+/**
+ * @brief Function for efficient intersection of multiple sets, done in accordance
+ *        with their indices, across processes.
+ */
+template <typename Set, typename Var>
+void
+set_allintersect_indexed(std::unordered_map<Var, Set>&, const Set&, const Var, const mxx::comm&);
+
+/**
+ * @brief Function for gathering sets spread across processes.
+ */
+template <typename Set, typename Var>
+std::vector<Set>
+set_allgatherv(const std::vector<Set>&, const std::vector<size_t>&, const Var, const mxx::comm&);
+
 #include "detail/StdSetUtils.hpp"
 #include "detail/UintSetUtils.hpp"
 

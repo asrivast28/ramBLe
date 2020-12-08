@@ -197,6 +197,7 @@ template <typename Data, typename Var, typename Set>
  */
 BayesianNetwork<Var>
 LocalLearning<Data, Var, Set>::getSkeleton_sequential(
+  const bool
 ) const
 {
   BayesianNetwork<Var> bn(this->m_data.varNames(this->m_allVars));
@@ -258,6 +259,52 @@ LocalLearning<Data, Var, Set>::parallelInitialize(
     // Initialize the p-values
     myPV[i] = std::make_tuple(*primary, *secondary, 0.0);
   }
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function that synchronizes the candidate sets by taking a
+ *        union of the sets across all the processors.
+ *
+ * @param mySets A map with the candidate MB or PC sets of the
+ *               primary variables on this processor.
+ */
+void
+LocalLearning<Data, Var, Set>::syncSets(
+  std::unordered_map<Var, Set>& mySets
+) const
+{
+  set_allunion_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function that gets the missing candidate sets for the
+ *        primary variables on this processor.
+ *
+ * @param myPV A list of the p-values corresponding to all the local pairs.
+ * @param mySets A map with the candidate MB or PC sets of the
+ *               primary variables on this processor.
+ */
+void
+LocalLearning<Data, Var, Set>::syncMissingSets(
+  const std::vector<std::tuple<Var, Var, double>>& myPV,
+  std::unordered_map<Var, Set>& mySets
+) const
+{
+  for (const auto& mpv : myPV) {
+    const auto primary = std::get<0>(mpv);
+    if (mySets.find(primary) == mySets.end()) {
+      // This primary variable's candidate set was not available on this processor
+      // Initialize the set for the new primary variable
+      mySets.insert(std::make_pair(primary, set_init(Set(), this->m_data.numVars())));
+    }
+  }
+  // Synchronize all the sets
+  // XXX: We do not need to synchronize all the sets. However, some performance testing
+  // shows that tracking which sets should be synced does not result in better performance.
+  // Therefore, going with the easier way for now
+  this->syncSets(mySets);
 }
 
 template <typename Data, typename Var, typename Set>

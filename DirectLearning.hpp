@@ -74,7 +74,7 @@ private:
   getCandidateMB(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const override;
+  getSkeleton_parallel(const bool, const double) const override;
 
   std::pair<bool, double>
   checkCollider(const Var, const Var, const Var) const override;
@@ -131,7 +131,7 @@ private:
   getCandidatePC_impl(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const override;
+  getSkeleton_parallel(const bool, const double) const override;
 }; // class HITON
 
 /**
@@ -173,7 +173,7 @@ private:
   getCandidatePC_impl(const Var, Set&&) const override;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const override;
+  getSkeleton_parallel(const bool, const double) const override;
 }; // class GetPC
 
 #include "detail/DirectLearning.hpp"

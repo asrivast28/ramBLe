@@ -58,6 +58,7 @@ public:
 
 public:
   using Impl = typename UintTypeTrait<Size>::Set;
+  using ReduceType = typename UintTypeTrait<Size>::ArrayType;
   // Required typedefs
   using value_type = Element;
   using iterator = Enumerator;
@@ -136,20 +137,15 @@ public:
   void
   set_bcast(Set&, const int, const mxx::comm&);
 
-  template <typename Set>
+  template <typename Set, template <typename> class Functor, typename RType>
   friend
   void
-  set_allunion(Set&, const mxx::comm&);
+  uintset_allreduce(Set&, Functor<RType>, const mxx::comm&);
 
-  template <typename Set, typename Var>
+  template <typename Var, typename Set, template <typename> class Functor, typename RType>
   friend
   void
-  set_allunion_indexed(std::unordered_map<Var, Set>&, const Set&, const Var, const mxx::comm&);
-
-  template <typename Set>
-  friend
-  void
-  set_allintersect(Set&, const mxx::comm&);
+  uintset_allreduce_indexed(std::unordered_map<Var, Set>&, const Set&, const Var, Functor<RType>, const mxx::comm&);
 
 private:
   Impl m_set;

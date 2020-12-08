@@ -70,7 +70,7 @@ private:
   evaluateCandidatePC(const Var, const Var, const Set&, const Set&) const;
 
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const override;
+  getSkeleton_parallel(const bool, const double) const override;
 
   std::pair<bool, double>
   checkCollider(const Var, const Var, const Var) const override;

@@ -56,6 +56,12 @@ protected:
   void
   parallelInitialize(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
 
+  void
+  syncSets(std::unordered_map<Var, Set>&) const;
+
+  void
+  syncMissingSets(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+
   std::vector<std::pair<Var, Var>>
   symmetryCorrect(const std::unordered_map<Var, Set>&&, const std::set<std::pair<Var, Var>>&&) const;
 
@@ -73,7 +79,7 @@ private:
   symmetryCorrectMB(const Var, Set&) const;
 
   BayesianNetwork<Var>
-  getSkeleton_sequential() const override;
+  getSkeleton_sequential(const bool) const override;
 
 protected:
   mutable std::unordered_map<Var, Set> m_cachedPC;

@@ -31,6 +31,7 @@ template <typename Size>
 class UintTypeTrait {
 public:
   using Set = uint_type<Size::value>;
+  using ArrayType = typename std::remove_reference<decltype(Set::b[0])>::type;
 
 public:
   static

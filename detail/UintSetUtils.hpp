@@ -136,6 +136,61 @@ private:
   std::vector<bool> m_candidates;
 }; // class Subsets
 
+template <typename USet, template <typename> class Functor, typename ReduceType>
+void
+uintset_allreduce(
+  USet& set,
+  Functor<ReduceType> func,
+  const mxx::comm& comm
+)
+{
+  auto size = (set.max() + 63) / 64;
+  auto b = new ReduceType[size];
+  mxx::allreduce((*set).b, size, b, func, comm);
+  memcpy((*set).b, b, size * sizeof(ReduceType));
+  set.m_size = 0;
+  delete[] b;
+}
+
+template <typename Element, typename USet, template <typename> class Functor, typename ReduceType>
+void
+uintset_allreduce_indexed(
+  std::unordered_map<Element, USet>& indexedSets,
+  const USet& allIndices,
+  const Element max,
+  Functor<ReduceType> func,
+  const mxx::comm& comm
+)
+{
+  auto blockSize = static_cast<uint32_t>(max + 63) / 64;
+  auto totalSize = blockSize * allIndices.max();
+  auto bitSets = new ReduceType[totalSize]();
+  auto b = bitSets;
+  for (const auto x : allIndices) {
+    auto it = indexedSets.find(x);
+    if (it != indexedSets.end()) {
+      memcpy(b, (*(it->second)).b, blockSize * sizeof(ReduceType));
+    }
+    b += blockSize;
+  }
+  b = bitSets;
+  while (totalSize > 0) {
+    auto reduceSize = std::min(totalSize, ALLREDUCE_MAXSIZE);
+    mxx::allreduce(static_cast<ReduceType*>(MPI_IN_PLACE), reduceSize, b, func, comm);
+    b += reduceSize;
+    totalSize -= reduceSize;
+  }
+  b = bitSets;
+  for (const auto x : allIndices) {
+    auto it = indexedSets.find(x);
+    if (it != indexedSets.end()) {
+      memcpy((*(it->second)).b, b, blockSize * sizeof(ReduceType));
+      (it->second).m_size = 0;
+    }
+    b += blockSize;
+  }
+  delete[] bitSets;
+}
 
 // Definition of all the operations on UintSet
 #define DEFINE_UINT_SET_OPERATIONS(Element, N) \
@@ -193,7 +248,7 @@ set_bcast<UintSet<Element, std::integral_constant<int, N>>>( \
 ) \
 { \
   auto size = (set.max() + 63) / 64; \
-  mxx::bcast(&set.m_set.b[0], size, root, comm); \
+  mxx::bcast((*set).b, size, root, comm); \
   if (comm.rank() != root) { \
     set.m_size = 0; \
   } \
@@ -206,13 +261,8 @@ set_allunion<UintSet<Element, std::integral_constant<int, N>>>( \
   const mxx::comm& comm \
 ) \
 { \
-  auto size = (set.max() + 63) / 64; \
-  using ReduceType = std::remove_reference<decltype(set.m_set.b[0])>::type; \
-  auto b = new ReduceType[size]; \
-  mxx::allreduce(set.m_set.b, size, b, std::bit_or<ReduceType>(), comm); \
-  memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
-  set.m_size = 0; \
-  delete[] b; \
+  using ReduceType = typename UintSet<Element, std::integral_constant<int, N>>::ReduceType; \
+  uintset_allreduce(set, std::bit_or<ReduceType>(), comm); \
 } \
  \
 template <> \
@@ -224,35 +274,8 @@ set_allunion_indexed<UintSet<Element, std::integral_constant<int, N>>>( \
   const mxx::comm& comm \
 ) \
 { \
-  using ReduceType = std::remove_reference<decltype(std::remove_reference<decltype(indexedSets)>::type::mapped_type::m_set.b[0])>::type; \
-  auto blockSize = static_cast<uint32_t>(max + 63) / 64; \
-  auto totalSize = blockSize * allIndices.max(); \
-  auto bitSets = new ReduceType[totalSize](); \
-  auto b = bitSets; \
-  for (const auto x : allIndices) { \
-    auto it = indexedSets.find(x); \
-    if (it != indexedSets.end()) { \
-      memcpy(b, (*(it->second)).b, blockSize * sizeof(ReduceType)); \
-    } \
-    b += blockSize; \
-  } \
-  b = bitSets; \
-  while (totalSize > 0) { \
-    auto reduceSize = std::min(totalSize, ALLREDUCE_MAXSIZE); \
-    mxx::allreduce(static_cast<ReduceType*>(MPI_IN_PLACE), reduceSize, b, std::bit_or<ReduceType>(), comm); \
-    b += reduceSize; \
-    totalSize -= reduceSize; \
-  } \
-  b = bitSets; \
-  for (const auto x : allIndices) { \
-    auto it = indexedSets.find(x); \
-    if (it != indexedSets.end()) { \
-      memcpy((*(it->second)).b, b, blockSize * sizeof(ReduceType)); \
-      (it->second).m_size = 0; \
-    } \
-    b += blockSize; \
-  } \
-  delete[] bitSets; \
+  using ReduceType = typename UintSet<Element, std::integral_constant<int, N>>::ReduceType; \
+  uintset_allreduce_indexed(indexedSets, allIndices, max, std::bit_or<ReduceType>(), comm); \
 } \
  \
 template <> \
@@ -262,13 +285,60 @@ set_allintersect<UintSet<Element, std::integral_constant<int, N>>>( \
   const mxx::comm& comm \
 ) \
 { \
-  auto size = (set.max() + 63) / 64; \
-  using ReduceType = std::remove_reference<decltype(set.m_set.b[0])>::type; \
-  auto b = new ReduceType[size]; \
-  mxx::allreduce(set.m_set.b, size, b, std::bit_and<ReduceType>(), comm); \
-  memcpy(set.m_set.b, b, size * sizeof(ReduceType)); \
-  set.m_size = 0; \
-  delete[] b; \
+  using ReduceType = typename UintSet<Element, std::integral_constant<int, N>>::ReduceType; \
+  uintset_allreduce(set, std::bit_and<ReduceType>(), comm); \
+} \
+ \
+template <> \
+void \
+set_allintersect_indexed<UintSet<Element, std::integral_constant<int, N>>>( \
+  std::unordered_map<Element, UintSet<Element, std::integral_constant<int, N>>>& indexedSets, \
+  const UintSet<Element, std::integral_constant<int, N>>& allIndices, \
+  const Element max, \
+  const mxx::comm& comm \
+) \
+{ \
+  using ReduceType = typename UintSet<Element, std::integral_constant<int, N>>::ReduceType; \
+  uintset_allreduce_indexed(indexedSets, allIndices, max, std::bit_and<ReduceType>(), comm); \
+} \
+ \
+template <> \
+std::vector<UintSet<Element, std::integral_constant<int, N>>> \
+set_allgatherv<UintSet<Element, std::integral_constant<int, N>>>( \
+  const std::vector<UintSet<Element, std::integral_constant<int, N>>>& mySets, \
+  const std::vector<size_t>& allSizes, \
+  const Element max, \
+  const mxx::comm& comm \
+) \
+{ \
+  using SetType = UintSet<Element, std::integral_constant<int, N>>; \
+  using ReduceType = typename SetType::ReduceType; \
+  auto blockSize = static_cast<uint32_t>(max + 63) / 64; \
+  std::vector<size_t> allOffsets(allSizes.size()); \
+  std::partial_sum(allSizes.begin(), allSizes.end(), allOffsets.begin()); \
+  auto totalSize = static_cast<uint32_t>(blockSize * allOffsets.back()); \
+  auto bitSets = new ReduceType[totalSize](); \
+  auto myOffset = allOffsets[comm.rank()] - allSizes[comm.rank()]; \
+  auto b = bitSets + (myOffset * blockSize); \
+  for (const auto& set : mySets) { \
+    memcpy(b, (*set).b, blockSize * sizeof(ReduceType)); \
+    b += blockSize; \
+  } \
+  b = bitSets; \
+  while (totalSize > 0) { \
+    auto reduceSize = std::min(totalSize, ALLREDUCE_MAXSIZE); \
+    mxx::allreduce(static_cast<ReduceType*>(MPI_IN_PLACE), reduceSize, b, std::bit_or<ReduceType>(), comm); \
+    b += reduceSize; \
+    totalSize -= reduceSize; \
+  } \
+  std::vector<SetType> allSets(allOffsets.back(), set_init(SetType(), max)); \
+  b = bitSets; \
+  for (auto& set : allSets) { \
+    memcpy((*set).b, b, blockSize * sizeof(ReduceType)); \
+    b += blockSize; \
+  } \
+  delete[] bitSets; \
+  return allSets; \
 }
 
 DEFINE_UINT_SET_OPERATIONS(uint8_t, (maxSize<uint8_t>() >> 2))

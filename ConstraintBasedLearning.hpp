@@ -74,20 +74,14 @@ protected:
 
   virtual
   BayesianNetwork<Var>
-  getSkeleton_sequential() const = 0;
-
-  void
-  syncSets(std::unordered_map<Var, Set>&) const;
-
-  void
-  syncMissingSets(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
+  getSkeleton_sequential(const bool) const = 0;
 
   bool
   fixImbalance(std::vector<std::tuple<Var, Var, double>>&, const double) const;
 
   virtual
   BayesianNetwork<Var>
-  getSkeleton_parallel(const double) const = 0;
+  getSkeleton_parallel(const bool, const double) const = 0;
 
   virtual
   std::pair<bool, double>
