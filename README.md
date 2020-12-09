@@ -85,7 +85,7 @@ This class of algorithms directly finds the PC sets of nodes.
 
 ### Global Learning
 This class of algorithms learn the network directly by iteratively eliminating edges between variables which are found to be independent.
-* `pc.stable` (_sequential only_) corresponds to the [PC-stable](https://www.jmlr.org/papers/v15/colombo14a.html) algorithm by Colombo et al.
+* `pc.stable` corresponds to the [PC-stable](https://www.jmlr.org/papers/v15/colombo14a.html) algorithm by Colombo et al.
 
 ## Publication
 [**Ankit Srivastava, Sriram Chockalingam, and Srinivas Aluru.** "A Parallel Framework for Constraint-Based Bayesian Network Learning via Markov Blanket Discovery." _In 2020 SC20: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)_, IEEE Computer Society, 2020.](https://dl.acm.org/doi/abs/10.5555/3433701.3433710)
