@@ -140,15 +140,45 @@ GlobalLearning<Data, Var, Set>::syncSets(
 }
 
 template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function for storing removed edges if they might be relevant
+ *        for directing edges later.
+ *
+ * @param myRemoved A vector of all the removed edges.
+ * @param myDSepSets Vector containing d-separating sets for all the removed edges.
+ * @param allNeighbors Neighbor sets for all the variables.
+ */
 void
-GlobalLearning<Data, Var, Set>::syncRemovedEdges(
-  const std::vector<std::tuple<Var, Var, double>>&& myRemoved,
-  const std::vector<Set>&& myDSepSets
+GlobalLearning<Data, Var, Set>::storeRemovedEdges(
+  std::vector<std::tuple<Var, Var, double>>&& myRemoved,
+  std::vector<Set>&& myDSepSets,
+  const std::unordered_map<Var, Set>& allNeighbors
 ) const
 {
+  LOG_MESSAGE_IF(myRemoved.size() != myDSepSets.size(),
+                 error, "Mismatch between number of edges and d-separating sets.");
+  // Only retain information which can be used for directing edges later
+  auto e = myRemoved.begin();
+  auto s = myDSepSets.begin();
+  while (e != myRemoved.end()) {
+    Var x, y;
+    std::tie(x, y, std::ignore) = *e;
+    if (set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
+      e = myRemoved.erase(e);
+      s = myDSepSets.erase(s);
+    }
+    else {
+      ++e;
+      ++s;
+    }
+  }
+  LOG_MESSAGE_IF(myRemoved.size() != myDSepSets.size(),
+                 error, "Mismatch between number of edges and d-separating sets.");
+  // Gather this information from all the processes
   auto removedSizes = mxx::allgather(myRemoved.size(), this->m_comm);
   auto allRemoved = mxx::allgatherv(myRemoved, removedSizes, this->m_comm);
   auto allDSepSets = set_allgatherv(myDSepSets, removedSizes, this->m_data.numVars(), this->m_comm);
+  // Store this information in expected format
   Var x, y;
   double pv;
   for (auto e = 0u; e < allRemoved.size(); ++e) {
@@ -159,12 +189,18 @@ GlobalLearning<Data, Var, Set>::syncRemovedEdges(
 }
 
 template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function for constructing skeleton from the neighbor sets.
+ *
+ * @param allNeighbors Neighborhood sets for all the variables.
+ */
 BayesianNetwork<Var>
 GlobalLearning<Data, Var, Set>::constructSkeleton(
+  const std::unordered_map<Var, Set>&& allNeighbors
 ) const
 {
   BayesianNetwork<Var> bn(this->m_data.varNames(this->m_allVars));
-  for (const auto& neighbors : m_cachedNeighbors) {
+  for (const auto& neighbors : allNeighbors) {
     const auto x = neighbors.first;
     for (const auto y : neighbors.second) {
       if (x < y) {
@@ -174,6 +210,7 @@ GlobalLearning<Data, Var, Set>::constructSkeleton(
       }
     }
   }
+  m_cachedNeighbors = std::move(allNeighbors);
   return bn;
 }
 
@@ -192,6 +229,9 @@ GlobalLearning<Data, Var, Set>::checkCollider(
   const Var z
 ) const
 {
+  LOG_MESSAGE_IF(m_removedEdges.find(std::make_pair(y, z)) == m_removedEdges.end(),
+                 error, "Unable to check collider %s - %s - %s",
+                        this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
   auto p = m_removedEdges.at(std::make_pair(y, z));
   auto collider = false;
   if (!p.second.contains(x)) {
@@ -294,11 +334,20 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
     for (auto& e : allEdges) {
       auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s);
       std::get<2>(e) = result.first;
+      // We need to store the removed edges since the d-separating
+      // set may be required for directing edges later
       if (directEdges &&
           std::isless(result.first, std::numeric_limits<double>::max()) &&
           this->m_data.isIndependent(result.first)) {
+        Var x, y;
+        std::tie(x, y, std::ignore) = e;
         TIMER_START(this->m_tRemoved);
-        this->m_removedEdges.insert(std::make_pair(std::make_pair(std::get<0>(e), std::get<1>(e)), result));
+        // We only use this information for directing colliders of type x-z-y
+        // However, there is no need to store it if there are no candidates for z
+        // i.e., no common neighbors between x and y
+        if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
+          this->m_removedEdges.insert(std::make_pair(std::make_pair(x, y), result));
+        }
         TIMER_PAUSE(this->m_tRemoved);
       }
     }
@@ -310,8 +359,7 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
     }
   }
-  this->m_cachedNeighbors = std::move(allNeighbors);
-  return this->constructSkeleton();
+  return this->constructSkeleton(std::move(allNeighbors));
 }
 
 template <typename Data, typename Var, typename Set>
@@ -334,12 +382,21 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
     for (auto& e : myEdges) {
       auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s);
       std::get<2>(e) = result.first;
+      // We need to store the removed edges since the d-separating
+      // set may be required for directing edges later
       if (directEdges &&
           std::isless(result.first, std::numeric_limits<double>::max()) &&
           this->m_data.isIndependent(result.first)) {
         TIMER_START(this->m_tRemoved);
-        myRemoved.push_back(e);
-        myDSepSets.push_back(result.second);
+        Var x, y;
+        std::tie(x, y, std::ignore) = e;
+        // We only use this information for directing colliders of type x-z-y
+        // However, there is no need to store it if there are no candidates for z
+        // i.e., no common neighbors between x and y
+        if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
+          myRemoved.push_back(e);
+          myDSepSets.push_back(result.second);
+        }
         TIMER_PAUSE(this->m_tRemoved);
       }
     }
@@ -359,11 +416,10 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
   }
   if (directEdges) {
     TIMER_START(this->m_tRemoved);
-    this->syncRemovedEdges(std::move(myRemoved), std::move(myDSepSets));
+    this->storeRemovedEdges(std::move(myRemoved), std::move(myDSepSets), allNeighbors);
     TIMER_PAUSE(this->m_tRemoved);
   }
-  this->m_cachedNeighbors = std::move(allNeighbors);
-  return this->constructSkeleton();
+  return this->constructSkeleton(std::move(allNeighbors));
 }
 
 #endif // DETAIL_GLOBALLEARNING_HPP_

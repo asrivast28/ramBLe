@@ -52,10 +52,10 @@ protected:
   syncSets(std::unordered_map<Var, Set>&) const;
 
   void
-  syncRemovedEdges(const std::vector<std::tuple<Var, Var, double>>&&, const std::vector<Set>&&) const;
+  storeRemovedEdges(std::vector<std::tuple<Var, Var, double>>&&, std::vector<Set>&&, const std::unordered_map<Var, Set>&) const;
 
   BayesianNetwork<Var>
-  constructSkeleton() const;
+  constructSkeleton(const std::unordered_map<Var, Set>&&) const;
 
 private:
   std::pair<bool, double>

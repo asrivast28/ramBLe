@@ -100,6 +100,13 @@ Set
 set_union(const Set&, const Set&);
 
 /**
+ * @brief Function for getting the intersection of two given sets.
+ */
+template <typename Set>
+Set
+set_intersection(const Set&, const Set&);
+
+/**
  * @brief Function for getting the difference of the second set from the first.
  */
 template <typename Set>

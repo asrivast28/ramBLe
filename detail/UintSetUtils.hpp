@@ -229,6 +229,18 @@ set_union<UintSet<Element, std::integral_constant<int, N>>>( \
  \
 template <> \
 UintSet<Element, std::integral_constant<int, N>> \
+set_intersection<UintSet<Element, std::integral_constant<int, N>>>( \
+  const UintSet<Element, std::integral_constant<int, N>>& first, \
+  const UintSet<Element, std::integral_constant<int, N>>& second \
+) \
+{ \
+  UintSet<Element, std::integral_constant<int, N>> result; \
+  *result = *first & *second; \
+  return result; \
+} \
+ \
+template <> \
+UintSet<Element, std::integral_constant<int, N>> \
 set_difference<UintSet<Element, std::integral_constant<int, N>>>( \
   const UintSet<Element, std::integral_constant<int, N>>& first, \
   const UintSet<Element, std::integral_constant<int, N>>& second \
