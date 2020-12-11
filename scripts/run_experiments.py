@@ -226,8 +226,12 @@ def run_experiment(basedir, scratch, config, undirected, repeat, bnlearn, compar
         print(arguments)
         sys.stdout.flush()
         try:
-            output = subprocess.check_output(arguments, shell=True).decode('utf-8')
-            print(output)
+            output = ''
+            process = subprocess.Popen(arguments, shell=True, stdout=subprocess.PIPE)
+            for line in iter(process.stdout.readline, b''):
+                line = line.decode('utf-8')
+                output += line
+                print(line, end='')
         except subprocess.CalledProcessError:
             t += 1
             if t == MAX_TRIES:
