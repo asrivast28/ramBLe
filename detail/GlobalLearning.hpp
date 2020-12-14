@@ -329,7 +329,9 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
   std::vector<std::tuple<Var, Var, double>> allEdges;
   this->initializeLearning(allEdges, allNeighbors);
   auto maxSize = std::min(this->m_maxConditioning, static_cast<Var>(this->m_allVars.size() - 2));
-  for (auto s = 0u; (s < maxSize) && !allEdges.empty(); ++s) {
+  for (auto s = 0u; (s <= maxSize) && !allEdges.empty(); ++s) {
+    LOG_MESSAGE(debug, "Testing %u edges using sets of size %u", allEdges.size(), s);
+    TIMER_DECLARE(tIter);
     std::unordered_map<Var, Set> removedNeighbors;
     for (auto& e : allEdges) {
       auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s);
@@ -358,6 +360,7 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
     for (const auto& rn : removedNeighbors) {
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
     }
+    TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
   }
   return this->constructSkeleton(std::move(allNeighbors));
 }
@@ -377,7 +380,9 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
   std::vector<std::tuple<Var, Var, double>> myRemoved;
   std::vector<Set> myDSepSets;
   auto maxSize = std::min(this->m_maxConditioning, static_cast<Var>(this->m_allVars.size() - 2));
-  for (auto s = 0u; (s < maxSize) && mxx::any_of(myEdges.size() > 0, this->m_comm); ++s) {
+  for (auto s = 0u; (s <= maxSize) && mxx::any_of(myEdges.size() > 0, this->m_comm); ++s) {
+    LOG_MESSAGE(debug, "Testing %u edges using sets of size %u", myEdges.size(), s);
+    TIMER_DECLARE(tIter);
     std::unordered_map<Var, Set> removedNeighbors;
     for (auto& e : myEdges) {
       auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s);
@@ -413,6 +418,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
     TIMER_START(this->m_tSync);
     this->syncSets(allNeighbors);
     TIMER_PAUSE(this->m_tSync);
+    TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
   }
   if (directEdges) {
     TIMER_START(this->m_tRemoved);
