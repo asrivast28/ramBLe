@@ -32,8 +32,9 @@ template <typename Data, typename Var, typename Set>
 LocalLearning<Data, Var, Set>::LocalLearning(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning),
+) : ConstraintBasedLearning<Data, Var, Set>(comm, data, alpha, maxConditioning),
     m_cachedPC(),
     m_cachedMB(),
     m_cachedPCSymmetric(),

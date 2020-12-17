@@ -36,8 +36,9 @@ template <typename Data, typename Var, typename Set>
 DirectLearning<Data, Var, Set>::DirectLearning(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : LocalLearning<Data, Var, Set>(comm, data, maxConditioning),
+) : LocalLearning<Data, Var, Set>(comm, data, alpha, maxConditioning),
     m_cachedCandidatePC()
 {
   TIMER_RESET(m_tForward);
@@ -111,7 +112,7 @@ DirectLearning<Data, Var, Set>::removeFalsePC(
   for (const Var x : initial) {
     cpc.erase(x);
     LOG_MESSAGE(debug, "False Positive: Testing %s for removal", this->m_data.varName(x));
-    if (this->m_data.isIndependentAnySubset(target, x, cpc, this->m_maxConditioning)) {
+    if (this->m_data.isIndependentAnySubset(this->m_alpha, target, x, cpc, this->m_maxConditioning)) {
       LOG_MESSAGE(info, "- Removing %s from the PC of %s (FP)", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
     }
@@ -175,15 +176,15 @@ DirectLearning<Data, Var, Set>::updateMaxPValues(
     auto pvY = mpv.first;
     auto y = mpv.second;
     LOG_MESSAGE(debug, "Updating max p-value for %s (previous p-value = %g)", this->m_data.varName(y), pvY);
-    pvY = std::max(pvY, this->m_data.maxPValue(target, y, cpc, setNext, this->m_maxConditioning));
-    LOG_MESSAGE(debug, "%s is " + std::string(this->m_data.isIndependent(pvY) ? "independent of" : "dependent on") +
+    pvY = std::max(pvY, this->m_data.maxPValue(this->m_alpha, target, y, cpc, setNext, this->m_maxConditioning));
+    LOG_MESSAGE(debug, "%s is " + std::string(this->m_data.isIndependent(this->m_alpha, pvY) ? "independent of" : "dependent on") +
                        " the target %s (updated p-value = %g)",
                        this->m_data.varName(y), this->m_data.varName(target), pvY);
     mpv.first = pvY;
   }
   // Remove the independent elements to retain only the plausible candidates
   auto last = std::remove_if(maxPValues.begin(), maxPValues.end(), [this] (const std::pair<double, Var>& mpv)
-                                                                          { return this->m_data.isIndependent(mpv.first); });
+                                                                          { return this->m_data.isIndependent(this->m_alpha, mpv.first); });
   maxPValues.erase(last, maxPValues.end());
 }
 
@@ -209,15 +210,15 @@ DirectLearning<Data, Var, Set>::updateMyPValues(
     auto target = std::get<0>(pv);
     auto y = std::get<1>(pv);
     auto pvY = std::get<2>(pv);
-    pvY = std::max(pvY, this->m_data.maxPValue(target, y, myNeighbors.at(target), nextAdditions.at(target), this->m_maxConditioning));
-    LOG_MESSAGE(debug, "%s is " + std::string(this->m_data.isIndependent(pvY) ? "independent of" : "dependent on") +
+    pvY = std::max(pvY, this->m_data.maxPValue(this->m_alpha, target, y, myNeighbors.at(target), nextAdditions.at(target), this->m_maxConditioning));
+    LOG_MESSAGE(debug, "%s is " + std::string(this->m_data.isIndependent(this->m_alpha, pvY) ? "independent of" : "dependent on") +
                        " the target %s (updated p-value = %g)",
                        this->m_data.varName(y), this->m_data.varName(target), pvY);
     std::get<2>(pv) = pvY;
   }
   // Remove the independent elements to retain only the plausible candidates
   auto last = std::remove_if(myPV.begin(), myPV.end(), [this] (const std::tuple<Var, Var, double>& mpv)
-                                                              { return this->m_data.isIndependent(std::get<2>(mpv)); });
+                                                              { return this->m_data.isIndependent(this->m_alpha, std::get<2>(mpv)); });
   myPV.erase(last, myPV.end());
 }
 
@@ -258,7 +259,7 @@ DirectLearning<Data, Var, Set>::forwardPhase(
                            { return std::get<0>(a) == std::get<0>(b); };
   auto uniqueEnd = std::unique(minPV.begin(), minPV.end(), comparePrimary);
   for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
-    if (!this->m_data.isIndependent(std::get<2>(*it))) {
+    if (!this->m_data.isIndependent(this->m_alpha, std::get<2>(*it))) {
       // Add y to the blanket of x
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s (p-value = %g)",
                   this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
@@ -400,12 +401,12 @@ DirectLearning<Data, Var, Set>::getCandidateMB(
       if ((x != target) && !set_contains(pc, x)) {
         candidates.erase(x);
         LOG_MESSAGE(debug, "Evaluating %s for addition to the MB", this->m_data.varName(x));
-        auto ret = this->m_data.maxPValueSubset(target, x, candidates, this->m_maxConditioning);
-        if (this->m_data.isIndependent(ret.first)) {
+        auto ret = this->m_data.maxPValueSubset(this->m_alpha, target, x, candidates, this->m_maxConditioning);
+        if (this->m_data.isIndependent(this->m_alpha, ret.first)) {
           LOG_MESSAGE(debug, "%s found independent of the target, given a subset of the candidates", this->m_data.varName(x));
           auto& z = ret.second;
           z.insert(y);
-          if (!this->m_data.isIndependent(target, x, z)) {
+          if (!this->m_data.isIndependent(this->m_alpha, target, x, z)) {
             LOG_MESSAGE(info, "+ Adding %s to the MB of %s (spouse)",
                               this->m_data.varName(x), this->m_data.varName(target));
             cmb.insert(x);
@@ -444,8 +445,8 @@ DirectLearning<Data, Var, Set>::checkCollider(
     mbZ.erase(y);
   }
   mbZ.erase(x);
-  auto pv = this->m_data.maxPValue(y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
-  auto collider = !this->m_data.isIndependent(pv);
+  auto pv = this->m_data.maxPValue(this->m_alpha, y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
+  auto collider = !this->m_data.isIndependent(this->m_alpha, pv);
   return std::make_pair(collider, pv);
 }
 
@@ -453,8 +454,9 @@ template <typename Data, typename Var, typename Set>
 MMPC<Data, Var, Set>::MMPC(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -585,8 +587,9 @@ template <typename Data, typename Var, typename Set>
 HITON<Data, Var, Set>::HITON(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -639,8 +642,9 @@ template <typename Data, typename Var, typename Set>
 SemiInterleavedHITON<Data, Var, Set>::SemiInterleavedHITON(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -783,8 +787,9 @@ template <typename Data, typename Var, typename Set>
 GetPC<Data, Var, Set>::GetPC(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : DirectLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : DirectLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -808,8 +813,8 @@ GetPC<Data, Var, Set>::getCandidatePC_impl(
     auto remove = set_init(Set(), this->m_data.numVars());
     for (const Var y : candidates) {
       LOG_MESSAGE(debug, "GetPC: Evaluating %s for addition to the PC", this->m_data.varName(y));
-      auto pvY = this->m_data.maxPValue(target, y, cpc, this->m_maxConditioning);
-      if (this->m_data.isIndependent(pvY)) {
+      auto pvY = this->m_data.maxPValue(this->m_alpha, target, y, cpc, this->m_maxConditioning);
+      if (this->m_data.isIndependent(this->m_alpha, pvY)) {
         LOG_MESSAGE(debug, "GetPC: Marking %s for removal from the candidates", this->m_data.varName(y));
         // Can not be added to the candidate PC, mark for removal
         remove.insert(y);
@@ -830,7 +835,7 @@ GetPC<Data, Var, Set>::getCandidatePC_impl(
     LOG_MESSAGE(debug, "GetPC: %s chosen as the best candidate", this->m_data.varName(x));
     // Add the variable to the candidate PC if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(pvX)) {
+    if (!this->m_data.isIndependent(this->m_alpha, pvX)) {
       LOG_MESSAGE(info, "+ Adding %s to the PC of %s", this->m_data.varName(x), this->m_data.varName(target));
       cpc.insert(x);
       changed = true;

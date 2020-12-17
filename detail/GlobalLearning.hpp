@@ -32,8 +32,9 @@ template <typename Data, typename Var, typename Set>
 GlobalLearning<Data, Var, Set>::GlobalLearning(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : ConstraintBasedLearning<Data, Var, Set>(comm, data, maxConditioning),
+) : ConstraintBasedLearning<Data, Var, Set>(comm, data, alpha, maxConditioning),
     m_cachedNeighbors(),
     m_removedEdges()
 {
@@ -244,8 +245,9 @@ template <typename Data, typename Var, typename Set>
 PCStable<Data, Var, Set>::PCStable(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : GlobalLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : GlobalLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -278,9 +280,9 @@ PCStable<Data, Var, Set>::checkEdge(
     // First, check the edge using neighbors of x
     if (xNeighbors.size() > setSize) {
       xNeighbors.erase(y);
-      std::tie(pv, dsep) = this->m_data.maxPValueSubset(x, y, xNeighbors, setSize, setSize);
+      std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, xNeighbors, setSize, setSize);
       xNeighbors.insert(y);
-      remove = this->m_data.isIndependent(pv);
+      remove = this->m_data.isIndependent(this->m_alpha, pv);
     }
     // Then, check the edge using neighbors of y if all of the following hold:
     // 1. The neighbors of x did not remove it already
@@ -291,12 +293,12 @@ PCStable<Data, Var, Set>::checkEdge(
       // Further, only check if neighborhood of y has some elements which are
       // not present in the neighborhood of x
       if (!set_difference(yNeighbors, xNeighbors).empty()) {
-        std::tie(pv, dsep) = this->m_data.maxPValueSubset(x, y, yNeighbors, setSize, setSize);
+        std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, yNeighbors, setSize, setSize);
       }
       yNeighbors.insert(x);
-      remove = this->m_data.isIndependent(pv);
+      remove = this->m_data.isIndependent(this->m_alpha, pv);
     }
-    LOG_MESSAGE(debug, "%s and %s are " + std::string(this->m_data.isIndependent(pv) ? "independent" : "dependent") +
+    LOG_MESSAGE(debug, "%s and %s are " + std::string(this->m_data.isIndependent(this->m_alpha, pv) ? "independent" : "dependent") +
                        " (p-value = %g)",
                        this->m_data.varName(x), this->m_data.varName(y), pv);
     LOG_MESSAGE_IF(remove, debug, "- Removing the edge %s <-> %s",
@@ -340,7 +342,7 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
       // set may be required for directing edges later
       if (directEdges &&
           std::isless(result.first, std::numeric_limits<double>::max()) &&
-          this->m_data.isIndependent(result.first)) {
+          this->m_data.isIndependent(this->m_alpha, result.first)) {
         Var x, y;
         std::tie(x, y, std::ignore) = e;
         TIMER_START(this->m_tRemoved);
@@ -355,7 +357,7 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
     }
     auto newEnd = std::remove_if(allEdges.begin(), allEdges.end(),
                                  [this] (const std::tuple<Var, Var, double>& e)
-                                        { return this->m_data.isIndependent(std::get<2>(e)); });
+                                        { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
     allEdges.resize(std::distance(allEdges.begin(), newEnd));
     for (const auto& rn : removedNeighbors) {
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
@@ -391,7 +393,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
       // set may be required for directing edges later
       if (directEdges &&
           std::isless(result.first, std::numeric_limits<double>::max()) &&
-          this->m_data.isIndependent(result.first)) {
+          this->m_data.isIndependent(this->m_alpha, result.first)) {
         TIMER_START(this->m_tRemoved);
         Var x, y;
         std::tie(x, y, std::ignore) = e;
@@ -407,7 +409,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
     }
     auto newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
                                  [this] (const std::tuple<Var, Var, double>& e)
-                                        { return this->m_data.isIndependent(std::get<2>(e)); });
+                                        { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
     myEdges.resize(std::distance(myEdges.begin(), newEnd));
     TIMER_START(this->m_tDist);
     this->fixImbalance(myEdges, imbalanceThreshold);

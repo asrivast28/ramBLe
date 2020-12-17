@@ -35,8 +35,7 @@ template <typename Counter, typename Var>
  */
 DiscreteData<Counter, Var>::DiscreteData(
 ) : m_counter(),
-    m_varNames(),
-    m_threshold()
+    m_varNames()
 {
   TIMER_RESET(m_timer);
 }
@@ -47,15 +46,12 @@ template <typename Counter, typename Var>
  *
  * @param counter Object that executes counting queries.
  * @param varNames Names of all the variables.
- * @param threshold Target nominal type I error rate.
  */
 DiscreteData<Counter, Var>::DiscreteData(
   const Counter& counter,
-  const std::vector<std::string>& varNames,
-  const double threshold
+  const std::vector<std::string>& varNames
 ) : m_counter(counter),
-    m_varNames(varNames),
-    m_threshold(threshold)
+    m_varNames(varNames)
 {
   LOG_MESSAGE_IF(numVars() != varNames.size(), error, "Number of variables (%d) != Number of variable names", counter.n(), varNames.size());
   TIMER_RESET(m_timer);
@@ -211,37 +207,41 @@ DiscreteData<Counter, Var>::pValue(
 }
 
 template <typename Counter, typename Var>
-template <typename Set>
 /**
  * @brief Checks if the variables are independent, given the conditioning set.
  *
  * @tparam Set The type of the container used for indices of the given variables.
+ * @param alpha Target nominal type I error rate.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
  */
+template <typename Set>
 bool
 DiscreteData<Counter, Var>::isIndependent(
+  const double alpha,
   const Var x,
   const Var y,
   const Set& given
 ) const
 {
-  return std::isgreater(this->pValue(x, y, given), m_threshold);
+  return std::isgreater(this->pValue(x, y, given), alpha);
 }
 
 template <typename Counter, typename Var>
 /**
  * @brief Checks for independence, given the p-value.
  *
+ * @param alpha Target nominal type I error rate.
  * @param pv The p-value, expected to be in the range [0.0, 1.0].
  */
 bool
 DiscreteData<Counter, Var>::isIndependent(
+  const double alpha,
   const double pv
 ) const
 {
-  return std::isgreater(pv, m_threshold);
+  return std::isgreater(pv, alpha);
 }
 
 template <typename Counter, typename Var>
@@ -249,7 +249,9 @@ template <typename Counter, typename Var>
  * @brief Finds the maximum p-value between the given variables,
  *        conditioned on any subset of the given conditioning set.
  *
- * @tparam Set The type of the container used for indices of the given variables.
+ * @tparam SetType The type of the container used for storing indices of the given variables.
+ * @tparam Args The trailing args, after the element type, to the container template.
+ * @param alpha Target nominal type I error rate.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -261,6 +263,7 @@ template <typename Counter, typename Var>
 template <template <typename...> class SetType, typename... Args>
 double
 DiscreteData<Counter, Var>::maxPValue(
+  const double alpha,
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -270,11 +273,11 @@ DiscreteData<Counter, Var>::maxPValue(
 {
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
-  for (auto i = minSize; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
+  for (auto i = minSize; (i <= subsetSize) && !this->isIndependent(alpha, maxPV); ++i) {
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       maxPV = std::max(thisPV, maxPV);
-      if (this->isIndependent(maxPV)) {
+      if (this->isIndependent(alpha, maxPV)) {
         break;
       }
     }
@@ -288,7 +291,9 @@ template <typename Counter, typename Var>
  * @brief Finds the maximum p-value between the given variables,
  *        conditioned on any subset of the given conditioning set.
  *
- * @tparam Set The type of the container used for indices of the given variables.
+ * @tparam SetType The type of the container used for storing indices of the given variables.
+ * @tparam Args The trailing args, after the element type, to the container template.
+ * @param alpha Target nominal type I error rate.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -300,6 +305,7 @@ template <typename Counter, typename Var>
 template <template <typename...> class SetType, typename... Args>
 double
 DiscreteData<Counter, Var>::maxPValue(
+  const double alpha,
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -308,15 +314,15 @@ DiscreteData<Counter, Var>::maxPValue(
 ) const
 {
   auto maxPV = this->pValue(x, y, seed);
-  if (!(this->isIndependent(maxPV) || given.empty())) {
+  if (!(this->isIndependent(alpha, maxPV) || given.empty())) {
     auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
-    for (auto i = 1u; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
+    for (auto i = 1u; (i <= subsetSize) && !this->isIndependent(alpha, maxPV); ++i) {
       for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
         // Always include the seed set in the conditioning set
         condition = set_union(condition, seed);
         auto thisPV = this->pValue(x, y, condition);
         maxPV = std::max(thisPV, maxPV);
-        if (this->isIndependent(maxPV)) {
+        if (this->isIndependent(alpha, maxPV)) {
           break;
         }
       }
@@ -331,7 +337,9 @@ template <typename Counter, typename Var>
  * @brief Finds the subset of the given conditioning set that maximizes
  *        the p-value between the given variables.
  *
- * @tparam Set The type of the container used for indices of the given variables.
+ * @tparam SetType The type of the container used for storing indices of the given variables.
+ * @tparam Args The trailing args, after the element type, to the container template.
+ * @param alpha Target nominal type I error rate.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -343,6 +351,7 @@ template <typename Counter, typename Var>
 template <template <typename...> class SetType, typename... Args>
 std::pair<double, SetType<Var, Args...>>
 DiscreteData<Counter, Var>::maxPValueSubset(
+  const double alpha,
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -353,14 +362,14 @@ DiscreteData<Counter, Var>::maxPValueSubset(
   auto subsetSize = std::min(static_cast<Var>(given.size()), maxSize);
   auto maxPV = std::numeric_limits<double>::lowest();
   auto z = set_init(SetType<Var, Args...>(), numVars());
-  for (auto i = minSize; (i <= subsetSize) && !this->isIndependent(maxPV); ++i) {
+  for (auto i = minSize; (i <= subsetSize) && !this->isIndependent(alpha, maxPV); ++i) {
     for (auto condition : Subsets<SetType, Var, Args...>(given, i)) {
       auto thisPV = this->pValue(x, y, condition);
       if (std::isgreater(thisPV, maxPV)) {
         maxPV = thisPV;
         z = condition;
       }
-      if (this->isIndependent(maxPV)) {
+      if (this->isIndependent(alpha, maxPV)) {
         break;
       }
     }
@@ -384,6 +393,7 @@ template <typename Counter, typename Var>
 template <typename Set>
 bool
 DiscreteData<Counter, Var>::isIndependentAnySubset(
+  const double alpha,
   const Var x,
   const Var y,
   const Set& given,
@@ -391,8 +401,8 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var minSize
 ) const
 {
-  auto maxPV = this->maxPValue(x, y, given, maxSize, minSize);
-  return this->isIndependent(maxPV);
+  auto maxPV = this->maxPValue(alpha, x, y, given, maxSize, minSize);
+  return this->isIndependent(alpha, maxPV);
 }
 
 template <typename Counter, typename Var>
@@ -418,6 +428,7 @@ template <typename Counter, typename Var>
  *
  * @tparam SetType The type of the container used for storing indices of the given variables.
  * @tparam Args The trailing args, after the element type, to the container template.
+ * @param alpha Target nominal type I error rate.
  * @param x The index of the first variable.
  * @param y The index of the second variable.
  * @param given The indices of the variables to be conditioned on.
@@ -427,6 +438,7 @@ template <typename Counter, typename Var>
 template <template <typename...> class SetType, typename... Args>
 bool
 DiscreteData<Counter, Var>::isIndependentAnySubset(
+  const double alpha,
   const Var x,
   const Var y,
   const SetType<Var, Args...>& given,
@@ -453,7 +465,7 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
         ++mine;
         // Only conduct more tests if the previous tests did not
         // return independence
-        if (!this->isIndependent(maxPV)) {
+        if (!this->isIndependent(alpha, maxPV)) {
           auto thisPV = this->pValue(x, y, *sit);
           maxPV = std::max(maxPV, thisPV);
         }
@@ -461,7 +473,7 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
       // Sync if all the processes have conducted the same number of tests
       if ((mine + others) == (threshold * comm.size())) {
         maxPV = mxx::allreduce(maxPV, findMax, comm);
-        if (!this->isIndependent(maxPV)) {
+        if (!this->isIndependent(alpha, maxPV)) {
           mine = 0u;
           others = 0u;
         }
@@ -472,7 +484,7 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
       r = (r + 1) % comm.size();
     }
   }
-  return this->isIndependent(maxPV);
+  return this->isIndependent(alpha, maxPV);
 }
 
 template <typename Counter, typename Var>
@@ -490,6 +502,7 @@ template <typename Counter, typename Var>
 template <typename Set>
 bool
 DiscreteData<Counter, Var>::isIndependentAnySubset(
+  const double alpha,
   const Var x,
   const Var y,
   const Set& given,
@@ -497,8 +510,8 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
   const Var maxSize
 ) const
 {
-  auto maxPV = this->maxPValue(x, y, given, seed, maxSize);
-  return this->isIndependent(maxPV);
+  auto maxPV = this->maxPValue(alpha, x, y, given, seed, maxSize);
+  return this->isIndependent(alpha, maxPV);
 }
 
 template <typename Counter, typename Var>

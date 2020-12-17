@@ -59,40 +59,41 @@ getAlgorithm(
   const std::string& algoName,
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
 )
 {
   std::stringstream ss;
   if (algoName.compare("gs") == 0) {
-    return std::make_unique<GS<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<GS<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << "gs";
   if (algoName.compare("iamb") == 0) {
-    return std::make_unique<IAMB<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<IAMB<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",iamb";
   if (algoName.compare("inter.iamb") == 0) {
-    return std::make_unique<InterIAMB<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<InterIAMB<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",inter.iamb";
   if (algoName.compare("mmpc") == 0) {
-    return std::make_unique<MMPC<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<MMPC<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",mmpc";
   if (algoName.compare("hiton") == 0) {
-    return std::make_unique<HITON<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<HITON<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",hiton";
   if (algoName.compare("si.hiton.pc") == 0) {
-    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<SemiInterleavedHITON<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",si.hiton.pc";
   if (algoName.compare("getpc") == 0) {
-    return std::make_unique<GetPC<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<GetPC<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",getpc";
   if (algoName.compare("pc.stable") == 0) {
-    return std::make_unique<PCStable<Data, Var, Set>>(comm, data, maxConditioning);
+    return std::make_unique<PCStable<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",pc.stable";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
@@ -117,9 +118,9 @@ learnNetwork(
   const mxx::comm& comm
 )
 {
-  DiscreteData<Counter, Var> data(counter, varNames, options.alpha());
+  DiscreteData<Counter, Var> data(counter, varNames);
   Var maxConditioning = static_cast<Var>(std::min(options.numVars(), options.maxConditioning()));
-  auto algo = getAlgorithm<Var, UintSet<Var, Size>>(options.algoName(), comm, data, maxConditioning);
+  auto algo = getAlgorithm<Var, UintSet<Var, Size>>(options.algoName(), comm, data, options.alpha(), maxConditioning);
   std::vector<std::string> neighborhoodVars;
   if (!options.targetVar().empty()) {
     TIMER_DECLARE(tNeighborhood);

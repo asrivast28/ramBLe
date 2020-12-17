@@ -41,7 +41,7 @@ class DiscreteData {
 public:
   DiscreteData();
 
-  DiscreteData(const Counter&, const std::vector<std::string>&, const double = 0.05);
+  DiscreteData(const Counter&, const std::vector<std::string>&);
 
   Var
   numVars() const;
@@ -72,34 +72,34 @@ public:
 
   template <typename Set = std::set<Var>>
   bool
-  isIndependent(const Var, const Var, const Set& = Set()) const;
+  isIndependent(const double, const Var, const Var, const Set& = Set()) const;
 
   bool
-  isIndependent(const double) const;
+  isIndependent(const double, const double) const;
 
   template <template <typename...> class SetType, typename... Args>
   double
-  maxPValue(const Var, const Var, const SetType<Var, Args...>&, const Var, const Var = 0u) const;
+  maxPValue(const double, const Var, const Var, const SetType<Var, Args...>&, const Var, const Var = 0u) const;
 
   template <template <typename...> class SetType, typename... Args>
   double
-  maxPValue(const Var, const Var, const SetType<Var, Args...>&, const SetType<Var, Args...>&, const Var) const;
+  maxPValue(const double, const Var, const Var, const SetType<Var, Args...>&, const SetType<Var, Args...>&, const Var) const;
 
   template <template <typename...> class SetType, typename... Args>
   std::pair<double, SetType<Var, Args...>>
-  maxPValueSubset(const Var, const Var, const SetType<Var, Args...>&, const Var, const Var = 0u) const;
+  maxPValueSubset(const double, const Var, const Var, const SetType<Var, Args...>&, const Var, const Var = 0u) const;
 
   template <typename Set>
   bool
-  isIndependentAnySubset(const Var, const Var, const Set&, const Var, const Var = 0u) const;
+  isIndependentAnySubset(const double, const Var, const Var, const Set&, const Var, const Var = 0u) const;
 
   template <template <typename...> class SetType, typename... Args>
   bool
-  isIndependentAnySubset(const Var, const Var, const SetType<Var, Args...>&, const Var, const mxx::comm&) const;
+  isIndependentAnySubset(const double, const Var, const Var, const SetType<Var, Args...>&, const Var, const mxx::comm&) const;
 
   template <typename Set>
   bool
-  isIndependentAnySubset(const Var, const Var, const Set&, const Set&, const Var) const;
+  isIndependentAnySubset(const double, const Var, const Var, const Set&, const Set&, const Var) const;
 
   ~DiscreteData();
 
@@ -110,7 +110,6 @@ private:
 private:
   Counter m_counter;
   std::vector<std::string> m_varNames;
-  double m_threshold;
   TIMER_DECLARE(m_timer, mutable);
 };
 

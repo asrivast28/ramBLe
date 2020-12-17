@@ -35,7 +35,7 @@
 template <typename Data, typename Var, typename Set>
 class BlanketLearning : public LocalLearning<Data, Var, Set> {
 public:
-  BlanketLearning(const mxx::comm&, const Data&, const Var);
+  BlanketLearning(const mxx::comm&, const Data&, const double, const Var);
 
   virtual
   ~BlanketLearning();
@@ -96,7 +96,7 @@ protected:
 template <typename Data, typename Var, typename Set>
 class GS : public BlanketLearning<Data, Var, Set> {
 public:
-  GS(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  GS(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set
@@ -120,7 +120,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class IAMB : public BlanketLearning<Data, Var, Set> {
 public:
-  IAMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  IAMB(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set
@@ -138,7 +138,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class InterIAMB : public BlanketLearning<Data, Var, Set> {
 public:
-  InterIAMB(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  InterIAMB(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set

@@ -36,8 +36,9 @@ template <typename Data, typename Var, typename Set>
 BlanketLearning<Data, Var, Set>::BlanketLearning(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : LocalLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : LocalLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
   TIMER_RESET(m_tGrow);
   TIMER_RESET(m_tShrink);
@@ -109,7 +110,7 @@ BlanketLearning<Data, Var, Set>::shrinkMB(
   for (const Var x : initial) {
     cmb.erase(x);
     LOG_MESSAGE(debug, "Shrink: Evaluating %s for removal from the MB of %s", this->m_data.varName(x), this->m_data.varName(target));
-    if (this->m_data.isIndependent(target, x, cmb)) {
+    if (this->m_data.isIndependent(this->m_alpha, target, x, cmb)) {
       LOG_MESSAGE(info, "- Removing %s from the MB of %s (shrink)", this->m_data.varName(x), this->m_data.varName(target));
       removed.insert(x);
     }
@@ -151,7 +152,7 @@ BlanketLearning<Data, Var, Set>::evaluateCandidatePC(
     mbTest.erase(x);
   }
 
-  return !this->m_data.isIndependentAnySubset(x, y, mbTest, this->m_maxConditioning);
+  return !this->m_data.isIndependentAnySubset(this->m_alpha, x, y, mbTest, this->m_maxConditioning);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -238,7 +239,7 @@ BlanketLearning<Data, Var, Set>::growAll(
                            { return std::get<0>(a) == std::get<0>(b); };
   auto uniqueEnd = std::unique(minPV.begin(), minPV.end(), comparePrimary);
   for (auto it = minPV.begin(); it != uniqueEnd; ++it) {
-    if (!this->m_data.isIndependent(std::get<2>(*it))) {
+    if (!this->m_data.isIndependent(this->m_alpha, std::get<2>(*it))) {
       // Add y to the blanket of x
       LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
                   this->m_data.varName(std::get<1>(*it)), this->m_data.varName(std::get<0>(*it)), std::get<2>(*it));
@@ -404,7 +405,7 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
       mbTest = mbSecond;
       mbTest.erase(p.first);
     }
-    if (!this->m_data.isIndependentAnySubset(p.first, p.second, mbTest, this->m_maxConditioning)) {
+    if (!this->m_data.isIndependentAnySubset(this->m_alpha, p.first, p.second, mbTest, this->m_maxConditioning)) {
       if (allNeighbors.find(p.first) == allNeighbors.end()) {
         allNeighbors[p.first] = set_init(Set(), this->m_data.numVars());
       }
@@ -478,8 +479,8 @@ BlanketLearning<Data, Var, Set>::checkCollider(
     mbZ.erase(y);
   }
   mbZ.erase(x);
-  auto pv = this->m_data.maxPValue(y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
-  auto collider = !this->m_data.isIndependent(pv);
+  auto pv = this->m_data.maxPValue(this->m_alpha, y, z, smallerSet(mbY, mbZ), setX, this->m_maxConditioning);
+  auto collider = !this->m_data.isIndependent(this->m_alpha, pv);
   return std::make_pair(collider, pv);
 }
 
@@ -487,8 +488,9 @@ template <typename Data, typename Var, typename Set>
 GS<Data, Var, Set>::GS(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : BlanketLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : BlanketLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -503,7 +505,7 @@ GS<Data, Var, Set>::pickBestCandidate(
   for (const Var y : candidates) {
     LOG_MESSAGE(debug, "Grow: Evaluating %s for addition to the MB", this->m_data.varName(y));
     double pv = this->m_data.pValue(target, y, cmb);
-    if (!this->m_data.isIndependent(pv)) {
+    if (!this->m_data.isIndependent(this->m_alpha, pv)) {
       LOG_MESSAGE(debug, "Grow: %s chosen as the best candidate", this->m_data.varName(y));
       return std::make_pair(y, pv);
     }
@@ -528,7 +530,7 @@ GS<Data, Var, Set>::getCandidateMB(
   while ((candidates.size() > 0) && changed) {
     changed = false;
     std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
-    if (!this->m_data.isIndependent(pvX)) {
+    if (!this->m_data.isIndependent(this->m_alpha, pvX)) {
       LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
                   this->m_data.varName(x), this->m_data.varName(target), pvX);
       cmb.insert(x);
@@ -564,7 +566,7 @@ GS<Data, Var, Set>::updatePValues(
                   this->m_data.varName(primary), this->m_data.varName(std::get<1>(mpv)));
       // A candidate to be added for this primary variable has not been found yet
       // Conduct CI test for this primary-secondary variable pair
-      found = !this->m_data.isIndependent(primary, std::get<1>(mpv),
+      found = !this->m_data.isIndependent(this->m_alpha, primary, std::get<1>(mpv),
                                           myBlankets.at(std::get<0>(mpv)));
     }
     std::get<2>(mpv) = 1.0 - static_cast<double>(found);
@@ -575,8 +577,9 @@ template <typename Data, typename Var, typename Set>
 IAMB<Data, Var, Set>::IAMB(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : BlanketLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : BlanketLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -599,7 +602,7 @@ IAMB<Data, Var, Set>::getCandidateMB(
     std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(pvX)) {
+    if (!this->m_data.isIndependent(this->m_alpha, pvX)) {
       LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
                   this->m_data.varName(x), this->m_data.varName(target), pvX);
       cmb.insert(x);
@@ -619,8 +622,9 @@ template <typename Data, typename Var, typename Set>
 InterIAMB<Data, Var, Set>::InterIAMB(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
-) : BlanketLearning<Data, Var, Set>(comm, data, maxConditioning)
+) : BlanketLearning<Data, Var, Set>(comm, data, alpha, maxConditioning)
 {
 }
 
@@ -643,7 +647,7 @@ InterIAMB<Data, Var, Set>::getCandidateMB(
     std::tie(x, pvX) = this->pickBestCandidate(target, candidates, cmb);
     // Add the variable to the candidate MB if it is not
     // independedent of the target
-    if (!this->m_data.isIndependent(pvX)) {
+    if (!this->m_data.isIndependent(this->m_alpha, pvX)) {
       LOG_MESSAGE(info, "+ Adding %s to the MB of %s (p-value = %g)",
                   this->m_data.varName(x), this->m_data.varName(target), pvX);
       cmb.insert(x);

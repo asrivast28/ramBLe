@@ -33,7 +33,7 @@
 template <typename Data, typename Var, typename Set>
 class DirectLearning : public LocalLearning<Data, Var, Set> {
 public:
-  DirectLearning(const mxx::comm&, const Data&, const Var);
+  DirectLearning(const mxx::comm&, const Data&, const double, const Var);
 
   virtual
   ~DirectLearning();
@@ -103,7 +103,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class MMPC : public DirectLearning<Data, Var, Set> {
 public:
-  MMPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  MMPC(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set
@@ -124,7 +124,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class HITON : public DirectLearning<Data, Var, Set> {
 public:
-  HITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  HITON(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set
@@ -145,7 +145,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class SemiInterleavedHITON : public DirectLearning<Data, Var, Set> {
 public:
-  SemiInterleavedHITON(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  SemiInterleavedHITON(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set
@@ -166,7 +166,7 @@ private:
 template <typename Data, typename Var, typename Set>
 class GetPC : public DirectLearning<Data, Var, Set> {
 public:
-  GetPC(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  GetPC(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   Set

@@ -49,7 +49,7 @@ public:
 template <typename Data, typename Var, typename Set>
 class ConstraintBasedLearning {
 public:
-  ConstraintBasedLearning(const mxx::comm&, const Data&, const Var);
+  ConstraintBasedLearning(const mxx::comm&, const Data&, const double, const Var);
 
   virtual
   const Set&
@@ -95,6 +95,7 @@ protected:
   const mxx::comm& m_comm;
   const Data m_data;
   Set m_allVars;
+  const double m_alpha;
   const Var m_maxConditioning;
 }; // class ConstraintBasedLearning
 

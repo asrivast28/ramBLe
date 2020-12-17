@@ -33,7 +33,7 @@
 template <typename Data, typename Var, typename Set>
 class LocalLearning : public ConstraintBasedLearning<Data, Var, Set> {
 public:
-  LocalLearning(const mxx::comm&, const Data&, const Var);
+  LocalLearning(const mxx::comm&, const Data&, const double, const Var);
 
   const Set&
   getPC(const Var) const override;

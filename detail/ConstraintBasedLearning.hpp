@@ -43,10 +43,12 @@ template <typename Data, typename Var, typename Set>
 ConstraintBasedLearning<Data, Var, Set>::ConstraintBasedLearning(
   const mxx::comm& comm,
   const Data& data,
+  const double alpha,
   const Var maxConditioning
 ) : m_comm(comm),
     m_data(data),
     m_allVars(set_init(Set(), data.numVars())),
+    m_alpha(alpha),
     m_maxConditioning(maxConditioning)
 {
   for (auto i = 0u; i < data.numVars(); ++i) {

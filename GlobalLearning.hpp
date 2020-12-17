@@ -33,7 +33,7 @@
 template <typename Data, typename Var, typename Set>
 class GlobalLearning : public ConstraintBasedLearning<Data, Var, Set> {
 public:
-  GlobalLearning(const mxx::comm&, const Data&, const Var);
+  GlobalLearning(const mxx::comm&, const Data&, const double, const Var);
 
   const Set&
   getPC(const Var) const override;
@@ -81,7 +81,7 @@ protected:
 template <typename Data, typename Var, typename Set>
 class PCStable : public GlobalLearning<Data, Var, Set> {
 public:
-  PCStable(const mxx::comm&, const Data&, const Var = std::numeric_limits<Var>::max());
+  PCStable(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
   std::pair<double, Set>
