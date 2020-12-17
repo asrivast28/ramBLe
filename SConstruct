@@ -226,6 +226,7 @@ env = conf.Finish()
 
 env.targetSuffix = targetSuffix
 env.topDir = topDir
+env.mnetsDir = os.path.join(topDir, 'mnets')
 env.testDir = os.path.join(topDir, 'test')
 env.scriptsDir = os.path.join(topDir, 'scripts')
 
@@ -234,6 +235,9 @@ buildDir = os.path.join('builds', buildDir)
 if not SConscript('SConscript', exports='env', src_dir='.', variant_dir=buildDir, duplicate=0):
   print('Executable was not built')
   Exit(1)
+if ARGUMENTS.get('MNETS', 1) not in ('0', 0):
+  if not SConscript(os.path.join('mnets', 'SConscript'), exports='env', src_dir='mnets', variant_dir=os.path.join(buildDir, 'mnets'), duplicate=0):
+    print('Module network executable was not build')
 if ARGUMENTS.get('TEST', 1) not in ('0', 0):
   if not SConscript(os.path.join('test', 'SConscript'), exports='env', src_dir='test', variant_dir=os.path.join(buildDir, 'test'), duplicate=0):
     print('Test suite was not built')

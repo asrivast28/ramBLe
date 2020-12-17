@@ -376,14 +376,11 @@ operator<<(
   const UintSet<Element, Size>& set
 )
 {
-  stream << '{';
-  for (auto elem : set) {
-    stream << static_cast<uint32_t>(elem) << ',';
+  auto first = true;
+  for (const auto elem : set) {
+    stream << (first ? "" : ";") << static_cast<uint32_t>(elem);
+    first = false;
   }
-  if (set.size() > 0) {
-    stream << '\b';
-  }
-  stream << '}';
   return stream;
 }
 
