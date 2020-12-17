@@ -18,6 +18,8 @@
 # limitations under the License.
 Import('env')
 
+targetName = 'ramble'
+
 boostLibs = [
              'boost_program_options',
              'boost_system',
@@ -40,8 +42,9 @@ for lib in boostLibs:
     Return('built')
 buildEnv = conf.Finish()
 
-buildEnv.Program(target=buildEnv.targetName, source=srcFiles)
+targetName += buildEnv.targetSuffix
+buildEnv.Program(target=targetName, source=srcFiles)
 
-buildEnv.Install(buildEnv.topDir, buildEnv.targetName)
+buildEnv.Install(buildEnv.topDir, targetName)
 built = True
 Return('built')

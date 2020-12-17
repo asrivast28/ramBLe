@@ -16,9 +16,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-
 Import('env')
+
+targetName = 'testramble'
 
 gTestLibs = [
              'gtest',
@@ -42,8 +42,9 @@ for lib in gTestLibs:
     Return('built')
 buildEnv = conf.Finish()
 
-buildEnv.Program(target=buildEnv.testName, source=srcFiles)
+targetName += buildEnv.targetSuffix
+buildEnv.Program(target=targetName, source=srcFiles)
 
-buildEnv.Install(buildEnv.testDir, buildEnv.testName)
+buildEnv.Install(buildEnv.testDir, targetName)
 built = True
 Return('built')

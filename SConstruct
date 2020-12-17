@@ -23,8 +23,7 @@ topDir = os.path.abspath(os.getcwd())
 extDir = os.path.join(topDir, 'ext')
 cpp = None
 buildDir = None
-targetName = 'ramble'
-testName = 'testramble'
+targetSuffix = ''
 
 
 cppPaths = [
@@ -88,8 +87,7 @@ if releaseBuild:
   buildDir = 'release'
 else:
   buildDir = 'debug'
-  targetName += '_debug'
-  testName += '_debug'
+  targetSuffix += '_debug'
 
 enableLogging = ARGUMENTS.get('LOGGING', None)
 if enableLogging is not None:
@@ -124,8 +122,7 @@ if profiler is not None:
     else:
       print('ERROR: Profiler "%s" is not supported' % profiler)
       Exit(1)
-    targetName += '_%s' % profiler
-    testName += '_%s' % profiler
+    targetSuffix += '_%s' % profiler
   else:
     print('WARNING: Profiling is not supported on', platform.system())
 
@@ -139,8 +136,7 @@ if ARGUMENTS.get('SANITIZE', 0) not in [0, '0']:
 
 suffix = ARGUMENTS.get('SUFFIX')
 if suffix is not None:
-  targetName += suffix
-  testName += suffix
+  targetSuffix += suffix
 
 if ARGUMENTS.get('LOCALENVIRON', 1) not in [0, '0']:
   # Use all the paths specified by the environment
@@ -228,8 +224,7 @@ for lib in allLibs:
 # Use the modified environment
 env = conf.Finish()
 
-env.targetName = targetName
-env.testName = testName
+env.targetSuffix = targetSuffix
 env.topDir = topDir
 env.testDir = os.path.join(topDir, 'test')
 env.scriptsDir = os.path.join(topDir, 'scripts')
