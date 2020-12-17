@@ -20,7 +20,7 @@
 #ifndef DETAIL_GLOBALLEARNING_HPP_
 #define DETAIL_GLOBALLEARNING_HPP_
 
-#include "../SetUtils.hpp"
+#include "SetUtils.hpp"
 
 #include "utils/Logging.hpp"
 

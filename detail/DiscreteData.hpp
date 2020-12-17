@@ -20,8 +20,7 @@
 #ifndef DETAIL_DISCRETEDATA_HPP_
 #define DETAIL_DISCRETEDATA_HPP_
 
-#include "../SetUtils.hpp"
-#include "../UintSet.hpp"
+#include "SetUtils.hpp"
 
 #include "mxx/reduction.hpp"
 #include "utils/Logging.hpp"

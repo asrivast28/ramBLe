@@ -20,7 +20,7 @@
 #ifndef DETAIL_CONSTRAINTBASEDLEARNING_HPP_
 #define DETAIL_CONSTRAINTBASEDLEARNING_HPP_
 
-#include "../SetUtils.hpp"
+#include "SetUtils.hpp"
 
 #include "mxx/distribution.hpp"
 #include "mxx/reduction.hpp"

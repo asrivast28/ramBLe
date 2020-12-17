@@ -31,8 +31,8 @@ class ChildData : public testing::Test {
 protected:
   void
   SetUp() override {
-    uint32_t n = 20;
-    uint32_t m = 10000;
+    constexpr uint32_t n = 20;
+    constexpr uint32_t m = 10000;
     ColumnObservationReader<uint8_t> reader("child.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
@@ -62,8 +62,8 @@ class InsuranceData : public testing::Test {
 protected:
   void
   SetUp() override {
-    uint32_t n = 27;
-    uint32_t m = 10000;
+    constexpr uint32_t n = 27;
+    constexpr uint32_t m = 10000;
     ColumnObservationReader<uint8_t> reader("insurance.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
@@ -93,8 +93,8 @@ class MildewData : public testing::Test {
 protected:
   void
   SetUp() override {
-    uint32_t n = 35;
-    uint32_t m = 10000;
+    constexpr uint32_t n = 35;
+    constexpr uint32_t m = 10000;
     ColumnObservationReader<uint8_t> reader("mildew.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
@@ -124,8 +124,8 @@ class AlarmData : public testing::Test {
 protected:
   void
   SetUp() override {
-    uint32_t n = 37;
-    uint32_t m = 10000;
+    constexpr uint32_t n = 37;
+    constexpr uint32_t m = 10000;
     ColumnObservationReader<uint8_t> reader("alarm.csv", n, m, ' ', false, false, true);
     auto counter = Counter::create(n, m, std::begin(reader.data()));
     data = new DiscreteData<Counter, uint8_t>(counter, reader.varNames());
