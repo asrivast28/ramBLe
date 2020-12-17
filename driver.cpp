@@ -42,7 +42,7 @@
 
 
 /**
- * @brief Gets a pointer to the object of the required MB discovery algorithm.
+ * @brief Gets a pointer to the object of the required constraint-based algorithm.
  *
  * @tparam Var Type of the variables (expected to be an integral type).
  * @tparam Set Type of set container.
@@ -100,19 +100,17 @@ getAlgorithm(
 }
 
 /**
- * @brief Gets the neighborhood for the given target variable.
+ * @brief Learns the BN using the given data counter.
  *
  * @tparam Var Type of the variables (expected to be an integral type).
  * @tparam Counter Type of the object that provides counting queries.
  * @param counter Object that executes counting queries.
  * @param varNames Names of all the variables.
  * @param options Program options provider.
- *
- * @return The list of labels of the variables in the neighborhood.
  */
 template <typename Var, typename Size, typename Counter>
-std::vector<std::string>
-getNeighborhood(
+void
+learnNetwork(
   const Counter& counter,
   const std::vector<std::string>& varNames,
   const ProgramOptions& options,
@@ -142,6 +140,10 @@ getNeighborhood(
       }
     }
     if (comm.is_first()) {
+      for (const auto var : neighborhoodVars) {
+        std::cout << var << ",";
+      }
+      std::cout << std::endl;
       TIMER_ELAPSED("Time taken in getting the neighborhood: ", tNeighborhood);
     }
   }
@@ -159,7 +161,6 @@ getNeighborhood(
       TIMER_ELAPSED("Time taken in writing the network: ", tWrite);
     }
   }
-  return neighborhoodVars;
 }
 
 /**
@@ -198,7 +199,7 @@ createCounter(
 }
 
 /**
- * @brief Gets the neighborhood for the given target variable.
+ * @brief Learns the BN from the data in the given file.
  *
  * @tparam CounterType Type of the counter to be used.
  * @tparam FileType Type of the file to be read.
@@ -206,12 +207,10 @@ createCounter(
  * @param m The total number of observations.
  * @param reader File data reader.
  * @param options Program options provider.
- *
- * @return The list of labels of the variables in the neighborhood.
  */
 template <template <typename...> class CounterType, typename FileType>
-std::vector<std::string>
-getNeighborhood(
+void
+learnNetwork(
   const uint32_t n,
   const uint32_t m,
   std::unique_ptr<FileType>&& reader,
@@ -223,52 +222,51 @@ getNeighborhood(
   std::vector<std::string> nbrVars;
   if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(counter, varNames, options, comm);
+    learnNetwork<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(counter, varNames, options, comm);
+    learnNetwork<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint8_t>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, maxSize<uint8_t>()>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint8_t, std::integral_constant<int, maxSize<uint8_t>()>>(counter, varNames, options, comm);
+    learnNetwork<uint8_t, std::integral_constant<int, maxSize<uint8_t>()>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, maxSize<uint16_t>()>>(n, m, std::begin(reader->data()));
-    nbrVars = getNeighborhood<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>(counter, varNames, options, comm);
+    learnNetwork<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>(counter, varNames, options, comm);
   }
   else {
     throw std::runtime_error("The given number of variables is not supported.");
   }
-  return nbrVars;
 }
 
 void
@@ -382,17 +380,17 @@ main(
     std::stringstream ss;
     std::vector<std::string> nbrVars;
     if (options.counterType().compare("ct") == 0) {
-      nbrVars = getNeighborhood<CTCounter>(n, m, std::move(reader), options, comm);
+      learnNetwork<CTCounter>(n, m, std::move(reader), options, comm);
       counterFound = true;
     }
     ss << "ct";
     if (options.counterType().compare("bv") == 0) {
-      nbrVars = getNeighborhood<BVCounter>(n, m, std::move(reader), options, comm);
+      learnNetwork<BVCounter>(n, m, std::move(reader), options, comm);
       counterFound = true;
     }
     ss << ",bv";
     if (options.counterType().compare("rad") == 0) {
-      nbrVars = getNeighborhood<RadCounter>(n, m, std::move(reader), options, comm);
+      learnNetwork<RadCounter>(n, m, std::move(reader), options, comm);
       counterFound = true;
     }
     ss << ",rad";
@@ -400,12 +398,6 @@ main(
       throw std::runtime_error("Requested counter not found. Supported counter types are: {" + ss.str() + "}");
     }
 
-    if (comm.is_first()) {
-      for (const auto var : nbrVars) {
-        std::cout << var << ",";
-      }
-      std::cout << std::endl;
-    }
   }
   catch (const std::runtime_error& e) {
     std::cerr << "Encountered runtime error during execution:" << std::endl;
