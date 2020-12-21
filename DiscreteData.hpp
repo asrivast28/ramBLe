@@ -47,7 +47,7 @@ public:
   numVars() const;
 
   uint32_t
-  numRows() const;
+  numObs() const;
 
   const std::string&
   varName(const Var) const;
@@ -108,8 +108,8 @@ private:
   testThreshold(const uint32_t = 1u) const;
 
 private:
-  Counter m_counter;
-  std::vector<std::string> m_varNames;
+  const Counter m_counter;
+  const std::vector<std::string> m_varNames;
   TIMER_DECLARE(m_timer, mutable);
 };
 

@@ -1,7 +1,7 @@
 /**
- * @file driver.cpp
- * @brief The implementation of the main function, and other
- *        functions that drive the program execution.
+ * @file ramble.cpp
+ * @brief The implementation of the main function for ramble,
+ *        and other functions that drive the program execution.
  * @author Ankit Srivastava <asrivast@gatech.edu>
  *
  * Copyright 2020 Georgia Institute of Technology

@@ -69,10 +69,10 @@ DiscreteData<Counter, Var>::numVars(
 
 template <typename Counter, typename Var>
 /**
- * @return Number of rows (observations) in the given dataset.
+ * @return Number of observations in the given dataset.
  */
 uint32_t
-DiscreteData<Counter, Var>::numRows(
+DiscreteData<Counter, Var>::numObs(
 ) const
 {
   return static_cast<uint32_t>(m_counter.m());
