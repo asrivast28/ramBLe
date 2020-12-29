@@ -223,46 +223,57 @@ learnNetwork(
   std::vector<std::string> nbrVars;
   if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 2)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint8_t, std::integral_constant<int, (maxSize<uint8_t>() >> 1)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint8_t>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, maxSize<uint8_t>()>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint8_t, std::integral_constant<int, maxSize<uint8_t>()>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 7)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 6)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 5)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 4)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 3)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 2)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, (maxSize<uint16_t>() >> 1)>>(counter, varNames, options, comm);
   }
   else if ((n - 1) <= UintSet<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>::capacity()) {
     auto counter = createCounter<CounterType, std::integral_constant<int, maxSize<uint16_t>()>>(n, m, std::begin(reader->data()));
+    reader.reset();
     learnNetwork<uint16_t, std::integral_constant<int, maxSize<uint16_t>()>>(counter, varNames, options, comm);
   }
   else {
