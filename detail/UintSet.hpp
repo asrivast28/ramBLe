@@ -211,6 +211,17 @@ UintSet<Element, Size>::UintSet(
 }
 
 template <typename Element, typename Size>
+UintSet<Element, Size>::UintSet(
+  const Impl& set,
+  const Element max
+) : m_set(set),
+    m_max(max),
+    m_size()
+{
+  m_size = static_cast<Element>(set_size(m_set));
+}
+
+template <typename Element, typename Size>
 const typename UintSet<Element, Size>::Impl&
 UintSet<Element, Size>::operator*(
 ) const

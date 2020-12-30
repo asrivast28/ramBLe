@@ -136,7 +136,7 @@ private:
   std::vector<bool> m_candidates;
 }; // class Subsets
 
-template <typename USet, template <typename> class Functor, typename ReduceType>
+template <typename Element, typename USet, template <typename> class Functor, typename ReduceType>
 void
 uintset_allreduce(
   USet& set,
@@ -148,7 +148,7 @@ uintset_allreduce(
   auto b = new ReduceType[size];
   mxx::allreduce((*set).b, size, b, func, comm);
   memcpy((*set).b, b, size * sizeof(ReduceType));
-  set.m_size = 0;
+  set.m_size = static_cast<Element>(set_size(*set));
   delete[] b;
 }
 
@@ -185,7 +185,7 @@ uintset_allreduce_indexed(
     auto it = indexedSets.find(x);
     if (it != indexedSets.end()) {
       memcpy((*(it->second)).b, b, blockSize * sizeof(ReduceType));
-      (it->second).m_size = 0;
+      (it->second).m_size = static_cast<Element>(set_size(*(it->second)));
     }
     b += blockSize;
   }
@@ -222,9 +222,9 @@ set_union<UintSet<Element, std::integral_constant<int, N>>>( \
   const UintSet<Element, std::integral_constant<int, N>>& second \
 ) \
 { \
-  UintSet<Element, std::integral_constant<int, N>> result; \
-  *result = *first | *second; \
-  return result; \
+  auto result = *first | *second; \
+  auto max = std::max(first.max(), second.max()); \
+  return UintSet<Element, std::integral_constant<int, N>>(result, max); \
 } \
  \
 template <> \
@@ -234,9 +234,9 @@ set_intersection<UintSet<Element, std::integral_constant<int, N>>>( \
   const UintSet<Element, std::integral_constant<int, N>>& second \
 ) \
 { \
-  UintSet<Element, std::integral_constant<int, N>> result; \
-  *result = *first & *second; \
-  return result; \
+  auto result = *first & *second; \
+  auto max = std::max(first.max(), second.max()); \
+  return UintSet<Element, std::integral_constant<int, N>>(result, max); \
 } \
  \
 template <> \
@@ -246,9 +246,9 @@ set_difference<UintSet<Element, std::integral_constant<int, N>>>( \
   const UintSet<Element, std::integral_constant<int, N>>& second \
 ) \
 { \
-  UintSet<Element, std::integral_constant<int, N>> result; \
-  *result = set_diff(*first, *second); \
-  return result; \
+  auto result = set_diff(*first, *second); \
+  auto max = std::max(first.max(), second.max()); \
+  return UintSet<Element, std::integral_constant<int, N>>(result, max); \
 } \
  \
 template <> \
@@ -262,7 +262,7 @@ set_bcast<UintSet<Element, std::integral_constant<int, N>>>( \
   auto size = (set.max() + 63) / 64; \
   mxx::bcast((*set).b, size, root, comm); \
   if (comm.rank() != root) { \
-    set.m_size = 0; \
+    set.m_size = static_cast<Element>(set_size(*set)); \
   } \
 } \
  \
@@ -274,7 +274,7 @@ set_allunion<UintSet<Element, std::integral_constant<int, N>>>( \
 ) \
 { \
   using ReduceType = typename UintSet<Element, std::integral_constant<int, N>>::ReduceType; \
-  uintset_allreduce(set, std::bit_or<ReduceType>(), comm); \
+  uintset_allreduce<Element>(set, std::bit_or<ReduceType>(), comm); \
 } \
  \
 template <> \
@@ -298,7 +298,7 @@ set_allintersect<UintSet<Element, std::integral_constant<int, N>>>( \
 ) \
 { \
   using ReduceType = typename UintSet<Element, std::integral_constant<int, N>>::ReduceType; \
-  uintset_allreduce(set, std::bit_and<ReduceType>(), comm); \
+  uintset_allreduce<Element>(set, std::bit_and<ReduceType>(), comm); \
 } \
  \
 template <> \
@@ -347,6 +347,7 @@ set_allgatherv<UintSet<Element, std::integral_constant<int, N>>>( \
   b = bitSets; \
   for (auto& set : allSets) { \
     memcpy((*set).b, b, blockSize * sizeof(ReduceType)); \
+    set.m_size = static_cast<Element>(set_size(*set)); \
     b += blockSize; \
   } \
   delete[] bitSets; \

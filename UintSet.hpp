@@ -78,6 +78,8 @@ public:
 
   UintSet(const typename std::vector<Element>::iterator&, const typename std::vector<Element>::iterator&, const Element = capacity());
 
+  UintSet(const Impl&, const Element = capacity());
+
   const Impl&
   operator*() const;
 
@@ -137,7 +139,7 @@ public:
   void
   set_bcast(Set&, const int, const mxx::comm&);
 
-  template <typename Set, template <typename> class Functor, typename RType>
+  template <typename Var, typename Set, template <typename> class Functor, typename RType>
   friend
   void
   uintset_allreduce(Set&, Functor<RType>, const mxx::comm&);
@@ -146,6 +148,11 @@ public:
   friend
   void
   uintset_allreduce_indexed(std::unordered_map<Var, Set>&, const Set&, const Var, Functor<RType>, const mxx::comm&);
+
+  template <typename Set, typename Var>
+  friend
+  std::vector<Set>
+  set_allgatherv(const std::vector<Set>&, const std::vector<size_t>&, const Var, const mxx::comm&);
 
 private:
   Impl m_set;
