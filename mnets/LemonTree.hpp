@@ -72,6 +72,9 @@ private:
   std::list<std::list<Set>>
   clusterObsGanesh(const uint32_t, const uint32_t, const uint32_t, const uint32_t, std::mt19937* const, const Set&) const;
 
+  void
+  readCandidateParents(const std::string&, Set&) const;
+
   std::list<Module<Data, Var, Set>>
   learnModules(const std::multimap<Var, Var>&&, const pt::ptree&) const;
 

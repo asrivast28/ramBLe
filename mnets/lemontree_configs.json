@@ -25,6 +25,7 @@
     "sample_steps" : 100,
     "use_bayesian_score" : true,
     "score_gain" : 0.0,
+    "reg_file" : "",
     "beta_reg" : 20.0,
     "num_reg" : 10,
     "output_file" : "modules"

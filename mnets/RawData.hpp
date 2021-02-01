@@ -53,6 +53,9 @@ public:
   varNames(const Set&) const;
 
   Var
+  varIndex(const std::string&) const;
+
+  Var
   numVars() const;
 
   Var
@@ -158,6 +161,30 @@ RawData<Counter, Var>::varNames(
     names[i++] = m_varNames[var];
   }
   return names;
+}
+
+template <typename Counter, typename Var>
+/**
+ * @brief Returns the index of a variable.
+ *
+ * @param name The name of the query variable.
+ *
+ * @return The index of the query variable.
+ */
+Var
+RawData<Counter, Var>::varIndex(
+  const std::string& name
+) const
+{
+  Var x = 0u;
+  for (const auto& var : m_varNames) {
+    if (var.compare(name) == 0) {
+      break;
+    }
+    ++x;
+  }
+  LOG_MESSAGE_IF(x == numVars(), error, "Variable with name %s not found.", name);
+  return x;
 }
 
 template <typename DataType, typename Var>

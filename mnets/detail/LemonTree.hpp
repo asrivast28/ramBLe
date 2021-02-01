@@ -229,6 +229,25 @@ LemonTree<Data, Var, Set>::clusterObsGanesh(
 }
 
 template <typename Data, typename Var, typename Set>
+void
+LemonTree<Data, Var, Set>::readCandidateParents(
+  const std::string& fileName,
+  Set& candidateParents
+) const
+{
+  LOG_MESSAGE(info, "Reading candidate parents from %s", fileName);
+  std::ifstream regFile(boost::filesystem::canonical(fileName).string());
+  std::string name;
+  while (std::getline(regFile, name)) {
+    auto v = this->m_data.varIndex(name);
+    if (v < this->m_data.numVars()) {
+      candidateParents.insert(v);
+    }
+  }
+  LOG_MESSAGE(info, "Read %u candidate parents", candidateParents.size());
+}
+
+template <typename Data, typename Var, typename Set>
 std::list<Module<Data, Var, Set>>
 LemonTree<Data, Var, Set>::learnModules(
   const std::multimap<Var, Var>&& coClusters,
@@ -242,6 +261,7 @@ LemonTree<Data, Var, Set>::learnModules(
   auto sampleSteps = modulesConfigs.get<uint32_t>("sample_steps");
   auto scoreBHC = modulesConfigs.get<bool>("use_bayesian_score");
   auto scoreGain = modulesConfigs.get<double>("score_gain");
+  auto regFile = modulesConfigs.get<std::string>("reg_file");
   auto betaMax = modulesConfigs.get<double>("beta_reg");
   auto numSplits = modulesConfigs.get<uint32_t>("num_reg");
   std::mt19937 generator(randomSeed);
@@ -265,8 +285,15 @@ LemonTree<Data, Var, Set>::learnModules(
     cit = clusterIts.second;
   }
   Set candidateParents(this->m_data.numVars());
-  for (Var v = 0u; v < candidateParents.max(); ++v) {
-    candidateParents.insert(v);
+  if (!regFile.empty()) {
+    // Read candidate parents from the given file
+    this->readCandidateParents(regFile, candidateParents);
+  }
+  else {
+    // Add all the variables as candidate parents
+    for (Var v = 0u; v < candidateParents.max(); ++v) {
+      candidateParents.insert(v);
+    }
   }
   OptimalBeta ob(0.0, betaMax, 1e-5);
   for (auto& module : modules) {
