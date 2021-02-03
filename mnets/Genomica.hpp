@@ -40,11 +40,11 @@ public:
   ~Genomica();
 
 protected:
-  ModuleNetwork<Var>
-  getNetwork_sequential(const pt::ptree&) const;
+  void
+  learnNetwork_sequential(const pt::ptree&, const std::string&) const;
 
-  ModuleNetwork<Var>
-  getNetwork_parallel(const pt::ptree&) const;
+  void
+  learnNetwork_parallel(const pt::ptree&, const std::string&) const;
 }; // class Genomica
 
 #include "detail/Genomica.hpp"

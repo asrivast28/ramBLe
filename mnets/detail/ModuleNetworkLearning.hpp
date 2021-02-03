@@ -53,15 +53,15 @@ template <typename Data, typename Var, typename Set>
  *
  * @param isParallel Specifies if the network should be learned in parallel.
  */
-ModuleNetwork<Var>
-ModuleNetworkLearning<Data, Var, Set>::getNetwork(
+void
+ModuleNetworkLearning<Data, Var, Set>::learnNetwork(
   const bool isParallel,
-  const pt::ptree& algoConfigs
+  const pt::ptree& algoConfigs,
+  const std::string& outputDir
 ) const
 {
-  auto mn = isParallel ? this->getNetwork_parallel(algoConfigs) :
-                         this->getNetwork_sequential(algoConfigs);
-  return mn;
+  isParallel ? this->learnNetwork_parallel(algoConfigs, outputDir) :
+               this->learnNetwork_sequential(algoConfigs, outputDir);
 }
 
 #endif // DETAIL_MODULENETWORKLEARNING_HPP_

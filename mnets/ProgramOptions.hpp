@@ -69,7 +69,7 @@ public:
   learnNetwork() const;
 
   const std::string&
-  outputFile() const;
+  outputDir() const;
 
   const std::string&
   counterType() const;
@@ -101,7 +101,7 @@ private:
   std::string m_logFile;
   std::string m_dataFile;
   std::string m_algoName;
-  std::string m_outputFile;
+  std::string m_outputDir;
   std::string m_counterType;
   std::string m_configFile;
   uint32_t m_numVars;

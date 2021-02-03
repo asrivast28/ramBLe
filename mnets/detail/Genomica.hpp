@@ -42,23 +42,23 @@ Genomica<Data, Var, Set>::~Genomica(
 }
 
 template <typename Data, typename Var, typename Set>
-ModuleNetwork<Var>
-Genomica<Data, Var, Set>::getNetwork_sequential(
-  const pt::ptree&
+void
+Genomica<Data, Var, Set>::learnNetwork_sequential(
+  const pt::ptree&,
+  const std::string&
 ) const
 {
   throw NotImplementedError("Genomica: Sequential algorithm is not implemented yet");
-  return ModuleNetwork<Var>(this->m_data.varNames(this->m_allVars));
 }
 
 template <typename Data, typename Var, typename Set>
-ModuleNetwork<Var>
-Genomica<Data, Var, Set>::getNetwork_parallel(
-  const pt::ptree&
+void
+Genomica<Data, Var, Set>::learnNetwork_parallel(
+  const pt::ptree&,
+  const std::string&
 ) const
 {
   throw NotImplementedError("Genomica: Parallel algorithm is not implemented yet");
-  return ModuleNetwork<Var>(this->m_data.varNames(this->m_allVars));
 }
 
 #endif // DETAIL_GENOMICA_HPP_

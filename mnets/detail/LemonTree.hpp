@@ -63,17 +63,19 @@ LemonTree<Data, Var, Set>::clusterVarsGanesh(
 ) const
 {
   auto randomSeed = ganeshConfigs.get<uint32_t>("seed");
-  std::mt19937 generator(randomSeed);
   auto initClusters = ganeshConfigs.get<Var>("init_num_clust");
   if ((initClusters == 0) || (initClusters > this->m_data.numVars())) {
     initClusters = this->m_data.numVars() / 2;
   }
   auto numRuns = ganeshConfigs.get<uint32_t>("num_runs");
   auto numSteps = ganeshConfigs.get<uint32_t>("num_steps");
-  Ganesh<Data, Var, Set> ganesh(this->m_comm, this->m_data, &generator);
   std::list<std::list<Set>> sampledClusters;
   for (auto r = 0u; r < numRuns; ++r) {
     LOG_MESSAGE(info, "Run %u", r);
+    // XXX: Seeding PRNG in this way to compare the results
+    //      with Lemon-Tree; the seeding can be moved outside later
+    std::mt19937 generator(randomSeed + r);
+    Ganesh<Data, Var, Set> ganesh(this->m_comm, this->m_data, &generator);
     ganesh.initializeRandom(initClusters);
     for (auto s = 0u; s <= numSteps; ++s) {
       LOG_MESSAGE(info, "Step %u", s);
@@ -164,8 +166,8 @@ LemonTree<Data, Var, Set>::clusterConsensus(
 ) const
 {
   auto coMatrix = this->coclusteringMatrix(std::move(varClusters), consensusConfigs.get<double>("min_weight"));
-  auto tolerance = consensusConfigs.get<double>("tolerance");
-  auto maxSteps = consensusConfigs.get<uint32_t>("max_steps");
+  auto tolerance = consensusConfigs.get<double>("tolerance", 1e-5);
+  auto maxSteps = consensusConfigs.get<uint32_t>("max_steps", 1000);
   auto minClustSize = consensusConfigs.get<uint32_t>("min_clust_size");
   auto minClustScore = consensusConfigs.get<double>("min_clust_score");
   auto result = densePerron(std::move(coMatrix), this->m_data.numVars(), tolerance,
@@ -259,7 +261,7 @@ LemonTree<Data, Var, Set>::learnModules(
   auto numSteps = modulesConfigs.get<uint32_t>("num_steps");
   auto burnSteps = modulesConfigs.get<uint32_t>("burn_in");
   auto sampleSteps = modulesConfigs.get<uint32_t>("sample_steps");
-  auto scoreBHC = modulesConfigs.get<bool>("use_bayesian_score");
+  auto scoreBHC = modulesConfigs.get<bool>("use_bayesian_score", true);
   auto scoreGain = modulesConfigs.get<double>("score_gain");
   auto regFile = modulesConfigs.get<std::string>("reg_file");
   auto betaMax = modulesConfigs.get<double>("beta_reg");
@@ -369,9 +371,10 @@ LemonTree<Data, Var, Set>::writeModules(
 }
 
 template <typename Data, typename Var, typename Set>
-ModuleNetwork<Var>
-LemonTree<Data, Var, Set>::getNetwork_sequential(
-  const pt::ptree& algoConfigs
+void
+LemonTree<Data, Var, Set>::learnNetwork_sequential(
+  const pt::ptree& algoConfigs,
+  const std::string& outputDir
 ) const
 {
   TIMER_START(m_tGanesh);
@@ -381,6 +384,7 @@ LemonTree<Data, Var, Set>::getNetwork_sequential(
   auto clusterFile = ganeshConfigs.get<std::string>("output_file");
   if (!clusterFile.empty()) {
     TIMER_START(m_tWrite);
+    clusterFile = outputDir + "/" + clusterFile;
     this->writeVarClusters(clusterFile, varClusters);
     TIMER_PAUSE(m_tWrite);
   }
@@ -391,6 +395,7 @@ LemonTree<Data, Var, Set>::getNetwork_sequential(
   auto consensusFile = consensusConfigs.get<std::string>("output_file");
   if (!consensusFile.empty()) {
     TIMER_START(m_tWrite);
+    consensusFile = outputDir + "/" + consensusFile;
     this->writeConsensusCluster(consensusFile, coClusters);
     TIMER_PAUSE(m_tWrite);
   }
@@ -401,20 +406,20 @@ LemonTree<Data, Var, Set>::getNetwork_sequential(
   auto modulesFile = modulesConfigs.get<std::string>("output_file");
   if (!modulesFile.empty()) {
     TIMER_START(m_tWrite);
+    modulesFile = outputDir + "/" + modulesFile;
     this->writeModules(modulesFile, modules);
     TIMER_PAUSE(m_tWrite);
   }
-  return ModuleNetwork<Var>(this->m_data.varNames(this->m_allVars));
 }
 
 template <typename Data, typename Var, typename Set>
-ModuleNetwork<Var>
-LemonTree<Data, Var, Set>::getNetwork_parallel(
-  const pt::ptree&
+void
+LemonTree<Data, Var, Set>::learnNetwork_parallel(
+  const pt::ptree&,
+  const std::string&
 ) const
 {
   throw NotImplementedError("Lemon Tree: Parallel algorithm is not implemented yet");
-  return ModuleNetwork<Var>(this->m_data.varNames(this->m_allVars));
 }
 
 #endif // DETAIL_LEMONTREE_HPP_

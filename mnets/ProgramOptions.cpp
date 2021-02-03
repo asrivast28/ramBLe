@@ -34,7 +34,7 @@ ProgramOptions::ProgramOptions(
     m_logFile(),
     m_dataFile(),
     m_algoName(),
-    m_outputFile(),
+    m_outputDir(),
     m_counterType(),
     m_configFile(),
     m_numVars(),
@@ -61,7 +61,7 @@ ProgramOptions::ProgramOptions(
     ("varnames,v", po::bool_switch(&m_varNames)->default_value(false), "The file contains variable names")
     ("indices,i", po::bool_switch(&m_obsIndices)->default_value(false), "The file contains observation indices")
     ("algorithm,a", po::value<std::string>(&m_algoName)->default_value("lemontree"), "Name of the algorithm to be used")
-    ("output,o", po::value<std::string>(&m_outputFile), "Name of the file to which the learned network should be written")
+    ("outdir,o", po::value<std::string>(&m_outputDir)->default_value("."), "Name of the directory to which the output files should be written")
     ;
 
   po::options_description advanced("Advanced options");
@@ -75,7 +75,6 @@ ProgramOptions::ProgramOptions(
   developer.add_options()
     ("parallel", po::bool_switch(&m_forceParallel)->default_value(false), "Use the parallel implementation even for p=1")
     ("hostnames", po::bool_switch(&m_hostNames)->default_value(false), "Print out the hostname for every process")
-    ("learn", po::bool_switch(&m_learnNetwork)->default_value(false), "Force learn the network")
 #ifdef LOGGING
     ("loglevel", po::value<std::string>(&m_logLevel)->default_value("error"), "Level of logging")
     ("logfile", po::value<std::string>(&m_logFile)->default_value(""), "File to which logs should be written")
@@ -106,9 +105,6 @@ ProgramOptions::parse(
   if ((vm.count("nvars") == 0) || (vm.count("nobs") == 0)) {
     throw po::error("Dimensions of the data file should be provided using -n and -m");
   }
-  if ((!m_learnNetwork) && (vm.count("output") == 0)) {
-    throw po::error("At least one of --learn or --output should be specified");
-  }
   if (m_configFile.empty()) {
     m_configFile = m_algoName + "_configs.json";
     std::cerr << "Using the default configuration file for the algorithm: " << m_configFile << std::endl;
@@ -117,6 +113,11 @@ ProgramOptions::parse(
     throw po::error("Couldn't find the algorithm configuration file");
   }
   pt::read_json(m_configFile, m_algoConfigs);
+  if (!fs::is_directory(m_outputDir)) {
+    if (!fs::create_directories(m_outputDir)) {
+      throw po::error("Output directory doesn't exist and could not be created");
+    }
+  }
 }
 
 uint32_t
@@ -190,10 +191,10 @@ ProgramOptions::learnNetwork(
 }
 
 const std::string&
-ProgramOptions::outputFile(
+ProgramOptions::outputDir(
 ) const
 {
-  return m_outputFile;
+  return m_outputDir;
 }
 
 const std::string&

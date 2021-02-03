@@ -53,20 +53,20 @@ public:
   ModuleNetworkLearning(const mxx::comm&, const Data&);
 
   virtual
-  ModuleNetwork<Var>
-  getNetwork(const bool, const pt::ptree&) const;
+  void
+  learnNetwork(const bool, const pt::ptree&, const std::string&) const;
 
   virtual
   ~ModuleNetworkLearning() { }
 
 protected:
   virtual
-  ModuleNetwork<Var>
-  getNetwork_sequential(const pt::ptree&) const = 0;
+  void
+  learnNetwork_sequential(const pt::ptree&, const std::string&) const = 0;
 
   virtual
-  ModuleNetwork<Var>
-  getNetwork_parallel(const pt::ptree&) const = 0;
+  void
+  learnNetwork_parallel(const pt::ptree&, const std::string&) const = 0;
 
 protected:
   const mxx::comm& m_comm;
