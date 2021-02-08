@@ -23,6 +23,7 @@ targetName = 'mnets'
 boostLibs = [
              'boost_program_options',
              'boost_system',
+             'boost_iostreams',
              ]
 
 armadilloLib = [

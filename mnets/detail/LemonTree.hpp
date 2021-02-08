@@ -25,6 +25,9 @@
 #include "Module.hpp"
 #include "PFCluster.hpp"
 
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+
 
 template <typename Data, typename Var, typename Set>
 LemonTree<Data, Var, Set>::LemonTree(
@@ -314,7 +317,12 @@ LemonTree<Data, Var, Set>::writeModules(
   std::ofstream rpf(randParentsFile);
   std::string xmlFile = modulesFile + ".xml.gz";
   LOG_MESSAGE(info, "Writing modules to XML file %s", xmlFile);
-  std::ofstream xmlf(xmlFile);
+  std::ofstream file(xmlFile, std::ios_base::out | std::ios_base::binary);
+  boost::iostreams::filtering_streambuf<boost::iostreams::output> out;
+  out.push(boost::iostreams::gzip_compressor());
+  out.push(file);
+  std::ostream xmlf(&out);
+
   // XXX: Try to match JAVA precision
   xmlf.precision(16);
   xmlf << "<?xml version='1.0' encoding='iso-8859-1'?>" << std::endl;
