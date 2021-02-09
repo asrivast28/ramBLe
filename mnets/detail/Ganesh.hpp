@@ -349,7 +349,7 @@ Ganesh<Data, Var, Set>::clusterPrimary(
   LOG_MESSAGE(info, "Done reassigning primary variables");
   // Try to merge clusters
   LOG_MESSAGE(info, "Merging primary clusters (number of clusters = %u)", m_cluster.size());
-  for (auto cit = m_cluster.begin(); cit != m_cluster.end(); ) {
+  for (auto cit = m_cluster.begin(); (cit != m_cluster.end()) && (m_cluster.size() > 1); ) {
     if (this->mergeCluster(cit)) {
       cit = m_cluster.erase(cit);
     }

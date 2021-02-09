@@ -388,7 +388,7 @@ PrimaryCluster<Data, Var, Set>::clusterSecondary(
     }
     LOG_MESSAGE(info, "Done reassigning secondary variables");
     LOG_MESSAGE(info, "Merging secondary clusters (number of clusters = %u)", m_cluster.size());
-    for (auto cit = m_cluster.begin(); cit != m_cluster.end(); ) {
+    for (auto cit = m_cluster.begin(); (cit != m_cluster.end()) && (m_cluster.size() > 1); ) {
       if (this->mergeCluster(cit)) {
         cit = m_cluster.erase(cit);
       }
