@@ -53,7 +53,7 @@ clusterScore1(
   if (begin == end) {
     return 0.0;
   }
-  auto v = arma::zeros<arma::colvec>(A.n_rows);
+  arma::colvec v = arma::zeros<arma::colvec>(A.n_rows);
   for (auto it = begin; it != end; ++it) {
     v(*it) = 1.0;
   }
@@ -86,7 +86,7 @@ clusterScore2(
 // vertices with the highest values of eigen vector that can maximize the
 // cluster score
 template <typename Var, typename MatType>
-std::vector<Var>
+std::pair<std::vector<Var>, double>
 bestCluster(
   const MatType& A,
   const arma::vec& v,
@@ -117,17 +117,19 @@ bestCluster(
   auto numElements = 0u;
   // Find the top k vertices in the sorted order that maximzes the
   // cluster score
-  auto end = sortedIdx.cbegin() + 1;
-  for (auto k = 0u; k < sortedIdx.size(); ++k, ++end) {
-    auto thisScore = clusterScore2(A, sortedIdx.cbegin(), end);
-    if (thisScore > maxScore) {
+  const auto first = sortedIdx.cbegin();
+  auto last = first + 1;
+  for (auto k = 0u; k < sortedIdx.size(); ++k, ++last) {
+    auto thisScore = clusterScore2(A, first, last);
+    if (std::isgreater(thisScore, maxScore)) {
       maxScore = thisScore;
       numElements = k + 1;
     }
   }
-  LOG_MESSAGE_IF(numElements > 0, info, "Cluster Size: %u; Score: %g", numElements, maxScore);
+  LOG_MESSAGE_IF(numElements > 0, info, "Cluster Size: %u; Score: %g",
+                                        numElements, clusterScore1(A, first, std::next(first, numElements)));
   sortedIdx.resize(numElements);
-  return sortedIdx;
+  return std::make_pair(sortedIdx, maxScore);
 }
 
 // Compute dominant eigen vector using the power method
@@ -227,7 +229,7 @@ perronCluster(
   const double tolerance,
   const uint32_t maxSteps,
   const uint32_t minClustSize,
-  const double
+  const double minClustScore
 )
 {
   // set diagonal to ones as done by Lemon Tree
@@ -239,19 +241,13 @@ perronCluster(
   }
   std::multimap<Var, Var> vertexClusters;
   Var clusterId = 0;
-  while (true) {
+  auto numRemaining = A.n_rows;
+  while (numRemaining >= minClustSize) {
     // Compute PF vector and best cluster
     auto v = perronVector(A, tolerance,  maxSteps);
-    auto clusterElements = bestCluster<Var>(A, v, tolerance);
-    // Update the cluster ids of the clusters
-    for (const auto ce : clusterElements) {
-      auto vid = vertexMapping[ce];
-      vertexClusters.emplace(clusterId, vid);
-    }
-    auto numRemaining = A.n_rows - clusterElements.size();
-    if (numRemaining <= minClustSize) {
-      break;
-    }
+    auto best = bestCluster<Var>(A, v, tolerance);
+    auto& clusterElements = best.first;
+    numRemaining = A.n_rows - clusterElements.size();
     // Identify remaining rows/cols
     std::vector<Var> currElements(A.n_rows);
     for (Var i = 0; i < A.n_rows; ++i) {
@@ -263,14 +259,22 @@ perronCluster(
     std::set_difference(currElements.begin(), currElements.end(),
                         clusterElements.begin(), clusterElements.end(),
                         remainingElements.begin());
-    // Resize matrix and update mapping
-    vertexMapping.resize(numRemaining);
-    for (auto i = 0u; i < remainingElements.size(); ++i) {
-      auto vid = vertexMapping[remainingElements[i]];
-      vertexMapping[i] = vid;
-    }
     A = getSubmatrix(A, remainingElements);
-    ++clusterId;
+    if ((clusterElements.size() >= minClustSize) &&
+        (best.second >= minClustScore)) {
+      // Update the cluster ids of the clusters
+      for (const auto ce : clusterElements) {
+        auto vid = vertexMapping[ce];
+        vertexClusters.emplace(clusterId, vid);
+      }
+      // Resize matrix and update mapping
+      vertexMapping.resize(numRemaining);
+      for (auto i = 0u; i < remainingElements.size(); ++i) {
+        auto vid = vertexMapping[remainingElements[i]];
+        vertexMapping[i] = vid;
+      }
+      ++clusterId;
+    }
   }
 
   // XXX: Assign unique ids to the rest of the vertices ?
