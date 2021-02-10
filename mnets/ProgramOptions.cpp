@@ -118,6 +118,7 @@ ProgramOptions::parse(
       throw po::error("Output directory doesn't exist and could not be created");
     }
   }
+  fs::copy_file(fs::path(m_configFile), m_outputDir + "/configs.json", fs::copy_option::overwrite_if_exists);
 }
 
 uint32_t

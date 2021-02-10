@@ -331,12 +331,15 @@ LemonTree<Data, Var, Set>::writeModules(
   std::string allParentsFile = modulesFile + ".allreg.txt";
   LOG_MESSAGE(info, "Writing all parents to %s", allParentsFile);
   std::ofstream apf(allParentsFile);
+  apf.precision(std::numeric_limits<double>::max_digits10);
   std::string topParentsFile = modulesFile + ".topreg.txt";
   LOG_MESSAGE(info, "Writing top 1%% parents to %s", topParentsFile);
   std::ofstream tpf(topParentsFile);
+  tpf.precision(std::numeric_limits<double>::max_digits10);
   std::string randParentsFile = modulesFile + ".randomreg.txt";
   LOG_MESSAGE(info, "Writing random parents to %s", randParentsFile);
   std::ofstream rpf(randParentsFile);
+  rpf.precision(std::numeric_limits<double>::max_digits10);
   std::string xmlFile = modulesFile + ".xml.gz";
   LOG_MESSAGE(info, "Writing modules to XML file %s", xmlFile);
   std::ofstream file(xmlFile, std::ios_base::out | std::ios_base::binary);
@@ -344,9 +347,8 @@ LemonTree<Data, Var, Set>::writeModules(
   out.push(boost::iostreams::gzip_compressor());
   out.push(file);
   std::ostream xmlf(&out);
+  xmlf.precision(std::numeric_limits<double>::max_digits10);
 
-  // XXX: Try to match JAVA precision
-  xmlf.precision(16);
   xmlf << "<?xml version='1.0' encoding='iso-8859-1'?>" << std::endl;
   xmlf << "<ModuleNetwork>" << std::endl;
   // First compute the cutoff for top parents

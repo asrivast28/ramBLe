@@ -30,6 +30,7 @@ def parse_args():
     '''
     from argparse import ArgumentParser
     from os import makedirs
+    from shutil import copyfile
 
     LEMONTREE_DIR = path.join(path.expanduser('~'), 'data', 'lemon-tree')
     LEMONTREE_RUN = path.join(LEMONTREE_DIR, 'LemonTree', 'run_task.sh')
@@ -63,6 +64,7 @@ def parse_args():
             makedirs(args.outdir)
         except:
             raise RuntimeError('Output directory doesn\'t exist and could not be created')
+    copyfile(args.config, path.join(args.outdir, 'configs.json'))
     return args
 
 
