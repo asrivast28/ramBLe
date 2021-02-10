@@ -182,7 +182,7 @@ private:
     auto f2 = assmt.evaluate(sv, sign, max);
     auto found = false;
     for (auto i = 0u; i < m_initTries; ++i) {
-      if (std::isless(f1 * f2, 0) || std::isless(abs(f2), m_acc)) {
+      if (std::isless(f1 * f2, 0)) {
         found = true;
         break;
       }
