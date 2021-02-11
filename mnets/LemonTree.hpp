@@ -79,7 +79,7 @@ private:
   learnModules(const std::multimap<Var, Var>&&, const pt::ptree&) const;
 
   void
-  writeParents(std::ofstream&, const std::unordered_map<Var, double>&, const uint32_t, const double = 1.0) const;
+  writeParents(std::ofstream&, const std::unordered_map<Var, double>&, const uint32_t, const double = std::numeric_limits<double>::lowest()) const;
 
   void
   writeModules(const std::string&, const std::list<Module<Data, Var, Set>>&) const;

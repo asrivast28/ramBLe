@@ -308,21 +308,14 @@ LemonTree<Data, Var, Set>::writeParents(
   std::ofstream& stream,
   const std::unordered_map<Var, double>& splits,
   const uint32_t moduleIndex,
-  const double frac
+  const double cutoff
 ) const
 {
-  std::vector<std::pair<Var, double>> splitsVec(splits.begin(), splits.end());
-  std::sort(splitsVec.begin(), splitsVec.end(),
-            [] (const std::pair<Var, double>& a, const std::pair<Var, double>& b)
-               { return std::isgreater(a.second, b.second); });
-  auto last = static_cast<uint32_t>(round(frac * splitsVec.size()));
-  auto s = 0u;
-  for (const auto& split : splitsVec) {
-    if (s == last) {
-      break;
+  std::set<std::pair<Var, double>, std::greater<std::pair<Var, double>>> splitsSorted(splits.begin(), splits.end());
+  for (const auto& split : splitsSorted) {
+    if (split.second > cutoff) {
+      stream << this->m_data.varName(split.first) << "\t" << moduleIndex << "\t" << split.second << std::endl;
     }
-    stream << this->m_data.varName(split.first) << "\t" << moduleIndex << "\t" << split.second << std::endl;
-    ++s;
   }
 }
 
@@ -354,11 +347,21 @@ LemonTree<Data, Var, Set>::writeModules(
   xmlf.precision(16);
   xmlf << "<?xml version='1.0' encoding='iso-8859-1'?>" << std::endl;
   xmlf << "<ModuleNetwork>" << std::endl;
+  // First compute the cutoff for top parents
+  std::multiset<double, std::greater<double>> allScores;
+  for (const auto& module : modules) {
+    for (const auto& parent : module.allParents()) {
+      allScores.insert(parent.second);
+    }
+  }
+  auto index = static_cast<uint32_t>(round(0.01 * allScores.size()));
+  auto cutoff = *std::next(allScores.begin(), index);
+  // Now, write the modules
   auto m = 0u;
   for (const auto& module : modules) {
     module.toXML(xmlf, m);
     this->writeParents(apf, module.allParents(), m);
-    this->writeParents(tpf, module.allParents(), m, 0.01);
+    this->writeParents(tpf, module.allParents(), m, cutoff);
     this->writeParents(rpf, module.randParents(), m);
     ++m;
   }
