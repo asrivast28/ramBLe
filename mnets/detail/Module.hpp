@@ -89,17 +89,21 @@ Module<Data, Var, Set>::bestOrderedMerge(
   const bool scoreBHC
 ) const
 {
+  LOG_MESSAGE_IF(treeList.empty(), error, "Empty tree list passed to ordered merge");
   if (treeList.size() > 1) {
     std::shared_ptr<TreeNode<Data, Var, Set>> bestMerged;
     double bestScore = std::numeric_limits<double>::lowest();
     for (auto fit = treeList.begin(), sit = std::next(fit); sit != treeList.end(); ++fit, ++sit) {
       auto mergedTree = std::make_shared<TreeNode<Data, Var, Set>>(*fit, *sit);
       auto mergeScore = mergedTree->mergeScore(scoreBHC);
-      if (std::isgreater(mergeScore, bestScore)) {
+      if ((bestScore == std::numeric_limits<double>::lowest()) ||
+          std::isgreater(mergeScore, bestScore) ||
+          (mergeScore == std::numeric_limits<double>::infinity())) {
         bestMerged = mergedTree;
         bestScore = mergeScore;
       }
     }
+    LOG_MESSAGE_IF(!std::isfinite(bestScore), warning, "Performed ordered merge using non-finite merge score");
     LOG_MESSAGE(debug, "Best ordered merge score %g", bestScore);
     return bestMerged;
   }
