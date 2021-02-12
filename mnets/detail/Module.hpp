@@ -89,18 +89,23 @@ Module<Data, Var, Set>::bestOrderedMerge(
   const bool scoreBHC
 ) const
 {
-  std::shared_ptr<TreeNode<Data, Var, Set>> bestMerged;
-  double bestScore = std::numeric_limits<double>::lowest();
-  for (auto fit = treeList.begin(), sit = std::next(fit); sit != treeList.end(); ++fit, ++sit) {
-    auto mergedTree = std::make_shared<TreeNode<Data, Var, Set>>(*fit, *sit);
-    auto mergeScore = mergedTree->mergeScore(scoreBHC);
-    if (std::isgreater(mergeScore, bestScore)) {
-      bestMerged = mergedTree;
-      bestScore = mergeScore;
+  if (treeList.size() > 1) {
+    std::shared_ptr<TreeNode<Data, Var, Set>> bestMerged;
+    double bestScore = std::numeric_limits<double>::lowest();
+    for (auto fit = treeList.begin(), sit = std::next(fit); sit != treeList.end(); ++fit, ++sit) {
+      auto mergedTree = std::make_shared<TreeNode<Data, Var, Set>>(*fit, *sit);
+      auto mergeScore = mergedTree->mergeScore(scoreBHC);
+      if (std::isgreater(mergeScore, bestScore)) {
+        bestMerged = mergedTree;
+        bestScore = mergeScore;
+      }
     }
+    LOG_MESSAGE(debug, "Best ordered merge score %g", bestScore);
+    return bestMerged;
   }
-  LOG_MESSAGE(debug, "Best ordered merge score %g", bestScore);
-  return bestMerged;
+  else {
+    return treeList.front();
+  }
 }
 
 template <typename Data, typename Var, typename Set>
