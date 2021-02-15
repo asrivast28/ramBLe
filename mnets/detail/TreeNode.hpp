@@ -62,12 +62,10 @@ public:
   sign(const double sv) const
   {
     int signFirst = -1, signSecond = -1;
-    double sumFirst = m_sum.first - (sv * m_count.first);
-    double sumSecond = m_sum.second - (sv * m_count.second);
-    if (std::isless(sumFirst, 0)) {
+    if (std::isless(m_sum.first, sv * m_count.first)) {
       signFirst = 1;
     }
-    if (std::isgreater(sumSecond, 0)) {
+    if (std::isgreater(m_sum.second, sv * m_count.second)) {
       signSecond = 1;
     }
     return (signFirst == signSecond) ? signFirst : 0;
@@ -473,6 +471,7 @@ TreeNode<Data, Var, Set>::candidateParentsSplits(
         LOG_MESSAGE(trace, "Considering split (%s, %g)", m_data.varName(v), sv);
         auto sign = assmt.sign(sv);
         if (sign == 0) {
+          LOG_MESSAGE(trace, "Split sign is zero. Skipping");
           continue;
         }
         auto beta = ob.find(assmt, sv, sign);

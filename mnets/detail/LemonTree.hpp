@@ -268,7 +268,9 @@ LemonTree<Data, Var, Set>::learnModules(
   auto numSplits = modulesConfigs.get<uint32_t>("num_reg");
   std::mt19937 generator(randomSeed);
   std::list<Module<Data, Var, Set>> modules;
+  auto m = 0u;
   for (auto cit = coClusters.begin(); cit != coClusters.end(); ) {
+    LOG_MESSAGE(info, "Module %u: Learning tree structures", m++);
     // Get the range of variables in this cluster
     auto clusterIts = coClusters.equal_range(cit->first);
     // Add all the variables in the cluster to a set
@@ -298,7 +300,9 @@ LemonTree<Data, Var, Set>::learnModules(
     }
   }
   OptimalBeta ob(0.0, betaMax, 1e-5);
+  m = 0u;
   for (auto& module : modules) {
+    LOG_MESSAGE(info, "Module %u: Learning parents", m++);
     module.learnParents(generator, candidateParents, ob, numSplits);
   }
   return modules;
