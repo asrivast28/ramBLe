@@ -497,6 +497,13 @@ TreeNode<Data, Var, Set>::learnParentsSplits(
 )
 {
   auto splits = this->candidateParentsSplits(candidateParents, ob);
+  if (splits.empty()) {
+    m_leaf = true;
+    m_children.first.reset();
+    m_children.second.reset();
+    LOG_MESSAGE(warning, "No candidate splits found for the node");
+    return;
+  }
   std::vector<double> weights(splits.size());
   std::transform(splits.begin(), splits.end(), weights.begin(),
                  [] (const std::tuple<Var, Var, double>& s)
