@@ -22,6 +22,8 @@
 
 #include "PrimaryCluster.hpp"
 
+#include "utils/Random.hpp"
+
 
 /**
  * @brief Class that implements the two-way Gibbs clustering algorithm,
@@ -242,8 +244,7 @@ Ganesh<Data, Var, Set>::reassignPrimary(
     w = exp(w - maxDiff);
   }
   // Pick a cluster using the computed weights
-  std::discrete_distribution<Var> clusterDistrib(weight.begin(), weight.end());
-  auto c = clusterDistrib(*m_generator);
+  auto c = discrete_distribution_pick<Var>(weight.cbegin(), weight.cend(), *m_generator);
   if (c == 0) {
     // The variable will stay in its own cluster
     LOG_MESSAGE(info, "Primary variable %u assigned to a newly created cluster", static_cast<uint32_t>(given));
@@ -310,8 +311,7 @@ Ganesh<Data, Var, Set>::mergeCluster(
   }
 
   // Choose a cluster using the computed weights
-  std::discrete_distribution<Var> clusterDistrib(weight.begin(), weight.end());
-  auto c = clusterDistrib(*m_generator);
+  auto c = discrete_distribution_pick<Var>(weight.cbegin(), weight.cend(), *m_generator);
   auto chosen = std::next(m_cluster.begin(), c);
   if (chosen != given) {
     LOG_MESSAGE(info, "Merging given cluster with cluster %u", static_cast<uint32_t>(c));
