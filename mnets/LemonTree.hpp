@@ -60,9 +60,6 @@ private:
   void
   writeVarClusters(const std::string&, const std::list<std::list<Set>>&) const;
 
-  std::vector<double>
-  coclusteringMatrix(const std::list<std::list<Set>>&&, const double) const;
-
   std::multimap<Var, Var>
   clusterConsensus(const std::list<std::list<Set>>&&, const pt::ptree&) const;
 

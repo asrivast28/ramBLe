@@ -1,6 +1,6 @@
 /**
- * @file PFCluster.hpp
- * @brief Implementation of tighten clusters using Armadillo.
+ * @file ConsensusCluster.hpp
+ * @brief Implementation of consensus clustering using Armadillo.
  * @author Sriram P. Chockalingam <srirampc@gatech.edu>
  * @version 1.0
  * @date 2021-01-05
@@ -19,8 +19,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DETAIL_PFCLUSTER_HPP_
-#define DETAIL_PFCLUSTER_HPP_
+#ifndef DETAIL_CONSENSUSCLUSTER_HPP_
+#define DETAIL_CONSENSUSCLUSTER_HPP_
 
 #include "utils/Logging.hpp"
 
@@ -281,35 +281,66 @@ perronCluster(
   return vertexClusters;
 }
 
-#if 0
-std::vector<VertClusterId>
-sparse_perron(
-  const std::vector<double>& coMatrix,
-  const uint32_t numVars,
-  const double tolerance,
-  const uint32_t maxSteps,
-  const uint32_t minClustSize,
-  const double minClustScore
+template <typename MatType, typename Set, typename Var>
+void
+fillCoclusteringWeights(
+  MatType& C,
+  const std::list<std::list<Set>>&& sampledClusters,
+  const Var n,
+  const double minWeight
 )
 {
-  arma::sp_mat C = load_csv_mat<arma::sp_mat>(p.mat_file.c_str());
-  return perronCluster<Var>(std::move(C), tolerance, maxSteps, minClustSize, minClustScore);
+  std::list<std::unordered_map<Var, uint32_t>> varClusterMaps;
+  for (const auto& varClusters : sampledClusters) {
+    std::unordered_map<Var, uint32_t> thisMap;
+    auto c = 0u;
+    for (auto cit = varClusters.begin(); cit != varClusters.end(); ++cit, ++c) {
+      for (const auto var : *cit) {
+        thisMap[var] = c;
+      }
+    }
+    varClusterMaps.push_back(thisMap);
+  }
+  for (auto u = 0u; u < n; ++u) {
+    for (auto v = u + 1; v < n; ++v) {
+      auto cooccurrence = 0u;
+      for (const auto& varCluster : varClusterMaps) {
+        if (varCluster.at(u) == varCluster.at(v)) {
+          ++cooccurrence;
+        }
+      }
+      auto weight = static_cast<double>(cooccurrence) / sampledClusters.size();
+      if (std::isgreater(weight, minWeight)) {
+        C(u, v) = weight;
+        C(v, u) = weight;
+      }
+    }
+  }
 }
-#endif
 
-template <typename Var>
+template <typename Var, typename Set>
 std::multimap<Var, Var>
-densePerron(
-  const std::vector<double>&& coMatrix,
+consensusCluster(
+  const std::list<std::list<Set>>&& sampledClusters,
   const Var numVars,
+  const double minWeight,
   const double tolerance,
   const uint32_t maxSteps,
   const uint32_t minClustSize,
-  const double minClustScore
+  const double minClustScore,
+  const bool sparse = true
 )
 {
-  arma::mat C(&coMatrix[0], numVars, numVars);
-  return perronCluster<Var>(std::move(C), tolerance, maxSteps, minClustSize, minClustScore);
+  if (sparse) {
+    arma::sp_mat C(numVars, numVars);
+    fillCoclusteringWeights(C, std::move(sampledClusters), numVars, minWeight);
+    return perronCluster<Var>(std::move(C), tolerance, maxSteps, minClustSize, minClustScore);
+  }
+  else {
+    arma::mat C(numVars, numVars, arma::fill::zeros);
+    fillCoclusteringWeights(C, std::move(sampledClusters), numVars, minWeight);
+    return perronCluster<Var>(std::move(C), tolerance, maxSteps, minClustSize, minClustScore);
+  }
 }
 
-#endif // DETAIL_PFCLUSTER_HPP_
+#endif // DETAIL_CONSENSUSCLUSTER_HPP_

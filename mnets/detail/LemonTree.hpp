@@ -23,7 +23,7 @@
 
 #include "Ganesh.hpp"
 #include "Module.hpp"
-#include "PFCluster.hpp"
+#include "ConsensusCluster.hpp"
 
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -121,57 +121,19 @@ LemonTree<Data, Var, Set>::writeVarClusters(
 }
 
 template <typename Data, typename Var, typename Set>
-std::vector<double>
-LemonTree<Data, Var, Set>::coclusteringMatrix(
-  const std::list<std::list<Set>>&& sampledClusters,
-  const double minWeight
-) const
-{
-  std::list<std::unordered_map<Var, uint32_t>> varClusterMaps;
-  for (const auto& varClusters : sampledClusters) {
-    std::unordered_map<Var, uint32_t> thisMap;
-    auto c = 0u;
-    for (auto cit = varClusters.begin(); cit != varClusters.end(); ++cit, ++c) {
-      for (const auto var : *cit) {
-        thisMap[var] = c;
-      }
-    }
-    varClusterMaps.push_back(thisMap);
-  }
-  const auto n = this->m_data.numVars();
-  std::vector<double> coMatrix(n * n);
-  for (auto u = 0u; u < n; ++u) {
-    for (auto v = u + 1; v < n; ++v) {
-      auto cooccurrence = 0u;
-      for (const auto& varCluster : varClusterMaps) {
-        if (varCluster.at(u) == varCluster.at(v)) {
-          ++cooccurrence;
-        }
-      }
-      auto weight = static_cast<double>(cooccurrence) / sampledClusters.size();
-      if (weight > minWeight) {
-        coMatrix[u * n + v] = weight;
-        coMatrix[v * n + u] = weight;
-      }
-    }
-  }
-  return coMatrix;
-}
-
-template <typename Data, typename Var, typename Set>
 std::multimap<Var, Var>
 LemonTree<Data, Var, Set>::clusterConsensus(
   const std::list<std::list<Set>>&& varClusters,
   const pt::ptree& consensusConfigs
 ) const
 {
-  auto coMatrix = this->coclusteringMatrix(std::move(varClusters), consensusConfigs.get<double>("min_weight"));
+  auto minWeight = consensusConfigs.get<double>("min_weight");
   auto tolerance = consensusConfigs.get<double>("tolerance", 1e-5);
   auto maxSteps = consensusConfigs.get<uint32_t>("max_steps", 1000);
   auto minClustSize = consensusConfigs.get<uint32_t>("min_clust_size");
   auto minClustScore = consensusConfigs.get<double>("min_clust_score");
-  auto result = densePerron(std::move(coMatrix), this->m_data.numVars(), tolerance,
-                            maxSteps, minClustSize, minClustScore);
+  auto result = consensusCluster(std::move(varClusters), this->m_data.numVars(), minWeight,
+                                 tolerance, maxSteps, minClustSize, minClustScore);
   return result;
 }
 
