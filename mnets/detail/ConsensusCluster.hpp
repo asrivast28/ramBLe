@@ -121,7 +121,7 @@ bestCluster(
   auto last = first + 1;
   for (auto k = 0u; k < sortedIdx.size(); ++k, ++last) {
     auto thisScore = clusterScore2(A, first, last);
-    if (std::isgreater(thisScore, maxScore)) {
+    if (std::isgreaterequal(thisScore, maxScore)) {
       maxScore = thisScore;
       numElements = k + 1;
     }
