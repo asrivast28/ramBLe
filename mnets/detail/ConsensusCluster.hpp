@@ -267,13 +267,13 @@ perronCluster(
         auto vid = vertexMapping[ce];
         vertexClusters.emplace(clusterId, vid);
       }
-      // Resize matrix and update mapping
-      vertexMapping.resize(numRemaining);
-      for (auto i = 0u; i < remainingElements.size(); ++i) {
-        auto vid = vertexMapping[remainingElements[i]];
-        vertexMapping[i] = vid;
-      }
       ++clusterId;
+    }
+    // Resize matrix and update mapping
+    vertexMapping.resize(numRemaining);
+    for (auto i = 0u; i < remainingElements.size(); ++i) {
+      auto vid = vertexMapping[remainingElements[i]];
+      vertexMapping[i] = vid;
     }
   }
 
