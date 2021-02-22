@@ -94,29 +94,26 @@ template <typename Var, typename MatType>
 std::pair<std::vector<Var>, double>
 bestCluster(
   const MatType& A,
-  const arma::vec& v,
+  const arma::sp_mat&& v,
   const double tolerance
 )
 {
-  auto nvals = v.n_elem;
-  LOG_MESSAGE_IF(nvals != A.n_rows, error, "Mismatch between the given row vector and matrix rows");
-  LOG_MESSAGE_IF(nvals != A.n_cols, error, "Mismatch between the given row vector and matrix columns");
-  std::vector<std::pair<double, Var>> vals(nvals);
-  for (Var i = 0; i < nvals; ++i) {
-    vals[i] = std::make_pair(v[i], i);
+  LOG_MESSAGE_IF(v.n_cols != 1, error, "Perron vector should have one column");
+  LOG_MESSAGE_IF(v.n_rows != A.n_rows, error, "Mismatch between the given row vector and matrix rows");
+  LOG_MESSAGE_IF(v.n_rows != A.n_cols, error, "Mismatch between the given row vector and matrix columns");
+  // Store non-zero values in sorted descending order
+  std::set<std::pair<double, Var>, std::greater<std::pair<double, Var>>> vals;
+  for (auto vit = v.begin_col(0); vit != v.end_col(0); ++vit) {
+    // We only want to retain the elements which are greater than tolerance
+    if (std::isgreater(*vit, tolerance)) {
+      vals.insert(std::make_pair(*vit, vit.row()));
+    }
   }
-  // Sort the eigen vector in descending order
-  std::sort(vals.begin(), vals.end(), std::greater<std::pair<double, Var>>());
-  // We only want to retain the elements which are greater than tolerance
-  // Find iterator to the last element which is greater than tolerance
-  auto it = std::partition_point(vals.begin(), vals.end(),
-                                 [&tolerance] (const std::pair<double, Var>& v)
-                                              { return std::isgreaterequal(v.first, tolerance); });
-  // Now, copy all the eligible indices in sorted order
-  std::vector<Var> sortedIdx(std::distance(vals.begin(), it));
-  std::transform(vals.begin(), it, sortedIdx.begin(),
-                 [] (const std::pair<Var, double>& v)
-                    { return v.second; });
+  // Now, copy all the eligible indices in the sorted order
+  std::vector<Var> sortedIdx(vals.size());
+  std::transform(vals.begin(), vals.end(), sortedIdx.begin(),
+                 [] (const std::pair<Var, double>& vl)
+                    { return vl.second; });
 
   auto maxScore = 0.0;
   auto numElements = 0u;
@@ -139,7 +136,7 @@ bestCluster(
 
 // Compute dominant eigen vector using the power method
 template <typename MatType>
-arma::vec
+arma::sp_mat
 perronVector(
   const MatType& A,
   const double tolerance,
@@ -148,9 +145,9 @@ perronVector(
 {
   // Initial vector : unit vector with 1.0 at vertex w. the maximum weight
   MatType rx = arma::sum(A, 1);
-  arma::colvec v = arma::zeros<arma::colvec>(rx.n_rows);
+  arma::sp_mat v(rx.n_rows, 1);
   auto i = rx.index_max();
-  v(i) = 1.0;
+  v(i, 0) = 1.0;
 
   auto mu = 1.0;
   auto diff = 1.0;
@@ -250,7 +247,7 @@ perronCluster(
   while (numRemaining >= minClustSize) {
     // Compute PF vector and best cluster
     auto v = perronVector(A, tolerance,  maxSteps);
-    auto best = bestCluster<Var>(A, v, tolerance);
+    auto best = bestCluster<Var>(A, std::move(v), tolerance);
     auto& clusterElements = best.first;
     numRemaining = A.n_rows - clusterElements.size();
     // Identify remaining rows/cols
