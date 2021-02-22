@@ -39,13 +39,14 @@ load_csv_mat(
   return X;
 }
 
-// Lemon tree has too different ways to score a cluster
-// 1. Using average
-// 2. Using norm defn.
-template <typename MatType, typename RandomIt>
+template <bool Norm, typename RandomIt, typename MatType>
 double
-clusterScore1(
-  const MatType& A,
+clusterScore(const MatType&, const RandomIt, const RandomIt);
+
+template <bool Norm, typename RandomIt>
+double
+clusterScore(
+  const arma::mat& A,
   const RandomIt begin,
   const RandomIt end
 )
@@ -59,13 +60,15 @@ clusterScore1(
   }
   auto w = A * v;
   auto score = arma::dot(v, w);
-  return score / std::distance(begin, end);
+  auto denom = static_cast<double>(Norm ? pow(arma::norm(v), 2) :
+                                          std::distance(begin, end));
+  return score / denom;
 }
 
-template <typename MatType, typename RandomIt>
+template <bool Norm, typename RandomIt>
 double
-clusterScore2(
-  const MatType& A,
+clusterScore(
+  const arma::sp_mat& A,
   const RandomIt begin,
   const RandomIt end
 )
@@ -73,13 +76,15 @@ clusterScore2(
   if (begin == end) {
     return 0.0;
   }
-  arma::colvec v = arma::zeros<arma::colvec>(A.n_rows);
+  arma::sp_mat v(A.n_rows, 1);
   for (auto it = begin; it != end; ++it) {
-    v(*it) = 1.0;
+    v(*it, 0) = 1.0;
   }
   auto w = A * v;
   auto score = arma::dot(v, w);
-  return score / pow(arma::norm(v), 2);
+  auto denom = static_cast<double>(Norm ? pow(arma::norm(v), 2) :
+                                          std::distance(begin, end));
+  return score / denom;
 }
 
 // Identify the cluster with best score by finding the top k
@@ -120,14 +125,14 @@ bestCluster(
   const auto first = sortedIdx.cbegin();
   auto last = first + 1;
   for (auto k = 0u; k < sortedIdx.size(); ++k, ++last) {
-    auto thisScore = clusterScore2(A, first, last);
+    auto thisScore = clusterScore<true>(A, first, last);
     if (std::isgreaterequal(thisScore, maxScore)) {
       maxScore = thisScore;
       numElements = k + 1;
     }
   }
-  LOG_MESSAGE_IF(numElements > 0, info, "Cluster Size: %u; Score: %g",
-                                        numElements, clusterScore1(A, first, std::next(first, numElements)));
+  LOG_MESSAGE_IF(numElements > 0, info, "Score: %g; Cluster Size: %u",
+                                        clusterScore<false>(A, first, std::next(first, numElements)), numElements);
   sortedIdx.resize(numElements);
   return std::make_pair(sortedIdx, maxScore);
 }
@@ -169,7 +174,7 @@ perronVector(
 
 template <typename Var, typename MatType>
 MatType
-getSubmatrix(const MatType& Ain, const std::vector<Var>&);
+getSubmatrix(const MatType&, const std::vector<Var>&);
 
 template <typename Var>
 arma::mat
