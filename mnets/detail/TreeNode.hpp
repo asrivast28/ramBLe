@@ -31,41 +31,51 @@ public:
     const Data& data,
     const Var v,
     const TreeNode<Data, Var, Set>* const node
-  ) : m_data(data),
-      m_var(v),
-      m_node(node),
+  ) : m_data(),
       m_sum(std::make_pair(0.0, 0.0)),
-      m_count(std::make_pair(0, 0))
+      m_missing(std::make_pair(0, 0)),
+      m_varName(data.varName(v))
   {
-    const auto& children = node->children();
-    for (const auto o : children.first->observations()) {
-      if (!std::isnan(data(m_var, o))) {
-        m_sum.first += data(m_var, o);
-        ++m_count.first;
+    const auto& firstObs = node->children().first->observations();
+    m_data.first = std::vector<double>(firstObs.size());
+    auto d = m_data.first.begin();
+    for (const auto o : firstObs) {
+      if (!std::isnan(data(v, o))) {
+        *d = data(v, o);
+        m_sum.first += *d;
+        ++d;
       }
     }
-    for (const auto o : children.second->observations()) {
-      if (!std::isnan(data(m_var, o))) {
-        m_sum.second += data(m_var, o);
-        ++m_count.second;
+    m_missing.first = std::distance(d, m_data.first.end());
+    m_data.first.resize(std::distance(m_data.first.begin(), d));
+    const auto& secondObs = node->children().second->observations();
+    m_data.second = std::vector<double>(secondObs.size());
+    d = m_data.second.begin();
+    for (const auto o : secondObs) {
+      if (!std::isnan(data(v, o))) {
+        *d = data(v, o);
+        m_sum.second += *d;
+        ++d;
       }
     }
+    m_missing.second = std::distance(d, m_data.second.end());
+    m_data.second.resize(std::distance(m_data.second.begin(), d));
   }
 
-  std::string
+  const std::string&
   varName() const
   {
-    return m_data.varName(m_var);
+    return m_varName;
   }
 
   int
   sign(const double sv) const
   {
     int signFirst = -1, signSecond = -1;
-    if (std::isless(m_sum.first, sv * m_count.first)) {
+    if (std::isless(m_sum.first, sv * m_data.first.size())) {
       signFirst = 1;
     }
-    if (std::isgreater(m_sum.second, sv * m_count.second)) {
+    if (std::isgreater(m_sum.second, sv * m_data.second.size())) {
       signSecond = 1;
     }
     return (signFirst == signSecond) ? signFirst : 0;
@@ -78,20 +88,13 @@ public:
     const double beta
   ) const
   {
-    const auto& children = m_node->children();
     auto sumFirst = 0.0;
-    for (const auto o : children.first->observations()) {
-      if (!std::isnan(m_data(m_var, o))) {
-        auto x = m_data(m_var, o) - sv;
-        sumFirst += x / (1 + exp(-1 * sign * beta * x));
-      }
+    for (const auto x : m_data.first) {
+      sumFirst += (x - sv) / (1 + exp(-1 * sign * beta * (x - sv)));
     }
     auto sumSecond = 0.0;
-    for (const auto o : children.second->observations()) {
-      if (!std::isnan(m_data(m_var, o))) {
-        auto x = m_data(m_var, o) - sv;
-        sumSecond += x / (1 + exp(sign * beta * x));
-      }
+    for (const auto x : m_data.second) {
+      sumSecond += (x - sv) / (1 + exp(sign * beta * (x - sv)));
     }
     return sumSecond - sumFirst;
   }
@@ -103,37 +106,26 @@ public:
     const double beta
   ) const
   {
-    const auto& children = m_node->children();
     auto sumFirst = 0.0;
-    for (const auto o : children.first->observations()) {
-      if (!std::isnan(m_data(m_var, o))) {
-        auto x = m_data(m_var, o) - sv;
-        sumFirst -= log(1 + exp(sign * beta * x));
-      }
-      else {
-        sumFirst -= log(2);
-      }
+    for (const auto x : m_data.first) {
+      sumFirst -= log(1 + exp(sign * beta * (x - sv)));
     }
+    sumFirst -= (m_missing.first * log(2));
     auto sumSecond = 0.0;
-    for (const auto o : children.second->observations()) {
-      if (!std::isnan(m_data(m_var, o))) {
-        auto x = m_data(m_var, o) - sv;
-        sumSecond -= log(1 + exp(-1 * sign * beta * x));
-      }
-      else {
-        sumSecond -= log(2);
-      }
+    for (const auto x : m_data.second) {
+      sumSecond -= log(1 + exp(-1 * sign * beta * (x - sv)));
     }
+    sumSecond -= (m_missing.second * log(2));
     return sumFirst + sumSecond;
   }
 
 private:
-  const Data& m_data;
-  const Var m_var;
-  const TreeNode<Data, Var, Set>* const m_node;
+  std::pair<std::vector<double>, std::vector<double>> m_data;
   std::pair<double, double> m_sum;
-  std::pair<uint32_t, uint32_t> m_count;
-};
+  std::pair<uint32_t, uint32_t> m_missing;
+  std::string m_varName;
+}; // class Assignment<Data, Var, Set>
+
 
 class OptimalBeta {
 public:
