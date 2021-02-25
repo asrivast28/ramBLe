@@ -251,7 +251,9 @@ TreeNode<Data, Var, Set>::children(
 
 template <typename Data, typename Var, typename Set>
 std::list<TreeNode<Data, Var, Set>*>
-TreeNode<Data, Var, Set>::nodes(const bool includeLeaves)
+TreeNode<Data, Var, Set>::nodes(
+  const bool includeLeaves
+)
 {
   std::list<TreeNode<Data, Var, Set>*> nodes;
   if (!m_leaf || includeLeaves) {
@@ -391,6 +393,9 @@ TreeNode<Data, Var, Set>::learnParentsSplits(
     m_leaf = true;
     m_children.first.reset();
     m_children.second.reset();
+    // Move generator state forward to simulate picking
+    // 2 * numSplits splits
+    generator.discard(2 * numSplits);
     LOG_MESSAGE(warning, "No candidate splits found for the node");
     return;
   }

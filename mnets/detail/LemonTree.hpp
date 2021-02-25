@@ -348,7 +348,7 @@ LemonTree<Data, Var, Set>::learnNetwork_sequential(
   const std::string& outputDir
 ) const
 {
-  using Generator = std::mt19937;
+  using Generator = std::mt19937_64;
   TIMER_START(m_tGanesh);
   const auto& ganeshConfigs = algoConfigs.get_child("ganesh");
   auto varClusters = this->clusterVarsGanesh<Generator>(ganeshConfigs);
