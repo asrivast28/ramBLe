@@ -33,14 +33,15 @@
  * @tparam Data Type of the data provider.
  * @tparam Var Type of variables stored in the cluster.
  * @tparam Set Type of container used to store the clusters.
+ * @tparam Generator Type of PRNG used for generating random numbers.
  */
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator = void>
 class Cluster {
 public:
   Cluster(
     const Data& data,
-    std::mt19937* const generator,
-    const Var max
+    const Var max,
+    Generator* const generator = nullptr
   ) : m_elements(max),
       m_data(data),
       m_generator(generator)
@@ -49,8 +50,8 @@ public:
 
   Cluster(
     const Data& data,
-    std::mt19937* const generator,
-    const Set& elements
+    const Set& elements,
+    Generator* const generator = nullptr
   ) : m_elements(elements),
       m_data(data),
       m_generator(generator)
@@ -135,17 +136,17 @@ public:
 protected:
   Set m_elements;
   const Data& m_data;
-  std::mt19937* const m_generator;
+  Generator* const m_generator;
 }; // class Cluster
 
 /**
  * @brief Function for getting the output represention of a cluster.
  */
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 std::ostream&
 operator<<(
   std::ostream& stream,
-  const Cluster<Data, Var, Set>& cluster
+  const Cluster<Data, Var, Set, Generator>& cluster
 )
 {
   stream << cluster.m_elements;

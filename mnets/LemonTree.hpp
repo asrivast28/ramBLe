@@ -54,6 +54,7 @@ protected:
   learnNetwork_parallel(const pt::ptree&, const std::string&) const;
 
 private:
+  template <typename Generator>
   std::list<std::list<Set>>
   clusterVarsGanesh(const pt::ptree&) const;
 
@@ -66,12 +67,14 @@ private:
   void
   writeConsensusCluster(const std::string&, const std::multimap<Var, Var>&) const;
 
+  template <typename Generator>
   std::list<std::list<Set>>
-  clusterObsGanesh(const uint32_t, const uint32_t, const uint32_t, const uint32_t, std::mt19937* const, const Set&) const;
+  clusterObsGanesh(const uint32_t, const uint32_t, const uint32_t, const uint32_t, Generator* const, const Set&) const;
 
   void
   readCandidateParents(const std::string&, Set&) const;
 
+  template <typename Generator>
   std::list<Module<Data, Var, Set>>
   learnModules(const std::multimap<Var, Var>&&, const pt::ptree&) const;
 

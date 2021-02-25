@@ -160,8 +160,9 @@ public:
   void
   prune(const double);
 
+  template <typename Generator>
   void
-  learnParentsSplits(std::mt19937&, const Set&, const OptimalBeta&, const uint32_t);
+  learnParentsSplits(Generator&, const Set&, const OptimalBeta&, const uint32_t);
 
   const std::vector<std::tuple<Var, Var, double>>&
   weightSplits() const;
@@ -376,9 +377,10 @@ TreeNode<Data, Var, Set>::candidateParentsSplits(
 }
 
 template <typename Data, typename Var, typename Set>
+template <typename Generator>
 void
 TreeNode<Data, Var, Set>::learnParentsSplits(
-  std::mt19937& generator,
+  Generator& generator,
   const Set& candidateParents,
   const OptimalBeta& ob,
   const uint32_t numSplits

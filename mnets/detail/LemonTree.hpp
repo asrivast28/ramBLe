@@ -57,6 +57,7 @@ LemonTree<Data, Var, Set>::~LemonTree(
 }
 
 template <typename Data, typename Var, typename Set>
+template <typename Generator>
 std::list<std::list<Set>>
 LemonTree<Data, Var, Set>::clusterVarsGanesh(
   const pt::ptree& ganeshConfigs
@@ -74,8 +75,8 @@ LemonTree<Data, Var, Set>::clusterVarsGanesh(
     LOG_MESSAGE(info, "Run %u", r);
     // XXX: Seeding PRNG in this way to compare the results
     //      with Lemon-Tree; the seeding can be moved outside later
-    std::mt19937 generator(randomSeed + r);
-    Ganesh<Data, Var, Set> ganesh(this->m_comm, this->m_data, &generator);
+    Generator generator(randomSeed + r);
+    Ganesh<Data, Var, Set, Generator> ganesh(this->m_comm, this->m_data, &generator);
     ganesh.initializeRandom(initClusters);
     for (auto s = 0u; s <= numSteps; ++s) {
       LOG_MESSAGE(info, "Step %u", s);
@@ -153,18 +154,19 @@ LemonTree<Data, Var, Set>::writeConsensusCluster(
 }
 
 template <typename Data, typename Var, typename Set>
+template <typename Generator>
 std::list<std::list<Set>>
 LemonTree<Data, Var, Set>::clusterObsGanesh(
   const uint32_t numRuns,
   const uint32_t numSteps,
   const uint32_t burnSteps,
   const uint32_t sampleSteps,
-  std::mt19937* const generator,
+  Generator* const generator,
   const Set& clusterVars
 ) const
 {
   // Initialize Gibbs sampler algorithm for this cluster
-  Ganesh<Data, Var, Set> ganesh(this->m_comm, this->m_data, generator);
+  Ganesh<Data, Var, Set, Generator> ganesh(this->m_comm, this->m_data, generator);
   ganesh.initializeGiven(std::list<Set>(1, clusterVars));
   std::list<std::list<Set>> sampledClusters;
   for (auto r = 0u; r < numRuns; ++r) {
@@ -212,6 +214,7 @@ LemonTree<Data, Var, Set>::readCandidateParents(
 }
 
 template <typename Data, typename Var, typename Set>
+template <typename Generator>
 std::list<Module<Data, Var, Set>>
 LemonTree<Data, Var, Set>::learnModules(
   const std::multimap<Var, Var>&& coClusters,
@@ -228,7 +231,7 @@ LemonTree<Data, Var, Set>::learnModules(
   auto regFile = modulesConfigs.get<std::string>("reg_file");
   auto betaMax = modulesConfigs.get<double>("beta_reg");
   auto numSplits = modulesConfigs.get<uint32_t>("num_reg");
-  std::mt19937 generator(randomSeed);
+  Generator generator(randomSeed);
   std::list<Module<Data, Var, Set>> modules;
   auto m = 0u;
   for (auto cit = coClusters.begin(); cit != coClusters.end(); ) {
@@ -345,9 +348,10 @@ LemonTree<Data, Var, Set>::learnNetwork_sequential(
   const std::string& outputDir
 ) const
 {
+  using Generator = std::mt19937;
   TIMER_START(m_tGanesh);
   const auto& ganeshConfigs = algoConfigs.get_child("ganesh");
-  auto varClusters = this->clusterVarsGanesh(ganeshConfigs);
+  auto varClusters = this->clusterVarsGanesh<Generator>(ganeshConfigs);
   TIMER_PAUSE(m_tGanesh);
   auto clusterFile = ganeshConfigs.get<std::string>("output_file");
   if (!clusterFile.empty()) {
@@ -369,7 +373,7 @@ LemonTree<Data, Var, Set>::learnNetwork_sequential(
   }
   TIMER_START(m_tModules);
   const auto& modulesConfigs = algoConfigs.get_child("regulators");
-  auto modules = this->learnModules(std::move(coClusters), modulesConfigs);
+  auto modules = this->learnModules<Generator>(std::move(coClusters), modulesConfigs);
   TIMER_PAUSE(m_tModules);
   auto modulesFile = modulesConfigs.get<std::string>("output_file");
   if (!modulesFile.empty()) {

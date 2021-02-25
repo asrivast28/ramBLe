@@ -33,13 +33,14 @@
  * @tparam Data Type of the data provider.
  * @tparam Var Type of variables stored in the cluster.
  * @tparam Set Type of container used to store the clusters.
+ * @tparam Generator Type of PRNG used for generating random numbers.
  */
-template <typename Data, typename Var, typename Set>
-class PrimaryCluster : public Cluster<Data, Var, Set> {
+template <typename Data, typename Var, typename Set, typename Generator>
+class PrimaryCluster : public Cluster<Data, Var, Set, Generator> {
 public:
-  PrimaryCluster(const Data&, std::mt19937* const, const Var, const Var);
+  PrimaryCluster(const Data&, Generator* const, const Var, const Var);
 
-  PrimaryCluster(const Data&, std::mt19937* const, const Set&, const Var);
+  PrimaryCluster(const Data&, Generator* const, const Set&, const Var);
 
   PrimaryCluster(const PrimaryCluster&);
 
@@ -74,7 +75,7 @@ public:
   void
   clusterSecondary(const uint32_t = 1);
 
-  const std::list<SecondaryCluster<Data, Var, Set>>&
+  const std::list<SecondaryCluster<Data, Var, Set, Generator>>&
   secondaryClusters() const;
 
 private:
@@ -85,16 +86,16 @@ private:
   reassignSecondary(const Var);
 
   bool
-  mergeCluster(typename std::list<SecondaryCluster<Data, Var, Set>>::iterator&);
+  mergeCluster(typename std::list<SecondaryCluster<Data, Var, Set, Generator>>::iterator&);
 
 private:
-  std::list<SecondaryCluster<Data, Var, Set>> m_cluster;
-  std::vector<typename std::list<SecondaryCluster<Data, Var, Set>>::iterator> m_membership;
+  std::list<SecondaryCluster<Data, Var, Set, Generator>> m_cluster;
+  std::vector<typename std::list<SecondaryCluster<Data, Var, Set, Generator>>::iterator> m_membership;
   double m_score;
   const Var m_numSecondary;
 }; // class PrimaryCluster
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Constructs an empty primary cluster.
  *
@@ -103,12 +104,12 @@ template <typename Data, typename Var, typename Set>
  * @param numPrimary Number of primary variables.
  * @param numSecondary Number of secondary variables.
  */
-PrimaryCluster<Data, Var, Set>::PrimaryCluster(
+PrimaryCluster<Data, Var, Set, Generator>::PrimaryCluster(
   const Data& data,
-  std::mt19937* const generator,
+  Generator* const generator,
   const Var numPrimary,
   const Var numSecondary
-) : Cluster<Data, Var, Set>(data, generator, numPrimary),
+) : Cluster<Data, Var, Set, Generator>(data, numPrimary, generator),
     m_cluster(),
     m_membership(numSecondary, m_cluster.end()),
     m_score(std::nan("")),
@@ -116,7 +117,7 @@ PrimaryCluster<Data, Var, Set>::PrimaryCluster(
 {
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Constructs a primary cluster from the given elements.
  *
@@ -125,12 +126,12 @@ template <typename Data, typename Var, typename Set>
  * @param primaryElements The primary variables in the cluster.
  * @param numSecondary Number of secondary variables.
  */
-PrimaryCluster<Data, Var, Set>::PrimaryCluster(
+PrimaryCluster<Data, Var, Set, Generator>::PrimaryCluster(
   const Data& data,
-  std::mt19937* const generator,
+  Generator* const generator,
   const Set& primaryElements,
   const Var numSecondary
-) : Cluster<Data, Var, Set>(data, generator, primaryElements),
+) : Cluster<Data, Var, Set, Generator>(data, primaryElements, generator),
     m_cluster(),
     m_membership(numSecondary, m_cluster.end()),
     m_score(std::nan("")),
@@ -138,15 +139,15 @@ PrimaryCluster<Data, Var, Set>::PrimaryCluster(
 {
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Copy constructor.
  *
  * @param other The primary cluster to be copied.
  */
-PrimaryCluster<Data, Var, Set>::PrimaryCluster(
-  const PrimaryCluster<Data, Var, Set>& other
-) : Cluster<Data, Var, Set>(other),
+PrimaryCluster<Data, Var, Set, Generator>::PrimaryCluster(
+  const PrimaryCluster<Data, Var, Set, Generator>& other
+) : Cluster<Data, Var, Set, Generator>(other),
     m_cluster(),
     m_membership(other.m_numSecondary, m_cluster.end()),
     m_score(other.m_score),
@@ -161,7 +162,7 @@ PrimaryCluster<Data, Var, Set>::PrimaryCluster(
   }
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Merge constructor creates a new primary cluster
  *        by merging the two given clusters.
@@ -169,10 +170,10 @@ template <typename Data, typename Var, typename Set>
  * @param first The first primary cluster to be merged.
  * @param second The second primary cluster to be merged.
  */
-PrimaryCluster<Data, Var, Set>::PrimaryCluster(
-  const PrimaryCluster<Data, Var, Set>& first,
-  const PrimaryCluster<Data, Var, Set>& second
-) : Cluster<Data, Var, Set>(first, second),
+PrimaryCluster<Data, Var, Set, Generator>::PrimaryCluster(
+  const PrimaryCluster<Data, Var, Set, Generator>& first,
+  const PrimaryCluster<Data, Var, Set, Generator>& second
+) : Cluster<Data, Var, Set, Generator>(first, second),
     m_cluster(),
     m_membership(first.m_numSecondary, m_cluster.end()),
     m_score(std::nan("")),
@@ -182,22 +183,22 @@ PrimaryCluster<Data, Var, Set>::PrimaryCluster(
   this->singleSecondary();
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Default destructor.
  */
-PrimaryCluster<Data, Var, Set>::~PrimaryCluster(
+PrimaryCluster<Data, Var, Set, Generator>::~PrimaryCluster(
 )
 {
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Computes the score of this cluster, if not cached,
  *        and returns it.
  */
 double
-PrimaryCluster<Data, Var, Set>::score(
+PrimaryCluster<Data, Var, Set, Generator>::score(
 )
 {
   if (std::isnan(m_score)) {
@@ -211,18 +212,18 @@ PrimaryCluster<Data, Var, Set>::score(
   return m_score;
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Clears the cached score for this cluster.
  */
 void
-PrimaryCluster<Data, Var, Set>::scoreClear(
+PrimaryCluster<Data, Var, Set, Generator>::scoreClear(
 )
 {
   m_score = std::nan("");
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Computes the score of this primary cluster when a primary variable
  *        is inserted, optionally updating the cached score.
@@ -233,7 +234,7 @@ template <typename Data, typename Var, typename Set>
  * @return The changed score of this cluster after inserting the variable.
  */
 double
-PrimaryCluster<Data, Var, Set>::scoreInsertPrimary(
+PrimaryCluster<Data, Var, Set, Generator>::scoreInsertPrimary(
   const Var given,
   const bool cache
 )
@@ -248,7 +249,7 @@ PrimaryCluster<Data, Var, Set>::scoreInsertPrimary(
   return score;
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Computes the score of this cluster when a primary variable
  *        is erased, optionally updating the cached score.
@@ -259,7 +260,7 @@ template <typename Data, typename Var, typename Set>
  * @return The changed score of this cluster after erasing the variable.
  */
 double
-PrimaryCluster<Data, Var, Set>::scoreErasePrimary(
+PrimaryCluster<Data, Var, Set, Generator>::scoreErasePrimary(
   const Var given,
   const bool cache
 )
@@ -274,7 +275,7 @@ PrimaryCluster<Data, Var, Set>::scoreErasePrimary(
   return score;
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Computes the score of this cluster when another primary cluster
  *        is merged with it, optionally updating the cached score.
@@ -285,8 +286,8 @@ template <typename Data, typename Var, typename Set>
  * @return The changed score of this cluster after merging the clusters.
  */
 double
-PrimaryCluster<Data, Var, Set>::scoreMerge(
-  const PrimaryCluster<Data, Var, Set>& other,
+PrimaryCluster<Data, Var, Set, Generator>::scoreMerge(
+  const PrimaryCluster<Data, Var, Set, Generator>& other,
   const bool cache
 )
 {
@@ -302,13 +303,13 @@ PrimaryCluster<Data, Var, Set>::scoreMerge(
   return score;
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Clears all the secondary clusters for this primary cluster.
  *        Also clears the cached score for this cluster.
  */
 void
-PrimaryCluster<Data, Var, Set>::clearSecondary(
+PrimaryCluster<Data, Var, Set, Generator>::clearSecondary(
 )
 {
   LOG_MESSAGE(info, "Clearing all secondary clusters");
@@ -319,13 +320,13 @@ PrimaryCluster<Data, Var, Set>::clearSecondary(
   this->scoreClear();
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Creates a single secondary cluster for this primary cluster.
  *        Also clears the cached score for this cluster.
  */
 void
-PrimaryCluster<Data, Var, Set>::singleSecondary(
+PrimaryCluster<Data, Var, Set, Generator>::singleSecondary(
 )
 {
   LOG_MESSAGE(info, "Assigning all secondary variables to the same cluster");
@@ -339,24 +340,24 @@ PrimaryCluster<Data, Var, Set>::singleSecondary(
   this->scoreClear();
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Randomly initializes the secondary clusters for this primary cluster.
  *        Also clears the cached score for this cluster.
  */
 void
-PrimaryCluster<Data, Var, Set>::randomSecondary(
+PrimaryCluster<Data, Var, Set, Generator>::randomSecondary(
   const Var numClusters
 )
 {
   LOG_MESSAGE(info, "Randomly assigning secondary variables to %u clusters", static_cast<uint32_t>(numClusters));
-  std::vector<SecondaryCluster<Data, Var, Set>> cluster(numClusters, SecondaryCluster<Data, Var, Set>(this->m_data, m_numSecondary));
+  std::vector<SecondaryCluster<Data, Var, Set, Generator>> cluster(numClusters, SecondaryCluster<Data, Var, Set, Generator>(this->m_data, m_numSecondary));
   std::uniform_int_distribution<Var> clusterDistrib(0, numClusters - 1);
   for (Var e = 0u; e < m_numSecondary; ++e) {
     auto c = clusterDistrib(*(this->m_generator));
     cluster[c].insert(e);
   }
-  m_cluster = std::list<SecondaryCluster<Data, Var, Set>>(cluster.begin(), cluster.end());
+  m_cluster = std::list<SecondaryCluster<Data, Var, Set, Generator>>(cluster.begin(), cluster.end());
   this->removeEmptyClusters();
   for (auto cit = m_cluster.begin(); cit != m_cluster.end(); ++cit) {
     for (const auto e : cit->elements()) {
@@ -367,7 +368,7 @@ PrimaryCluster<Data, Var, Set>::randomSecondary(
   LOG_MESSAGE(info, "Assigned secondary variables to %u clusters", m_cluster.size());
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Performs a Gibbs clustering step for the secondary variables
  *        corresponding to this primary cluster.
@@ -376,7 +377,7 @@ template <typename Data, typename Var, typename Set>
  *                should be repeated.
  */
 void
-PrimaryCluster<Data, Var, Set>::clusterSecondary(
+PrimaryCluster<Data, Var, Set, Generator>::clusterSecondary(
   const uint32_t numReps
 )
 {
@@ -403,31 +404,31 @@ PrimaryCluster<Data, Var, Set>::clusterSecondary(
   this->scoreClear();
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Returns the secondary clusters corresponding to this primary cluster.
  */
-const std::list<SecondaryCluster<Data, Var, Set>>&
-PrimaryCluster<Data, Var, Set>::secondaryClusters(
+const std::list<SecondaryCluster<Data, Var, Set, Generator>>&
+PrimaryCluster<Data, Var, Set, Generator>::secondaryClusters(
 ) const
 {
   return m_cluster;
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Removes all the empty secondary clusters from this primary cluster.
  */
 void
-PrimaryCluster<Data, Var, Set>::removeEmptyClusters(
+PrimaryCluster<Data, Var, Set, Generator>::removeEmptyClusters(
 )
 {
-  auto emptyCluster = [] (const SecondaryCluster<Data, Var, Set>& cluster)
+  auto emptyCluster = [] (const SecondaryCluster<Data, Var, Set, Generator>& cluster)
                          { return cluster.empty(); };
   m_cluster.remove_if(emptyCluster);
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Moves the given secondary variable to a different
  *        secondary cluster in this primary cluster.
@@ -435,7 +436,7 @@ template <typename Data, typename Var, typename Set>
  * @param given The index of the secondary variable to be moved.
  */
 void
-PrimaryCluster<Data, Var, Set>::reassignSecondary(
+PrimaryCluster<Data, Var, Set, Generator>::reassignSecondary(
   const Var given
 )
 {
@@ -444,7 +445,7 @@ PrimaryCluster<Data, Var, Set>::reassignSecondary(
   auto oldCluster = m_membership[given];
   m_membership[given] = m_cluster.end();
   // Create a new cluster with only the given var
-  SecondaryCluster<Data, Var, Set> newCluster(this->m_data, m_numSecondary);
+  SecondaryCluster<Data, Var, Set, Generator> newCluster(this->m_data, m_numSecondary);
   newCluster.insert(given);
   if (oldCluster->size() > 1) {
     // Remove the element and update the score of the cluster
@@ -492,14 +493,14 @@ PrimaryCluster<Data, Var, Set>::reassignSecondary(
   }
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Merges the given secondary cluster with another secondary cluster
  *        in this primary cluster.
  */
 bool
-PrimaryCluster<Data, Var, Set>::mergeCluster(
-  typename std::list<SecondaryCluster<Data, Var, Set>>::iterator& given
+PrimaryCluster<Data, Var, Set, Generator>::mergeCluster(
+  typename std::list<SecondaryCluster<Data, Var, Set, Generator>>::iterator& given
 )
 {
   // Compute the weight of merging this cluster with

@@ -34,8 +34,9 @@ public:
   void
   learnTreeStructures(const std::list<std::list<Set>>&&, const bool, const double);
 
+  template <typename Generator>
   void
-  learnParents(std::mt19937&, const Set&, const OptimalBeta&, const uint32_t);
+  learnParents(Generator&, const Set&, const OptimalBeta&, const uint32_t);
 
   const std::unordered_map<Var, double>&
   allParents() const;
@@ -147,9 +148,10 @@ Module<Data, Var, Set>::learnTreeStructures(
 }
 
 template <typename Data, typename Var, typename Set>
+template <typename Generator>
 void
 Module<Data, Var, Set>::learnParents(
-  std::mt19937& generator,
+  Generator& generator,
   const Set& candidateParents,
   const OptimalBeta& ob,
   const uint32_t numSplits

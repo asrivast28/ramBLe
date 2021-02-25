@@ -33,10 +33,10 @@
  * @tparam Var Type of variable indices (expected to be an integer type).
  * @tparam Set Type of set container.
  */
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 class Ganesh {
 public:
-  Ganesh(const mxx::comm&, const Data&, std::mt19937* const);
+  Ganesh(const mxx::comm&, const Data&, Generator* const);
 
   ~Ganesh();
 
@@ -52,7 +52,7 @@ public:
   void
   clusterSecondary(const uint32_t = 1);
 
-  const std::list<PrimaryCluster<Data, Var, Set>>&
+  const std::list<PrimaryCluster<Data, Var, Set, Generator>>&
   primaryClusters() const;
 
 private:
@@ -66,23 +66,23 @@ private:
   reassignPrimary(const Var);
 
   double
-  scoreMerge(PrimaryCluster<Data, Var, Set>&, PrimaryCluster<Data, Var, Set>&);
+  scoreMerge(PrimaryCluster<Data, Var, Set, Generator>&, PrimaryCluster<Data, Var, Set, Generator>&);
 
   bool
-  mergeCluster(typename std::list<PrimaryCluster<Data, Var, Set>>::iterator&);
+  mergeCluster(typename std::list<PrimaryCluster<Data, Var, Set, Generator>>::iterator&);
 
   void
   clusterPrimary();
 
 private:
-  std::list<PrimaryCluster<Data, Var, Set>> m_cluster;
-  std::vector<typename std::list<PrimaryCluster<Data, Var, Set>>::iterator> m_membership;
+  std::list<PrimaryCluster<Data, Var, Set, Generator>> m_cluster;
+  std::vector<typename std::list<PrimaryCluster<Data, Var, Set, Generator>>::iterator> m_membership;
   const mxx::comm& m_comm;
   const Data& m_data;
-  std::mt19937* const m_generator;
+  Generator* const m_generator;
 }; // class Ganesh
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Constructs a Gibbs clustering object.
  *
@@ -90,10 +90,10 @@ template <typename Data, typename Var, typename Set>
  * @param data The data provider.
  * @param generator The random number generator.
  */
-Ganesh<Data, Var, Set>::Ganesh(
+Ganesh<Data, Var, Set, Generator>::Ganesh(
   const mxx::comm& comm,
   const Data& data,
-  std::mt19937* const generator
+  Generator* const generator
 ) : m_cluster(),
     m_membership(),
     m_comm(comm),
@@ -102,36 +102,36 @@ Ganesh<Data, Var, Set>::Ganesh(
 {
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Default destructor.
  */
-Ganesh<Data, Var, Set>::~Ganesh(
+Ganesh<Data, Var, Set, Generator>::~Ganesh(
 )
 {
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Randomly initializes the primary clusters and
  *        the corresponding secondary clusters.
  */
 void
-Ganesh<Data, Var, Set>::initializeRandom(
+Ganesh<Data, Var, Set, Generator>::initializeRandom(
   const Var numPrimary
 )
 {
   const auto n = m_data.numVars();
   const auto m = m_data.numObs();
   LOG_MESSAGE(info, "Randomly assigning primary variables to %u clusters", static_cast<uint32_t>(numPrimary));
-  std::vector<PrimaryCluster<Data, Var, Set>> cluster(numPrimary, PrimaryCluster<Data, Var, Set>(m_data, m_generator, n, m));
+  std::vector<PrimaryCluster<Data, Var, Set, Generator>> cluster(numPrimary, PrimaryCluster<Data, Var, Set, Generator>(m_data, m_generator, n, m));
   std::uniform_int_distribution<Var> clusterDistrib(0, numPrimary - 1);
   for (Var e = 0; e < n; ++e) {
     // Pick a cluster uniformly at random
     auto c = clusterDistrib(*m_generator);
     cluster[c].insert(e);
   }
-  m_cluster = std::list<PrimaryCluster<Data, Var, Set>>(cluster.begin(), cluster.end());
+  m_cluster = std::list<PrimaryCluster<Data, Var, Set, Generator>>(cluster.begin(), cluster.end());
   this->removeEmptyClusters();
   m_membership.resize(n, m_cluster.end());
   for (auto cit = m_cluster.begin(); cit != m_cluster.end(); ++cit) {
@@ -144,13 +144,13 @@ Ganesh<Data, Var, Set>::initializeRandom(
   this->initializeSecondaryRandom(numSecondary);
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Initializes the primary clusters with the given clusters
  *        and randomly initializes the corresponding secondary clusters.
  */
 void
-Ganesh<Data, Var, Set>::initializeGiven(
+Ganesh<Data, Var, Set, Generator>::initializeGiven(
   const std::list<Set>& givenClusters
 )
 {
@@ -164,13 +164,13 @@ Ganesh<Data, Var, Set>::initializeGiven(
   this->initializeSecondaryRandom(numSecondary);
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Randomly initializes the secondary clusters
  *        for all the primary clusters.
  */
 void
-Ganesh<Data, Var, Set>::initializeSecondaryRandom(
+Ganesh<Data, Var, Set, Generator>::initializeSecondaryRandom(
   const Var numSecondary
 )
 {
@@ -179,20 +179,20 @@ Ganesh<Data, Var, Set>::initializeSecondaryRandom(
   }
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Removes all the empty primary clusters.
  */
 void
-Ganesh<Data, Var, Set>::removeEmptyClusters(
+Ganesh<Data, Var, Set, Generator>::removeEmptyClusters(
 )
 {
-  auto emptyCluster = [] (const PrimaryCluster<Data, Var, Set>& cluster)
+  auto emptyCluster = [] (const PrimaryCluster<Data, Var, Set, Generator>& cluster)
                          { return cluster.empty(); };
   m_cluster.remove_if(emptyCluster);
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Moves the given primary variable to a different
  *        primary cluster.
@@ -200,7 +200,7 @@ template <typename Data, typename Var, typename Set>
  * @param given The index of the primary variable to be moved.
  */
 void
-Ganesh<Data, Var, Set>::reassignPrimary(
+Ganesh<Data, Var, Set, Generator>::reassignPrimary(
   const Var given
 )
 {
@@ -209,7 +209,7 @@ Ganesh<Data, Var, Set>::reassignPrimary(
   m_membership[given] = m_cluster.end();
   // Create a copy of the old cluster to get the same
   // clustering of the secondary elements
-  PrimaryCluster<Data, Var, Set> newCluster(*oldCluster);
+  PrimaryCluster<Data, Var, Set, Generator> newCluster(*oldCluster);
   // Remove all the primary elements from the copy
   newCluster.scoreClear();
   newCluster.clear();
@@ -264,7 +264,7 @@ Ganesh<Data, Var, Set>::reassignPrimary(
   }
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Computes the score of merging two primary clusters.
  *        The merged primary cluster has just one secondary cluster.
@@ -275,26 +275,26 @@ template <typename Data, typename Var, typename Set>
  * @return The score for merging the two given primary clusters.
  */
 double
-Ganesh<Data, Var, Set>::scoreMerge(
-  PrimaryCluster<Data, Var, Set>& first,
-  PrimaryCluster<Data, Var, Set>& second
+Ganesh<Data, Var, Set, Generator>::scoreMerge(
+  PrimaryCluster<Data, Var, Set, Generator>& first,
+  PrimaryCluster<Data, Var, Set, Generator>& second
 )
 {
   auto firstScore = first.score();
   auto secondScore = second.score();
-  PrimaryCluster<Data, Var, Set> merged(first, second);
+  PrimaryCluster<Data, Var, Set, Generator> merged(first, second);
   auto mergeScore = merged.score();
   auto scoreDiff = mergeScore - (firstScore + secondScore);
   return scoreDiff;
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Merges the given primary cluster with another primary cluster.
  */
 bool
-Ganesh<Data, Var, Set>::mergeCluster(
-  typename std::list<PrimaryCluster<Data, Var, Set>>::iterator& given
+Ganesh<Data, Var, Set, Generator>::mergeCluster(
+  typename std::list<PrimaryCluster<Data, Var, Set, Generator>>::iterator& given
 )
 {
   // Compute the weight of merging this cluster with
@@ -330,12 +330,12 @@ Ganesh<Data, Var, Set>::mergeCluster(
   }
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Performs a Gibbs clustering step for the primary variables.
  */
 void
-Ganesh<Data, Var, Set>::clusterPrimary(
+Ganesh<Data, Var, Set, Generator>::clusterPrimary(
 )
 {
   const auto n = m_data.numVars();
@@ -360,13 +360,13 @@ Ganesh<Data, Var, Set>::clusterPrimary(
   LOG_MESSAGE(info, "Done merging primary clusters (number of clusters = %u)", m_cluster.size());
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Performs a Gibbs clustering step for both primary as
  *        well as secondary variables.
  */
 void
-Ganesh<Data, Var, Set>::clusterTwoWay(
+Ganesh<Data, Var, Set, Generator>::clusterTwoWay(
 )
 {
   LOG_MESSAGE(info, "Clustering primary variables");
@@ -375,7 +375,7 @@ Ganesh<Data, Var, Set>::clusterTwoWay(
   this->clusterSecondary(50);
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Performs a Gibbs clustering step for secondary variables.
  *
@@ -383,7 +383,7 @@ template <typename Data, typename Var, typename Set>
  *                should be repeated.
  */
 void
-Ganesh<Data, Var, Set>::clusterSecondary(
+Ganesh<Data, Var, Set, Generator>::clusterSecondary(
   const uint32_t numReps
 )
 {
@@ -394,12 +394,12 @@ Ganesh<Data, Var, Set>::clusterSecondary(
   LOG_MESSAGE(info, "Done clustering secondary variables");
 }
 
-template <typename Data, typename Var, typename Set>
+template <typename Data, typename Var, typename Set, typename Generator>
 /**
  * @brief Returns the primary clusters.
  */
-const std::list<PrimaryCluster<Data, Var, Set>>&
-Ganesh<Data, Var, Set>::primaryClusters(
+const std::list<PrimaryCluster<Data, Var, Set, Generator>>&
+Ganesh<Data, Var, Set, Generator>::primaryClusters(
 ) const
 {
   return m_cluster;
