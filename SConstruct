@@ -83,10 +83,7 @@ if platform.system() == 'Darwin':
   libPaths.append('/opt/local/lib')
   cppPaths.append('/opt/local/include')
 
-if releaseBuild:
-  buildDir = 'release'
-else:
-  buildDir = 'debug'
+if not releaseBuild:
   targetSuffix += '_debug'
 
 enableLogging = ARGUMENTS.get('LOGGING', None)
@@ -229,6 +226,12 @@ env.topDir = topDir
 env.testDir = os.path.join(topDir, 'test')
 env.scriptsDir = os.path.join(topDir, 'scripts')
 
+if targetSuffix:
+  buildDir = targetSuffix
+  if buildDir.startswith('_'):
+    buildDir = buildDir[1:]
+else:
+  buildDir = 'release'
 buildDir = os.path.join('builds', buildDir)
 
 if not SConscript('SConscript', exports='env', src_dir='.', variant_dir=buildDir, duplicate=0):
