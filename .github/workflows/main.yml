@@ -58,5 +58,5 @@ jobs:
     - name: Parallel Unit tests
       run: |
         cd test
-        mpirun -np 4 ./testramble
-        mpirun -np 13 ./testramble
+        mpirun -np 4 -oversubscribe ./testramble
+        mpirun -np 13 -oversubscribe ./testramble
