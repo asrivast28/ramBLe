@@ -15,6 +15,7 @@ _Tested with [MVAPICH2 version 2.3.3](http://mvapich.cse.ohio-state.edu/static/m
 * **[SCons](http://scons.org/)** is required for building the project.  
 _Tested with version [3.1.2](https://scons.org/doc/3.1.2/HTML/scons-user.html)._
 * The following repositories are used as submodules:
+  * **[BN Utils](https://github.com/asrivast28/bn-utils)** contains common utilities for BN learning in parallel and scripts for post-processing.  
   * **[mxx](https://gitlab.com/patflick/mxx)** is used as a C++ wrapper for MPI.  
   * **[Graph API](https://github.com/asrivast28/cpp-utils)** is used as a lightweight wrapper around Boost.Graph.  
   * **[C++ Utils](https://github.com/asrivast28/cpp-utils)** are used for logging and timing.  
