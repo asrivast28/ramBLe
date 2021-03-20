@@ -20,8 +20,7 @@
 #ifndef DETAIL_BLANKETLEARNING_HPP_
 #define DETAIL_BLANKETLEARNING_HPP_
 
-#include "SetUtils.hpp"
-
+#include "common/SetUtils.hpp"
 #include "utils/Logging.hpp"
 
 #include <numeric>

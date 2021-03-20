@@ -20,7 +20,7 @@
 #ifndef TEST_ENVIRONMENT_HPP_
 #define TEST_ENVIRONMENT_HPP_
 
-#include "DataReader.hpp"
+#include "common/DataReader.hpp"
 
 #include <gtest/gtest.h>
 

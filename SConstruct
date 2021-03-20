@@ -20,8 +20,6 @@ import os
 import platform
 
 topDir = os.path.abspath(os.getcwd())
-commonDir = os.path.join(topDir, 'common')
-extDir = os.path.join(commonDir, 'ext')
 cpp = None
 buildDir = None
 targetSuffix = ''
@@ -29,8 +27,6 @@ targetSuffix = ''
 
 cppPaths = [
             topDir,
-            commonDir,
-            extDir,
             ]
 
 cppFlags = [
@@ -243,5 +239,5 @@ if ARGUMENTS.get('TEST', 1) not in ('0', 0):
   if not SConscript(os.path.join('test', 'SConscript'), exports='env', src_dir='test', variant_dir=os.path.join(buildDir, 'test'), duplicate=0):
     print('Test suite was not built')
 if ARGUMENTS.get('SCRIPTS', 1) not in ('0', 0):
-  if not SConscript(os.path.join(commonDir, 'scripts', 'SConscript'), exports='env', src_dir='scripts', variant_dir=os.path.join(buildDir, 'scripts'), duplicate=0):
+  if not SConscript(os.path.join('common', 'scripts', 'SConscript'), exports='env', src_dir='scripts', variant_dir=os.path.join(buildDir, 'scripts'), duplicate=0):
     print('Scripts were not built')

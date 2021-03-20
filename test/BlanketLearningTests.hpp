@@ -22,9 +22,10 @@
 
 #include "Environment.hpp"
 #include "BlanketLearning.hpp"
-#include "CTCounter.hpp"
 #include "DiscreteData.hpp"
-#include "UintSet.hpp"
+
+#include "common/CTCounter.hpp"
+#include "common/UintSet.hpp"
 
 
 using Counter = CTCounter<>;

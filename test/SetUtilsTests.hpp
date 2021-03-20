@@ -20,8 +20,8 @@
 #ifndef TEST_SETUTILS_HPP_
 #define TEST_SETUTILS_HPP_
 
-#include "SetUtils.hpp"
-#include "UintSet.hpp"
+#include "common/SetUtils.hpp"
+#include "common/UintSet.hpp"
 
 #include <gtest/gtest.h>
 

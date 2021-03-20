@@ -20,8 +20,9 @@
 #ifndef TEST_NETWORKDATA_HPP_
 #define TEST_NETWORKDATA_HPP_
 
-#include "CTCounter.hpp"
 #include "DiscreteData.hpp"
+
+#include "common/CTCounter.hpp"
 
 
 using Counter = CTCounter<>;

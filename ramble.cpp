@@ -18,21 +18,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "DataReader.hpp"
 #include "BlanketLearning.hpp"
 #include "DirectLearning.hpp"
 #include "DiscreteData.hpp"
 #include "GlobalLearning.hpp"
 #include "ProgramOptions.hpp"
-#include "UintSet.hpp"
 
+#include "common/CTCounter.hpp"
+#include "common/DataReader.hpp"
+#include "common/UintSet.hpp"
+#include "common/ext/BVCounter.hpp"
+#include "common/ext/RadCounter.hpp"
 #include "mxx/comm.hpp"
 #include "mxx/env.hpp"
 #include "utils/Logging.hpp"
 #include "utils/Timer.hpp"
-#include "BVCounter.hpp"
-#include "CTCounter.hpp"
-#include "RadCounter.hpp"
 
 #include <boost/asio/ip/host_name.hpp>
 

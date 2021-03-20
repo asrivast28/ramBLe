@@ -21,12 +21,12 @@
 #define TEST_DATA_HPP_
 
 #include "Environment.hpp"
-#include "CTCounter.hpp"
 #include "DiscreteData.hpp"
-#include "UintSet.hpp"
 
-#include "BVCounter.hpp"
-#include "RadCounter.hpp"
+#include "common/CTCounter.hpp"
+#include "common/UintSet.hpp"
+#include "common/ext/BVCounter.hpp"
+#include "common/ext/RadCounter.hpp"
 
 
 // All the different counter implementations

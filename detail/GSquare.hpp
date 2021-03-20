@@ -20,10 +20,10 @@
 #ifndef DETAIL_GSQUARE_HPP_
 #define DETAIL_GSQUARE_HPP_
 
+#include "common/CTCounter.hpp"
+#include "common/ext/BVCounter.hpp"
+#include "common/ext/RadCounter.hpp"
 #include "utils/Logging.hpp"
-#include "BVCounter.hpp"
-#include "CTCounter.hpp"
-#include "RadCounter.hpp"
 
 
 /**
