@@ -25,7 +25,7 @@ More information on building can be found in [`README.md`](README.md#building)
 
 ### Run-time Environment
 The run-time environment for the experiments (collected using the file [`collect_environment.sh`](https://github.com/SC-Tech-Program/Author-Kit/blob/master/collect_environment.sh))
-is available at [`hive_environment.log`](scripts/hive_environment.log)
+is available at [`hive_environment.log`](hive_environment.log)
 
 ### Sequential Execution
 The code can be used for learning the Bayesian network, using any of the [supported algorithms](README.md#algorithms), as described in [`README.md`](README.md#execution)  
