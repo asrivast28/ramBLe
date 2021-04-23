@@ -3,11 +3,11 @@
 ## Data sets
 We used the following three gene expression data sets from two model organisms, _Saccharomyces cerevisiae_ and _Arabidopsis thaliana_, for our experiments.
 * A data set created by [Tchourine et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5987223/) from multiple RNA-seq studies of _S. cerevisiae_  
-2,577 observations for 5,716 genes; can be downloaded from [here](https://zenodo.org/record/3355524#.Xpx0t1NKhhE)
+2,577 observations for 5,716 genes; can be downloaded from [Zenodo](https://zenodo.org/record/3355524#.Xpx0t1NKhhE)
 * An unpublished data set created from multiple microarray studies of _A. thaliana_  
 16,838 observations for 18,380 genes; will be made available soon
 * A manually curated subset of the above data set focusing only on the studies of the development process in _A. thaliana_
-5,102 observations for 18,373 genes; will be made available soon
+5,102 observations for 18,373 genes; can also be downloaded from [Zenodo](https://zenodo.org/record/4672797#.YG9TQhNKhQI)
 
 ### Discretization
 We discretize the expression levels in the data sets using the methodology suggested by [Fridman et al.](https://www.ncbi.nlm.nih.gov/pubmed/11108481)  
