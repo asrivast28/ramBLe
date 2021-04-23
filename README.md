@@ -90,7 +90,8 @@ This class of algorithms learn the network directly by iteratively eliminating e
 
 ## Publication
 [**Ankit Srivastava, Sriram Chockalingam, and Srinivas Aluru.** "A Parallel Framework for Constraint-Based Bayesian Network Learning via Markov Blanket Discovery." _In 2020 SC20: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)_, IEEE Computer Society, 2020.](https://dl.acm.org/doi/abs/10.5555/3433701.3433710)  
-The experiments in the publication can be reproduced using [`EXPERIMENTS.md`](EXPERIMENTS.md).
+
+_The experiments reported in the publication can be reproduced using_ [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 ## Licensing
 Our code is licensed under the Apache License 2.0 (see [`LICENSE`](LICENSE)).
