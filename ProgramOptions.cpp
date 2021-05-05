@@ -69,7 +69,7 @@ ProgramOptions::ProgramOptions(
   advanced.add_options()
     ("alpha,p", po::value<double>(&m_alpha)->default_value(0.05), "Threshold p-value.")
     ("conditioning,g", po::value<uint32_t>(&m_maxConditioning)->default_value(std::numeric_limits<uint32_t>::max()), "Maximum size of conditioning sets.")
-    ("imbalance,b", po::value<double>(&m_imbalanceThreshold)->default_value(2.0), "Correct any imbalance in skeleton discovery more than the given threshold.")
+    ("imbalance,b", po::value<double>(&m_imbalanceThreshold)->default_value(0.2), "Correct any imbalance in skeleton discovery more than the given threshold.")
     ("counter,t", po::value<std::string>(&m_counterType)->default_value("ct"), "Type of the counter to be used.")
     ("warmup,w", po::bool_switch(&m_warmupMPI)->default_value(false), "Warmup the MPI_Alltoall(v) functions before starting execution.")
     ;

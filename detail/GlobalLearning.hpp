@@ -437,7 +437,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
                                  [this] (const std::tuple<Var, Var, double>& e)
                                         { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
     myEdges.erase(newEnd, myEdges.end());
-    if (imbalanceThreshold > 1.0) {
+    if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
       TIMER_START(this->m_tDist);
       this->fixImbalance(myEdges, imbalanceThreshold);
       TIMER_PAUSE(this->m_tDist);

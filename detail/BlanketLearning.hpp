@@ -324,7 +324,7 @@ BlanketLearning<Data, Var, Set>::growShrink(
                                                           !changes.contains(std::get<0>(mpv)); };
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
       myPV.erase(newEnd, myPV.end());
-      if (imbalanceThreshold > 1.0) {
+      if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
         TIMER_START(this->m_tDist);
         if (this->fixImbalance(myPV, imbalanceThreshold)) {
           TIMER_START(this->m_tSync);
@@ -749,7 +749,7 @@ InterIAMB<Data, Var, Set>::growShrink(
                                                              !changes.contains(std::get<0>(mpv)); };
       auto newEnd = std::remove_if(myPV.begin(), myPV.end(), addedOrUnchanged);
       myPV.resize(std::distance(myPV.begin(), newEnd));
-      if (imbalanceThreshold > 1.0) {
+      if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
         TIMER_START(this->m_tDist);
         bool fixed = this->fixImbalance(myPV, imbalanceThreshold);
         bool sorted = false;

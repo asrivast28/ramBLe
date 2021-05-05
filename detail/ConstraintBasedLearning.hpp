@@ -103,10 +103,20 @@ ConstraintBasedLearning<Data, Var, Set>::fixImbalance(
 {
   bool fixed = false;
   TIMER_START(m_tMxx);
-  const auto minSize = mxx::allreduce(myPairs.size(), mxx::min<size_t>(), this->m_comm);
-  const auto maxSize = mxx::allreduce(myPairs.size(), mxx::max<size_t>(), this->m_comm);
+  auto totalSize = mxx::allreduce(myPairs.size(), m_comm);
   TIMER_PAUSE(m_tMxx);
-  if (minSize * imbalanceThreshold < static_cast<double>(maxSize)) {
+  auto imbalance = 0.0;
+  if (totalSize > 0) {
+    TIMER_START(m_tMxx);
+    auto maxSize = mxx::allreduce(myPairs.size(), mxx::max<size_t>(), m_comm);
+    TIMER_PAUSE(m_tMxx);
+    auto avgSize = totalSize / static_cast<double>(m_comm.size());
+    imbalance = (maxSize / avgSize) - 1.0;
+    //if (m_comm.is_first()) {
+      //std::cout << "Imbalance: " << imbalance << std::endl;
+    //}
+  }
+  if (std::isgreater(imbalance, imbalanceThreshold)) {
     // Redistribute the pairs to fix the imbalance
     TIMER_START(m_tMxx);
     mxx::stable_distribute_inplace(myPairs, this->m_comm);
