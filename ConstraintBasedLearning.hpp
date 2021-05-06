@@ -23,6 +23,7 @@
 #include "BayesianNetwork.hpp"
 
 #include "mxx/comm.hpp"
+#include "utils/Timer.hpp"
 
 #include <map>
 #include <stdexcept>
@@ -66,7 +67,7 @@ public:
   getNetwork(const bool, const bool, const double = 0.0) const;
 
   virtual
-  ~ConstraintBasedLearning() { }
+  ~ConstraintBasedLearning();
 
 protected:
   Set
@@ -97,6 +98,7 @@ protected:
   Set m_allVars;
   const double m_alpha;
   const Var m_maxConditioning;
+  TIMER_DECLARE(m_tMxx, mutable);
 }; // class ConstraintBasedLearning
 
 #include "detail/ConstraintBasedLearning.hpp"

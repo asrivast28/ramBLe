@@ -136,7 +136,9 @@ GlobalLearning<Data, Var, Set>::syncSets(
   std::unordered_map<Var, Set>& mySets
 ) const
 {
+  TIMER_START(this->m_tMxx);
   set_allintersect_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -175,9 +177,11 @@ GlobalLearning<Data, Var, Set>::storeRemovedEdges(
   LOG_MESSAGE_IF(myRemoved.size() != myDSepSets.size(),
                  error, "Mismatch between number of edges and d-separating sets.");
   // Gather this information from all the processes
+  TIMER_START(this->m_tMxx);
   auto removedSizes = mxx::allgather(myRemoved.size(), this->m_comm);
   auto allRemoved = mxx::allgatherv(myRemoved, removedSizes, this->m_comm);
   auto allDSepSets = set_allgatherv(myDSepSets, removedSizes, this->m_data.numVars(), this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
   // Store this information in expected format
   Var x, y;
   double pv;

@@ -53,6 +53,19 @@ ConstraintBasedLearning<Data, Var, Set>::ConstraintBasedLearning(
   for (auto i = 0u; i < data.numVars(); ++i) {
     m_allVars.insert(m_allVars.end(), i);
   }
+  TIMER_RESET(m_tMxx);
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Default destructor.
+ */
+ConstraintBasedLearning<Data, Var, Set>::~ConstraintBasedLearning(
+)
+{
+  if (m_comm.is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in mxx calls: ", m_tMxx);
+  }
 }
 
 template <typename Data, typename Var, typename Set>
@@ -89,11 +102,15 @@ ConstraintBasedLearning<Data, Var, Set>::fixImbalance(
 ) const
 {
   bool fixed = false;
+  TIMER_START(m_tMxx);
   const auto minSize = mxx::allreduce(myPairs.size(), mxx::min<size_t>(), this->m_comm);
   const auto maxSize = mxx::allreduce(myPairs.size(), mxx::max<size_t>(), this->m_comm);
+  TIMER_PAUSE(m_tMxx);
   if (minSize * imbalanceThreshold < static_cast<double>(maxSize)) {
     // Redistribute the pairs to fix the imbalance
+    TIMER_START(m_tMxx);
     mxx::stable_distribute_inplace(myPairs, this->m_comm);
+    TIMER_PAUSE(m_tMxx);
     fixed = true;
   }
   return fixed;
@@ -124,12 +141,12 @@ ConstraintBasedLearning<Data, Var, Set>::findVStructures(
         auto res = this->checkCollider(curr.first, target, curr.second);
         if (res.first) {
           LOG_MESSAGE(info, "* Found new v-structure %s -> %s <- %s (p-value = %g)",
-                            this->m_data.varName(curr.first), this->m_data.varName(target), this->m_data.varName(curr.second), res.second);
+                            m_data.varName(curr.first), m_data.varName(target), m_data.varName(curr.second), res.second);
           vStructures.push_back(std::make_tuple(res.second, curr.first, target, curr.second));
         }
         LOG_MESSAGE_IF(!res.first, debug,
                        "* Rejected the v-structure %s -> %s <- %s (p-value = %g)",
-                       this->m_data.varName(curr.first), this->m_data.varName(target), this->m_data.varName(curr.second), res.second);
+                       m_data.varName(curr.first), m_data.varName(target), m_data.varName(curr.second), res.second);
       }
     }
   }
@@ -176,7 +193,7 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
     auto vStructures = this->findVStructures();
     bn.applyVStructures(std::move(vStructures));
     // Then, break any directed cycles in the network
-    LOG_MESSAGE_IF(this->m_comm.is_first() && bn.hasDirectedCycles(),
+    LOG_MESSAGE_IF(m_comm.is_first() && bn.hasDirectedCycles(),
                    info, "* The initial network contains directed cycles");
     while (bn.hasDirectedCycles()) {
       bn.breakDirectedCycles();
@@ -186,7 +203,7 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
     while (changed) {
       changed = bn.applyMeekRules();
     }
-    if (this->m_comm.is_first()) {
+    if (m_comm.is_first()) {
       TIMER_ELAPSED("Time taken in directing the edges: ", tDirect);
     }
   }

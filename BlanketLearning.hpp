@@ -22,8 +22,6 @@
 
 #include "LocalLearning.hpp"
 
-#include "utils/Timer.hpp"
-
 
 /**
  * @brief Abstract base class for causal discovery by first learning MB sets.

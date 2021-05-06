@@ -246,12 +246,14 @@ DirectLearning<Data, Var, Set>::forwardPhase(
   std::vector<std::tuple<Var, Var, double>> minPV(myPV.size());
   // First, do a forward segmented parallel prefix with primary variable defining the segment boundaries
   // This will get the secondary variable with the minimum p-value to the corresponding primary variable boundary
+  TIMER_START(this->m_tMxx);
   mxx::global_scan(myPV.begin(), myPV.end(), minPV.begin(), comparePV, false, this->m_comm);
   if (reverse) {
     // Then, do a reverse segmented parallel prefix with the same segments as before
     // This will effectively broadcast the secondary variable with the minimum p-value within the segments
     mxx::global_scan_inplace(minPV.rbegin(), minPV.rend(), comparePV, false, this->m_comm.reverse());
   }
+  TIMER_PAUSE(this->m_tMxx);
   // There might be multiple local copies of the minimum p-value corresponding to every segment
   // Retain only one per segment
   auto comparePrimary = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
@@ -532,7 +534,9 @@ MMPC<Data, Var, Set>::forwardBackward(
     for (const auto& as : added) {
       changes.insert(std::get<0>(as));
     }
+    TIMER_START(this->m_tMxx);
     set_allunion(changes, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
     if (!changes.empty()) {
       if (!added.empty()) {
         // Record the added tuples belonging to this processor
@@ -715,7 +719,9 @@ SemiInterleavedHITON<Data, Var, Set>::forwardBackward(
                    { return (std::get<0>(a) == std::get<0>(b)) ?
                             (std::islessgreater(std::get<2>(a), std::get<2>(b)) ? std::isless(std::get<2>(a), std::get<2>(b)) : (std::get<1>(a) < std::get<1>(b))) :
                             (std::get<0>(a) < std::get<0>(b)); };
+  TIMER_START(this->m_tMxx);
   mxx::sort(myPV.begin(), myPV.end(), sortPV, this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
   auto comparePV = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
                       { return (std::get<0>(a) == std::get<0>(b)) ? a : b; };
   while (changed) {
@@ -725,7 +731,9 @@ SemiInterleavedHITON<Data, Var, Set>::forwardBackward(
     for (const auto& as : added) {
       changes.insert(std::get<0>(as));
     }
+    TIMER_START(this->m_tMxx);
     set_allunion(changes, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
     if (!changes.empty()) {
       if (!added.empty()) {
         // Record the added tuples belonging to this processor

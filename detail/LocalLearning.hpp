@@ -275,7 +275,9 @@ LocalLearning<Data, Var, Set>::syncSets(
   std::unordered_map<Var, Set>& mySets
 ) const
 {
+  TIMER_START(this->m_tMxx);
   set_allunion_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -343,13 +345,17 @@ LocalLearning<Data, Var, Set>::symmetryCorrect(
   }
   myPairs.resize(i);
   // Redistribute and sort the list across all the processors
+  TIMER_START(this->m_tMxx);
   mxx::stable_distribute_inplace(myPairs, this->m_comm);
   mxx::comm nonzero_comm(static_cast<MPI_Comm>(this->m_comm));
   if (mxx::any_of(myPairs.size() == 0, this->m_comm)) {
     nonzero_comm = this->m_comm.split(myPairs.size() > 0);
   }
+  TIMER_PAUSE(this->m_tMxx);
   if (myPairs.size() > 0) {
+    TIMER_START(this->m_tMxx);
     mxx::sort(myPairs.begin(), myPairs.end(), nonzero_comm);
+    TIMER_PAUSE(this->m_tMxx);
     // There should be a duplicate for every ordered pair,
     // otherwise symmetry correction is required
     std::vector<bool> remove(myPairs.size(), true);
@@ -368,14 +374,18 @@ LocalLearning<Data, Var, Set>::symmetryCorrect(
     // First, check if the first pair on this processor matches the
     // last pair on the previous processor
     auto elem = *myPairs.rbegin();
+    TIMER_START(this->m_tMxx);
     auto left = mxx::right_shift(elem, nonzero_comm);
+    TIMER_PAUSE(this->m_tMxx);
     if (*remove.begin() && (left == *myPairs.begin())) {
       *remove.begin() = false;
     }
     // Then, check if the last pair on this processor matches the
     // first pair on the next processor
     elem = *myPairs.begin();
+    TIMER_START(this->m_tMxx);
     auto right = mxx::left_shift(elem, nonzero_comm);
+    TIMER_PAUSE(this->m_tMxx);
     if (*remove.rbegin() && (right == *myPairs.rbegin())) {
       *remove.rbegin() = false;
     }
@@ -395,7 +405,9 @@ LocalLearning<Data, Var, Set>::symmetryCorrect(
     it = std::unique(myPairs.begin(), it);
     myPairs.resize(std::distance(myPairs.begin(), it));
   }
+  TIMER_START(this->m_tMxx);
   mxx::stable_distribute_inplace(myPairs, this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
 
   return myPairs;
 }

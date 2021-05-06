@@ -228,10 +228,12 @@ BlanketLearning<Data, Var, Set>::growAll(
                                (std::islessequal(std::get<2>(a), std::get<2>(b)) ? a : b) : b; };
   // First, do a forward segmented parallel prefix with primary variable defining the segment boundaries
   // This will get the secondary variable with the minimum p-value to the corresponding primary variable boundary
+  TIMER_START(this->m_tMxx);
   mxx::global_scan(myPV.begin(), myPV.end(), minPV.begin(), comparePV, false, this->m_comm);
   // Then, do a reverse segmented parallel prefix with the same segments as before
   // This will effectively broadcast the secondary variable with the minimum p-value within the segments
   mxx::global_scan_inplace(minPV.rbegin(), minPV.rend(), comparePV, false, this->m_comm.reverse());
+  TIMER_PAUSE(this->m_tMxx);
   // There might be multiple local copies of the minimum p-value corresponding to every segment
   // Retain only one per segment
   auto comparePrimary = [] (const std::tuple<Var, Var, double>& a, const std::tuple<Var, Var, double>& b)
@@ -303,7 +305,9 @@ BlanketLearning<Data, Var, Set>::growShrink(
     for (const auto& as : added) {
       changes.insert(std::get<0>(as));
     }
+    TIMER_START(this->m_tMxx);
     set_allunion(changes, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
     if (!changes.empty()) {
       if (!added.empty()) {
         // Record the added tuples belonging to this processor
@@ -423,7 +427,9 @@ BlanketLearning<Data, Var, Set>::getSkeleton_parallel(
       allNeighbors[x] = set_init(Set(), this->m_data.numVars());
     }
   }
+  TIMER_START(this->m_tMxx);
   set_allunion_indexed(allNeighbors, this->m_allVars, this->m_data.numVars(), this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
   // We can now create the Bayesian network independently on every processor
   for (const auto x : this->m_allVars) {
     for (const auto y : allNeighbors.at(x)) {
@@ -709,7 +715,9 @@ InterIAMB<Data, Var, Set>::growShrink(
         changes.insert(std::get<0>(as));
       }
     }
+    TIMER_START(this->m_tMxx);
     set_allunion(changes, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
     if (!changes.empty()) {
       if (!added.empty()) {
         for (const auto& mpv : myPV) {
@@ -745,6 +753,7 @@ InterIAMB<Data, Var, Set>::growShrink(
         TIMER_START(this->m_tDist);
         bool fixed = this->fixImbalance(myPV, imbalanceThreshold);
         bool sorted = false;
+        TIMER_START(this->m_tMxx);
         if ((redistributed || fixed) && mxx::any_of(sortPV, this->m_comm)) {
           // If the p-value list was redistributed in any of the previous iterations AND
           // there are newly added elements in the list, then we need to globally sort the list
@@ -757,6 +766,7 @@ InterIAMB<Data, Var, Set>::growShrink(
           }
           sorted = true;
         }
+        TIMER_PAUSE(this->m_tMxx);
         if (fixed || sorted) {
           // We need to get the missing blankets if the p-value list was redistributed in this iteration
           // This can happen if the imbalance was fixed OR if the list was sorted because of an addition
