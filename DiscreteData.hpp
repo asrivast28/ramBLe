@@ -20,6 +20,8 @@
 #ifndef DISCRETEDATA_HPP_
 #define DISCRETEDATA_HPP_
 
+#include "GSquare.hpp"
+
 #include "mxx/comm.hpp"
 #include "utils/Timer.hpp"
 
@@ -42,6 +44,8 @@ public:
   DiscreteData();
 
   DiscreteData(const Counter&, const std::vector<std::string>&);
+
+  ~DiscreteData();
 
   Var
   numVars() const;
@@ -101,19 +105,17 @@ public:
   bool
   isIndependentAnySubset(const double, const Var, const Var, const Set&, const Set&, const Var) const;
 
-  ~DiscreteData();
-
 private:
   uint32_t
   testThreshold(const uint32_t = 1u) const;
 
 private:
   const Counter m_counter;
+  const GSquare m_gsquare;
   const std::vector<std::string> m_varNames;
   TIMER_DECLARE(m_timer, mutable);
 };
 
-#include "detail/GSquare.hpp"
 #include "detail/DiscreteData.hpp"
 
 #endif // DISCRETEDATA_HPP_

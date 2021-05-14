@@ -33,6 +33,7 @@ template <typename Counter, typename Var>
  */
 DiscreteData<Counter, Var>::DiscreteData(
 ) : m_counter(),
+    m_gsquare(),
     m_varNames()
 {
   TIMER_RESET(m_timer);
@@ -53,6 +54,18 @@ DiscreteData<Counter, Var>::DiscreteData(
 {
   LOG_MESSAGE_IF(numVars() != varNames.size(), error, "Number of variables (%d) != Number of variable names", counter.n(), varNames.size());
   TIMER_RESET(m_timer);
+}
+
+template <typename Counter, typename Var>
+/**
+ * @brief Default destructor.
+ */
+DiscreteData<Counter, Var>::~DiscreteData(
+)
+{
+  if (mxx::comm().is_first()) {
+    TIMER_ELAPSED_NONZERO("Time taken in G-square computations: ", m_timer);
+  }
 }
 
 template <typename Counter, typename Var>
@@ -193,7 +206,7 @@ DiscreteData<Counter, Var>::pValue(
 ) const
 {
   TIMER_START(m_timer);
-  auto ret = computeGSquare(m_counter, x, y, given);
+  auto ret = m_gsquare.compute(m_counter, x, y, given);
   TIMER_PAUSE(m_timer);
   if (std::fpclassify(ret.second) == FP_ZERO) {
     return 1.0;
@@ -510,18 +523,6 @@ DiscreteData<Counter, Var>::isIndependentAnySubset(
 {
   auto maxPV = this->maxPValue(alpha, x, y, given, seed, maxSize);
   return this->isIndependent(alpha, maxPV);
-}
-
-template <typename Counter, typename Var>
-/**
- * @brief Default destructor.
- */
-DiscreteData<Counter, Var>::~DiscreteData(
-)
-{
-  if (mxx::comm().is_first()) {
-    TIMER_ELAPSED_NONZERO("Time taken in G-square computations: ", m_timer);
-  }
 }
 
 #endif // DETAIL_DISCRETEDATA_HPP_
