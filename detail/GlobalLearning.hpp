@@ -184,11 +184,14 @@ GlobalLearning<Data, Var, Set>::storeRemovedEdges(
   // Store this information in expected format
   Var x, y;
   double pv;
+  m_removedEdges.resize(allRemoved.size());
   for (auto e = 0u; e < allRemoved.size(); ++e) {
     std::tie(x, y, pv) = allRemoved.at(e);
-    m_removedEdges.insert(std::make_pair(std::make_pair(x, y),
-                          std::make_pair(pv, allDSepSets.at(e))));
+    m_removedEdges[e] = std::make_tuple(x, y, pv, allDSepSets.at(e));
   }
+  std::sort(m_removedEdges.begin(), m_removedEdges.end(),
+            [] (const std::tuple<Var, Var, double, Set>& a, const std::tuple<Var, Var, double, Set>& b)
+               { return std::make_pair(std::get<0>(a), std::get<1>(a)) < std::make_pair(std::get<0>(b), std::get<1>(b)); });
 }
 
 template <typename Data, typename Var, typename Set>
@@ -232,15 +235,24 @@ GlobalLearning<Data, Var, Set>::checkCollider(
   const Var z
 ) const
 {
-  LOG_MESSAGE_IF(m_removedEdges.find(std::make_pair(y, z)) == m_removedEdges.end(),
-                 error, "Unable to check collider %s - %s - %s",
-                        this->m_data.varName(y), this->m_data.varName(x), this->m_data.varName(z));
-  auto p = m_removedEdges.at(std::make_pair(y, z));
-  auto collider = false;
-  if (!p.second.contains(x)) {
-    collider = true;
+  auto edge = std::make_pair(y, z);
+  auto eIt = std::lower_bound(m_removedEdges.begin(), m_removedEdges.end(), edge,
+                              [] (const std::tuple<Var, Var, double, Set>& t, const std::pair<Var, Var>& e)
+                                 { return std::make_pair(std::get<0>(t), std::get<1>(t)) < e; });
+  if ((eIt == m_removedEdges.end()) ||
+      (std::make_pair(std::get<0>(*eIt), std::get<1>(*eIt)) != edge)) {
+    auto pv = this->m_data.pValue(y, z);
+    LOG_MESSAGE(debug, "Computed p-value for edge %s - %s is %g",
+                       this->m_data.varName(y), this->m_data.varName(z), pv);
+    return std::make_pair(true, pv);
   }
-  return std::make_pair(collider, p.first);
+  else {
+    auto collider = !(std::get<3>(*eIt).contains(x));
+    auto pv = std::get<2>(*eIt);
+    LOG_MESSAGE(debug, "Stored p-value for edge %s - %s is %g",
+                       this->m_data.varName(y), this->m_data.varName(z), std::get<2>(*eIt));
+    return std::make_pair(collider, pv);
+  }
 }
 
 template <typename Data, typename Var, typename Set>
@@ -342,7 +354,7 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
       std::get<2>(e) = result.first;
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
-      if (directEdges &&
+      if (directEdges && (s > 0) &&
           std::isless(result.first, std::numeric_limits<double>::max()) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
         Var x, y;
@@ -352,7 +364,7 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
         // However, there is no need to store it if there are no candidates for z
         // i.e., no common neighbors between x and y
         if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
-          this->m_removedEdges.insert(std::make_pair(std::make_pair(x, y), result));
+          this->m_removedEdges.push_back(std::make_tuple(x, y, result.first, result.second));
         }
         TIMER_PAUSE(this->m_tRemoved);
       }
@@ -360,12 +372,24 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
     auto newEnd = std::remove_if(allEdges.begin(), allEdges.end(),
                                  [this] (const std::tuple<Var, Var, double>& e)
                                         { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
-    allEdges.resize(std::distance(allEdges.begin(), newEnd));
+    allEdges.erase(newEnd, allEdges.end());
     for (const auto& rn : removedNeighbors) {
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
     }
-    TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
+    if (this->m_comm.is_first()) {
+      TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
+    }
+    if (directEdges) {
+      auto newEnd = std::remove_if(this->m_removedEdges.begin(), this->m_removedEdges.end(),
+                                   [&allNeighbors] (const std::tuple<Var, Var, double, Set>& t)
+                                                   { return set_intersection(allNeighbors.at(std::get<0>(t)),
+                                                                             allNeighbors.at(std::get<1>(t))).empty(); });
+      this->m_removedEdges.erase(newEnd, this->m_removedEdges.end());
+    }
   }
+  std::sort(this->m_removedEdges.begin(), this->m_removedEdges.end(),
+            [] (const std::tuple<Var, Var, double, Set>& a, const std::tuple<Var, Var, double, Set>& b)
+               { return std::make_pair(std::get<0>(a), std::get<1>(a)) < std::make_pair(std::get<0>(b), std::get<1>(b)); });
   return this->constructSkeleton(std::move(allNeighbors));
 }
 
@@ -393,7 +417,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
       std::get<2>(e) = result.first;
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
-      if (directEdges &&
+      if (directEdges && (s > 0) &&
           std::isless(result.first, std::numeric_limits<double>::max()) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
         TIMER_START(this->m_tRemoved);
@@ -412,10 +436,12 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
     auto newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
                                  [this] (const std::tuple<Var, Var, double>& e)
                                         { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
-    myEdges.resize(std::distance(myEdges.begin(), newEnd));
-    TIMER_START(this->m_tDist);
-    this->fixImbalance(myEdges, imbalanceThreshold);
-    TIMER_PAUSE(this->m_tDist);
+    myEdges.erase(newEnd, myEdges.end());
+    if (imbalanceThreshold > 1.0) {
+      TIMER_START(this->m_tDist);
+      this->fixImbalance(myEdges, imbalanceThreshold);
+      TIMER_PAUSE(this->m_tDist);
+    }
     for (const auto& rn : removedNeighbors) {
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
     }

@@ -63,7 +63,7 @@ private:
 
 protected:
   mutable std::unordered_map<Var, Set> m_cachedNeighbors;
-  mutable std::map<std::pair<Var, Var>, std::pair<double, Set>> m_removedEdges;
+  mutable std::vector<std::tuple<Var, Var, double, Set>> m_removedEdges;
   TIMER_DECLARE(m_tSync, mutable);
   TIMER_DECLARE(m_tDist, mutable);
   TIMER_DECLARE(m_tRemoved, mutable);
