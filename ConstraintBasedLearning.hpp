@@ -90,7 +90,7 @@ protected:
 
 private:
   std::vector<std::tuple<double, Var, Var, Var>>
-  findVStructures() const;
+  findVStructures(const bool) const;
 
 protected:
   const mxx::comm& m_comm;

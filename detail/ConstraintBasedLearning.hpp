@@ -160,14 +160,27 @@ template <typename Data, typename Var, typename Set>
  */
 std::vector<std::tuple<double, Var, Var, Var>>
 ConstraintBasedLearning<Data, Var, Set>::findVStructures(
+  const bool isParallel
 ) const
 {
-  std::vector<std::tuple<double, Var, Var, Var>> vStructures;
-  for (const auto x : m_allVars) {
-    auto xVStructures = this->findVStructures(x);
-    vStructures.insert(vStructures.end(), xVStructures.begin(), xVStructures.end());
+  mxx::blk_dist dist(m_allVars.size(), m_comm);
+  auto myOffset = isParallel ? dist.eprefix_size() : 0;
+  auto mySize = isParallel ? dist.local_size() : dist.global_size();
+  auto x = std::next(m_allVars.begin(), myOffset);
+  std::vector<std::tuple<double, Var, Var, Var>> myVStructures;
+  for (auto v = 0u; v < mySize; ++v, ++x) {
+    auto xVStructures = this->findVStructures(*x);
+    myVStructures.insert(myVStructures.end(), xVStructures.begin(), xVStructures.end());
   }
-  return vStructures;
+  if (isParallel) {
+    TIMER_START(m_tMxx);
+    auto vStructures = mxx::allgatherv(myVStructures, m_comm);
+    TIMER_PAUSE(m_tMxx);
+    return vStructures;
+  }
+  else {
+    return myVStructures;
+  }
 }
 
 template <typename Data, typename Var, typename Set>
@@ -190,7 +203,7 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   if (directEdges) {
     TIMER_DECLARE(tDirect);
     // First, orient the v-structures
-    auto vStructures = this->findVStructures();
+    auto vStructures = this->findVStructures(isParallel);
     bn.applyVStructures(std::move(vStructures));
     // Then, break any directed cycles in the network
     LOG_MESSAGE_IF(m_comm.is_first() && bn.hasDirectedCycles(),
