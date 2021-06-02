@@ -92,10 +92,9 @@ GlobalLearning<Data, Var, Set>::initializeLearning(
 {
   // First, block decompose all the edges on all the processors
   auto n = this->m_allVars.size();
-  auto totalPairs = (n * (n - 1)) / 2;
-  auto batchSize = (totalPairs / this->m_comm.size()) + ((totalPairs % this->m_comm.size() != 0) ? 1 : 0);
-  auto myOffset = std::min(this->m_comm.rank() * batchSize, totalPairs);
-  auto mySize = static_cast<uint32_t>(std::min(batchSize, totalPairs - myOffset));
+  mxx::blk_dist dist((n * (n - 1)) / 2, this->m_comm);
+  auto myOffset = dist.eprefix_size();
+  auto mySize = dist.local_size();
 
   auto vars = std::vector<Var>(this->m_allVars.begin(), this->m_allVars.end());
   auto k = 0u;
