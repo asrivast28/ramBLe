@@ -20,7 +20,7 @@ import os
 import platform
 
 topDir = os.path.abspath(os.getcwd())
-cpp = None
+cpp = '' if ARGUMENTS.get('CCACHE', 0) in [0, '0'] else 'ccache '
 buildDir = None
 targetSuffix = ''
 
@@ -64,7 +64,7 @@ if os.path.exists(mxxDir):
 
 
 if platform.system() in ['Darwin', 'Linux']:
-  cpp = 'mpic++'
+  cpp += 'mpic++'
   cppFlags.extend([
               '-Wall',
               '-Wextra',
@@ -124,10 +124,12 @@ if profiler is not None:
 if ARGUMENTS.get('SANITIZE', 0) not in [0, '0']:
   if platform.system() == 'Linux':
     cppFlags.append('-fsanitize=address')
-    #cppFlags.append('-fsanitize=leak')
-    #cppFlags.append('-fsanitize=undefined')
+    cppFlags.append('-fsanitize=leak')
+    cppFlags.append('-fsanitize=undefined')
     cppFlags.append('-fno-omit-frame-pointer')
     linkFlags.append('-fsanitize=address')
+    linkFlags.append('-fsanitize=leak')
+    linkFlags.append('-fsanitize=undefined')
 
 suffix = ARGUMENTS.get('SUFFIX')
 if suffix is not None:
