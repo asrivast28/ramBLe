@@ -51,6 +51,9 @@ protected:
   void
   syncSets(std::unordered_map<Var, Set>&) const;
 
+  bool
+  fixWeightedImbalance(std::vector<std::tuple<Var, Var, double>>&, const std::vector<double>&, const double) const;
+
   void
   storeRemovedEdges(std::vector<std::tuple<Var, Var, double>>&&, std::vector<Set>&&, const std::unordered_map<Var, Set>&) const;
 

@@ -23,6 +23,8 @@
 #include "common/SetUtils.hpp"
 #include "utils/Logging.hpp"
 
+#include <boost/math/special_functions/binomial.hpp>
+
 
 template <typename Data, typename Var, typename Set>
 /**
@@ -120,6 +122,76 @@ GlobalLearning<Data, Var, Set>::initializeLearning(
   for (const auto v : vars) {
     allNeighbors.insert(std::make_pair(v, set_init(this->getCandidates(v), this->m_data.numVars())));
   }
+}
+
+template <typename Data, typename Var, typename Set>
+bool
+GlobalLearning<Data, Var, Set>::fixWeightedImbalance(
+  std::vector<std::tuple<Var, Var, double>>& myEdges,
+  const std::vector<double>& myWeights,
+  const double imbalanceThreshold
+) const
+{
+  bool fixed = false;
+  double myTotalWeight = std::accumulate(myWeights.cbegin(), myWeights.cend(), 0);
+  TIMER_START(this->m_tMxx);
+  double totalWeight = mxx::allreduce(myTotalWeight, this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
+  auto imbalance = 0.0;
+  if (totalWeight > 0) {
+    TIMER_START(this->m_tMxx);
+    auto maxWeight = mxx::allreduce(myTotalWeight, mxx::max<double>(), this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
+    auto avgWeight = totalWeight / this->m_comm.size();
+    imbalance = (maxWeight / avgWeight) - 1.0;
+    //if (this->m_comm.is_first()) {
+      //std::cout << "Imbalance: " << imbalance << std::endl;
+    //}
+  }
+  if (std::isgreater(imbalance, imbalanceThreshold)) {
+    std::vector<double> myWeightsPrefix(myWeights.size());
+    std::partial_sum(myWeights.cbegin(), myWeights.cend(), myWeightsPrefix.begin());
+    // Get the weight on previous processors
+    TIMER_START(this->m_tMxx);
+    auto globalPrefix = mxx::exscan(myTotalWeight, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
+    std::vector<uint64_t> sendCounts(this->m_comm.size(), 0);
+    if (myTotalWeight > 0) {
+      mxx::blk_dist dist(static_cast<uint64_t>(totalWeight), this->m_comm);
+      auto proc = dist.rank_of(globalPrefix);
+      auto procFirst = 0u;
+      double localPrefix = 0;
+      double leftWeight = myTotalWeight;
+      for (; (leftWeight > 0) && (proc < this->m_comm.size()); ++proc) {
+        double sendWeight = std::min<double>(dist.iprefix_size(proc) - globalPrefix, leftWeight);
+        auto procLast = std::distance(myWeightsPrefix.cbegin(),
+                                      std::lower_bound(myWeightsPrefix.cbegin(),
+                                                       myWeightsPrefix.cend(),
+                                                       localPrefix + sendWeight));
+        if (myWeightsPrefix[procLast] < (localPrefix + sendWeight)) {
+          ++procLast;
+        }
+        sendCounts[proc] = (procLast - procFirst) + 1;
+        leftWeight -= (myWeightsPrefix[procLast] - localPrefix);
+        globalPrefix += (myWeightsPrefix[procLast] - localPrefix);
+        localPrefix = myWeightsPrefix[procLast];
+        procFirst = procLast + 1;
+      }
+    }
+    TIMER_START(this->m_tMxx);
+    auto recvCounts = mxx::all2all(sendCounts, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
+    auto myRecv = std::accumulate(recvCounts.begin(), recvCounts.end(), 0u);
+    std::vector<std::tuple<Var, Var, double>> newEdges(myRecv);
+    const std::tuple<Var, Var, double>* sendBuf = (myEdges.size() > 0) ? &myEdges[0] : nullptr;
+    std::tuple<Var, Var, double>* recvBuf = (newEdges.size() > 0) ? &newEdges[0] : nullptr;
+    TIMER_START(this->m_tMxx);
+    mxx::all2allv(sendBuf, sendCounts, recvBuf, recvCounts, this->m_comm);
+    TIMER_PAUSE(this->m_tMxx);
+    myEdges = std::move(newEdges);
+    fixed = true;
+  }
+  return fixed;
 }
 
 template <typename Data, typename Var, typename Set>
@@ -282,55 +354,46 @@ PCStable<Data, Var, Set>::checkEdge(
   auto& yNeighbors = allNeighbors.at(y);
   LOG_MESSAGE(debug, "Checking the edge %s <-> %s, d-separating set of size %u",
                      this->m_data.varName(x), this->m_data.varName(y), setSize);
-  if ((xNeighbors.size() <= setSize) && (yNeighbors.size() <= setSize)) {
-    // The neighborhoods of both x and y are too small to remove the edge now
-    LOG_MESSAGE(debug, "+ Fixing the edge %s <-> %s",
-                       this->m_data.varName(x), this->m_data.varName(y));
-    // Mark it for removal so that it does not get tested in subsequent iterations
-    pv = std::numeric_limits<double>::max();
+  auto remove = false;
+  // First, check the edge using neighbors of x
+  if (xNeighbors.size() > setSize) {
+    xNeighbors.erase(y);
+    std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, xNeighbors, setSize, setSize);
+    xNeighbors.insert(y);
+    remove = this->m_data.isIndependent(this->m_alpha, pv);
   }
-  else {
-    auto remove = false;
-    // First, check the edge using neighbors of x
-    if (xNeighbors.size() > setSize) {
-      xNeighbors.erase(y);
-      std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, xNeighbors, setSize, setSize);
-      xNeighbors.insert(y);
-      remove = this->m_data.isIndependent(this->m_alpha, pv);
+  // Then, check the edge using neighbors of y if all of the following hold:
+  // 1. The neighbors of x did not remove it already
+  // 2. The conditioning set used for checking is not empty
+  // 3. The size of the neighborhood of y is greater than the conditioning set size
+  if (!remove && (setSize > 0) && (yNeighbors.size() > setSize)) {
+    yNeighbors.erase(x);
+    // Further, only check if neighborhood of y has some elements which are
+    // not present in the neighborhood of x
+    if (!set_difference(yNeighbors, xNeighbors).empty()) {
+      std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, yNeighbors, setSize, setSize);
     }
-    // Then, check the edge using neighbors of y if all of the following hold:
-    // 1. The neighbors of x did not remove it already
-    // 2. The conditioning set used for checking is not empty
-    // 3. The size of the neighborhood of y is greater than the conditioning set size
-    if (!remove && (setSize > 0) && (yNeighbors.size() > setSize)) {
-      yNeighbors.erase(x);
-      // Further, only check if neighborhood of y has some elements which are
-      // not present in the neighborhood of x
-      if (!set_difference(yNeighbors, xNeighbors).empty()) {
-        std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, yNeighbors, setSize, setSize);
-      }
-      yNeighbors.insert(x);
-      remove = this->m_data.isIndependent(this->m_alpha, pv);
+    yNeighbors.insert(x);
+    remove = this->m_data.isIndependent(this->m_alpha, pv);
+  }
+  LOG_MESSAGE(debug, "%s and %s are " + std::string(this->m_data.isIndependent(this->m_alpha, pv) ? "independent" : "dependent") +
+                     " (p-value = %g)",
+                     this->m_data.varName(x), this->m_data.varName(y), pv);
+  LOG_MESSAGE_IF(remove, debug, "- Removing the edge %s <-> %s",
+                                this->m_data.varName(x), this->m_data.varName(y));
+  if (remove) {
+    // Mark y for removal from neighborhood of x
+    auto it = removedNeighbors.find(x);
+    if (it == removedNeighbors.end()) {
+      it = removedNeighbors.insert(it, std::make_pair(x, set_init(Set(), this->m_data.numVars())));
     }
-    LOG_MESSAGE(debug, "%s and %s are " + std::string(this->m_data.isIndependent(this->m_alpha, pv) ? "independent" : "dependent") +
-                       " (p-value = %g)",
-                       this->m_data.varName(x), this->m_data.varName(y), pv);
-    LOG_MESSAGE_IF(remove, debug, "- Removing the edge %s <-> %s",
-                                  this->m_data.varName(x), this->m_data.varName(y));
-    if (remove) {
-      // Mark y for removal from neighborhood of x
-      auto it = removedNeighbors.find(x);
-      if (it == removedNeighbors.end()) {
-        it = removedNeighbors.insert(it, std::make_pair(x, set_init(Set(), this->m_data.numVars())));
-      }
-      it->second.insert(y);
-      // Mark x for removal from neighborhood of y
-      it = removedNeighbors.find(y);
-      if (it == removedNeighbors.end()) {
-        it = removedNeighbors.insert(it, std::make_pair(y, set_init(Set(), this->m_data.numVars())));
-      }
-      it->second.insert(x);
+    it->second.insert(y);
+    // Mark x for removal from neighborhood of y
+    it = removedNeighbors.find(y);
+    if (it == removedNeighbors.end()) {
+      it = removedNeighbors.insert(it, std::make_pair(y, set_init(Set(), this->m_data.numVars())));
     }
+    it->second.insert(x);
   }
   return std::make_pair(pv, dsep);
 }
@@ -355,7 +418,6 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
       if (directEdges && (s > 0) &&
-          std::isless(result.first, std::numeric_limits<double>::max()) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
         Var x, y;
         std::tie(x, y, std::ignore) = e;
@@ -369,13 +431,15 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
         TIMER_PAUSE(this->m_tRemoved);
       }
     }
-    auto newEnd = std::remove_if(allEdges.begin(), allEdges.end(),
-                                 [this] (const std::tuple<Var, Var, double>& e)
-                                        { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
-    allEdges.erase(newEnd, allEdges.end());
     for (const auto& rn : removedNeighbors) {
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
     }
+    auto newEnd = std::remove_if(allEdges.begin(), allEdges.end(),
+                                 [this, &allNeighbors, &s] (const std::tuple<Var, Var, double>& e)
+                                                           { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)) ||
+                                                                    (allNeighbors.at(std::get<0>(e)).size() <= (s + 1) &&
+                                                                     allNeighbors.at(std::get<1>(e)).size() <= (s + 1)); });
+    allEdges.erase(newEnd, allEdges.end());
     if (this->m_comm.is_first()) {
       TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
     }
@@ -418,7 +482,6 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
       if (directEdges && (s > 0) &&
-          std::isless(result.first, std::numeric_limits<double>::max()) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
         TIMER_START(this->m_tRemoved);
         Var x, y;
@@ -437,18 +500,37 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
                                  [this] (const std::tuple<Var, Var, double>& e)
                                         { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
     myEdges.erase(newEnd, myEdges.end());
-    if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
-      TIMER_START(this->m_tDist);
-      this->fixImbalance(myEdges, imbalanceThreshold);
-      TIMER_PAUSE(this->m_tDist);
-    }
     for (const auto& rn : removedNeighbors) {
       allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
     }
+    this->m_comm.barrier();
     TIMER_START(this->m_tSync);
     this->syncSets(allNeighbors);
     TIMER_PAUSE(this->m_tSync);
-    TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
+    newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
+                            [&allNeighbors, &s] (const std::tuple<Var, Var, double>& e)
+                                                { return allNeighbors.at(std::get<0>(e)).size() <= (s + 1) &&
+                                                         allNeighbors.at(std::get<1>(e)).size() <= (s + 1); });
+    myEdges.erase(newEnd, myEdges.end());
+    if (this->m_comm.is_first()) {
+      TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
+    }
+    if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
+      std::vector<double> myWeights(myEdges.size(), 0.0);
+      for (auto e = 0u; e < myEdges.size(); ++e) {
+        auto n1 = allNeighbors.at(std::get<0>(myEdges[e])).size();
+        auto n2 = allNeighbors.at(std::get<1>(myEdges[e])).size();
+        if (n1 > s + 1) {
+          myWeights[e] = boost::math::binomial_coefficient<double>(n1 - 1, s + 1);
+        }
+        if (n2 > s + 1) {
+          myWeights[e] += boost::math::binomial_coefficient<double>(n2 - 1, s + 1);
+        }
+      }
+      TIMER_START(this->m_tDist);
+      this->fixWeightedImbalance(myEdges, myWeights, imbalanceThreshold);
+      TIMER_PAUSE(this->m_tDist);
+    }
   }
   if (directEdges) {
     TIMER_START(this->m_tRemoved);
