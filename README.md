@@ -79,7 +79,7 @@ This class of algorithms first finds the Markov blanket (MB) of the variable to 
 
 #### Direct Learning
 This class of algorithms directly finds the PC sets of nodes.
-* `mmpc` corresponds to the [Max-Min PC (MMPC)](https://link.springer.com/article/10.1007/s10994-006-6889-7) algorithm by Tsamardinos et al. and corrected by Pena et al.
+* `mmpc` corresponds to the [Max-Min PC (MMPC)](https://dl.acm.org/doi/10.1145/956750.956838) algorithm by Tsamardinos et al. and corrected by Pena et al.
 * `si.hiton.pc` corresponds to the [Semi-interleaved HITON-PC](http://www.jmlr.org/papers/v11/aliferis10a.html) algorithm by Aliferis et al.
 * `hiton` (_sequential only_) corresponds to the [HITON-PC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1480117/) algorithm by Aliferis et al. and corrected by Pena et al.
 * `getpc` (_sequential only_) corresponds to the [Get PC](https://www.sciencedirect.com/science/article/pii/S0888613X06000600) algorithm by Pena et al.
