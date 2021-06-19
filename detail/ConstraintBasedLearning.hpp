@@ -63,9 +63,13 @@ template <typename Data, typename Var, typename Set>
 ConstraintBasedLearning<Data, Var, Set>::~ConstraintBasedLearning(
 )
 {
+#if TIMER
+  auto myMxx = m_tMxx.elapsed();
+  auto maxMxx= mxx::reduce(myMxx, 0, mxx::max<float>(), m_comm);
   if (m_comm.is_first()) {
-    TIMER_ELAPSED_NONZERO("Time taken in mxx calls: ", m_tMxx);
+    std::cout << "Time taken in mxx calls: " << maxMxx << std::endl;
   }
+#endif
 }
 
 template <typename Data, typename Var, typename Set>
