@@ -96,6 +96,10 @@ getAlgorithm(
     return std::make_unique<PCStable<Data, Var, Set>>(comm, data, alpha, maxConditioning);
   }
   ss << ",pc.stable";
+  if (algoName.compare("pc.stable.2") == 0) {
+    return std::make_unique<PCStable2<Data, Var, Set>>(comm, data, alpha, maxConditioning);
+  }
+  ss << ",pc.stable.2";
   throw std::runtime_error("Requested algorithm not found. Supported algorithms are: {" + ss.str() + "}");
   return std::unique_ptr<ConstraintBasedLearning<Data, Var, Set>>();
 }

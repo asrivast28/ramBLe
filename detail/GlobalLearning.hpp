@@ -79,17 +79,20 @@ GlobalLearning<Data, Var, Set>::getMB(
 template <typename Data, typename Var, typename Set>
 /**
  * @brief Function for initializing the data structures used for
- *        learning the skeleton in parallel.
+ *        learning the skeleton.
  *
  * @param myEdges The array to be initialized with the edges
  *                to be handled by this processor.
  * @param allNeighbors The map containing the neighborhood set
  *                     for all the variables in the network.
+ * @param allNeighbors The map used for tracking the removals for
+ *                     for all the variables in the network.
  */
 void
 GlobalLearning<Data, Var, Set>::initializeLearning(
   std::vector<std::tuple<Var, Var, double>>& myEdges,
-  std::unordered_map<Var, Set>& allNeighbors
+  std::unordered_map<Var, Set>& allNeighbors,
+  std::unordered_map<Var, Set>& removedNeighbors
 ) const
 {
   // First, block decompose all the edges on all the processors
@@ -121,6 +124,7 @@ GlobalLearning<Data, Var, Set>::initializeLearning(
   // Then, initialize all the neighbor sets
   for (const auto v : vars) {
     allNeighbors.insert(std::make_pair(v, set_init(this->getCandidates(v), this->m_data.numVars())));
+    removedNeighbors.insert(std::make_pair(v, set_init(Set(), this->m_data.numVars())));
   }
 }
 
@@ -192,24 +196,6 @@ GlobalLearning<Data, Var, Set>::fixWeightedImbalance(
     fixed = true;
   }
   return fixed;
-}
-
-template <typename Data, typename Var, typename Set>
-/**
- * @brief Function that synchronizes the candidate sets by taking an
- *        intersection of the sets across all the processors.
- *
- * @param mySets A map with the neighbors of the variables
- *               remaining on this processor.
- */
-void
-GlobalLearning<Data, Var, Set>::syncSets(
-  std::unordered_map<Var, Set>& mySets
-) const
-{
-  TIMER_START(this->m_tMxx);
-  set_allintersect_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
-  TIMER_PAUSE(this->m_tMxx);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -307,10 +293,17 @@ GlobalLearning<Data, Var, Set>::checkCollider(
   const Var z
 ) const
 {
+  static auto findPair = [] (const std::tuple<Var, Var, double, Set>& t, const std::pair<Var, Var>& e)
+                            { return std::make_pair(std::get<0>(t), std::get<1>(t)) < e; };
+  // First, try to find the forward edge
   auto edge = std::make_pair(y, z);
-  auto eIt = std::lower_bound(m_removedEdges.begin(), m_removedEdges.end(), edge,
-                              [] (const std::tuple<Var, Var, double, Set>& t, const std::pair<Var, Var>& e)
-                                 { return std::make_pair(std::get<0>(t), std::get<1>(t)) < e; });
+  auto eIt = std::lower_bound(m_removedEdges.begin(), m_removedEdges.end(), edge, findPair);
+  if ((eIt == m_removedEdges.end()) ||
+      (std::make_pair(std::get<0>(*eIt), std::get<1>(*eIt)) != edge)) {
+    // If the forward edge does not exist, then try to find the backward edge
+    edge = std::make_pair(z, y);
+    eIt = std::lower_bound(m_removedEdges.begin(), m_removedEdges.end(), edge, findPair);
+  }
   if ((eIt == m_removedEdges.end()) ||
       (std::make_pair(std::get<0>(*eIt), std::get<1>(*eIt)) != edge)) {
     auto pv = this->m_data.pValue(y, z);
@@ -328,7 +321,7 @@ GlobalLearning<Data, Var, Set>::checkCollider(
 }
 
 template <typename Data, typename Var, typename Set>
-PCStable<Data, Var, Set>::PCStable(
+PCStableCommon<Data, Var, Set>::PCStableCommon(
   const mxx::comm& comm,
   const Data& data,
   const double alpha,
@@ -339,19 +332,20 @@ PCStable<Data, Var, Set>::PCStable(
 
 template <typename Data, typename Var, typename Set>
 std::pair<double, Set>
-PCStable<Data, Var, Set>::checkEdge(
+PCStableCommon<Data, Var, Set>::checkEdge(
   const std::tuple<Var, Var, double>& edge,
-  std::unordered_map<Var, Set>& allNeighbors,
+  const std::unordered_map<Var, Set>& allNeighbors,
   std::unordered_map<Var, Set>& removedNeighbors,
-  const uint32_t setSize
+  const uint32_t setSize,
+  const bool checkBackward
 ) const
 {
   auto pv = 0.0;
   auto dsep = set_init(Set(), this->m_data.numVars());
   const auto x = std::get<0>(edge);
   const auto y = std::get<1>(edge);
-  auto& xNeighbors = allNeighbors.at(x);
-  auto& yNeighbors = allNeighbors.at(y);
+  auto xNeighbors = allNeighbors.at(x);
+  auto yNeighbors = allNeighbors.at(y);
   LOG_MESSAGE(debug, "Checking the edge %s <-> %s, d-separating set of size %u",
                      this->m_data.varName(x), this->m_data.varName(y), setSize);
   auto remove = false;
@@ -359,22 +353,20 @@ PCStable<Data, Var, Set>::checkEdge(
   if (xNeighbors.size() > setSize) {
     xNeighbors.erase(y);
     std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, xNeighbors, setSize, setSize);
-    xNeighbors.insert(y);
     remove = this->m_data.isIndependent(this->m_alpha, pv);
   }
   // Then, check the edge using neighbors of y if all of the following hold:
-  // 1. The neighbors of x did not remove it already
-  // 2. The conditioning set used for checking is not empty
+  // 1. The conditioning set used for checking is not empty
+  // 2. The neighbors of x did not remove it already
   // 3. The size of the neighborhood of y is greater than the conditioning set size
-  if (!remove && (setSize > 0) && (yNeighbors.size() > setSize)) {
+  if (checkBackward && !remove && (yNeighbors.size() > setSize)) {
     yNeighbors.erase(x);
     // Further, only check if neighborhood of y has some elements which are
     // not present in the neighborhood of x
     if (!set_difference(yNeighbors, xNeighbors).empty()) {
       std::tie(pv, dsep) = this->m_data.maxPValueSubset(this->m_alpha, x, y, yNeighbors, setSize, setSize);
+      remove = this->m_data.isIndependent(this->m_alpha, pv);
     }
-    yNeighbors.insert(x);
-    remove = this->m_data.isIndependent(this->m_alpha, pv);
   }
   LOG_MESSAGE(debug, "%s and %s are " + std::string(this->m_data.isIndependent(this->m_alpha, pv) ? "independent" : "dependent") +
                      " (p-value = %g)",
@@ -383,37 +375,29 @@ PCStable<Data, Var, Set>::checkEdge(
                                 this->m_data.varName(x), this->m_data.varName(y));
   if (remove) {
     // Mark y for removal from neighborhood of x
-    auto it = removedNeighbors.find(x);
-    if (it == removedNeighbors.end()) {
-      it = removedNeighbors.insert(it, std::make_pair(x, set_init(Set(), this->m_data.numVars())));
-    }
-    it->second.insert(y);
+    removedNeighbors.at(x).insert(y);
     // Mark x for removal from neighborhood of y
-    it = removedNeighbors.find(y);
-    if (it == removedNeighbors.end()) {
-      it = removedNeighbors.insert(it, std::make_pair(y, set_init(Set(), this->m_data.numVars())));
-    }
-    it->second.insert(x);
+    removedNeighbors.at(y).insert(x);
   }
   return std::make_pair(pv, dsep);
 }
 
 template <typename Data, typename Var, typename Set>
 BayesianNetwork<Var>
-PCStable<Data, Var, Set>::getSkeleton_sequential(
+PCStableCommon<Data, Var, Set>::getSkeleton_sequential(
   const bool directEdges
 ) const
 {
-  std::unordered_map<Var, Set> allNeighbors;
   std::vector<std::tuple<Var, Var, double>> allEdges;
-  this->initializeLearning(allEdges, allNeighbors);
+  std::unordered_map<Var, Set> allNeighbors;
+  std::unordered_map<Var, Set> removedNeighbors;
+  this->initializeLearning(allEdges, allNeighbors, removedNeighbors);
   auto maxSize = std::min(this->m_maxConditioning, static_cast<Var>(this->m_allVars.size() - 2));
   for (auto s = 0u; (s <= maxSize) && !allEdges.empty(); ++s) {
     LOG_MESSAGE(debug, "Testing %u edges using sets of size %u", allEdges.size(), s);
     TIMER_DECLARE(tIter);
-    std::unordered_map<Var, Set> removedNeighbors;
     for (auto& e : allEdges) {
-      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s);
+      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s, (s > 0));
       std::get<2>(e) = result.first;
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
@@ -431,8 +415,11 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
         TIMER_PAUSE(this->m_tRemoved);
       }
     }
-    for (const auto& rn : removedNeighbors) {
-      allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
+    for (auto& rn : removedNeighbors) {
+      if (!rn.second.empty()) {
+        allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
+        rn.second.clear();
+      }
     }
     auto newEnd = std::remove_if(allEdges.begin(), allEdges.end(),
                                  [this, &allNeighbors, &s] (const std::tuple<Var, Var, double>& e)
@@ -458,15 +445,46 @@ PCStable<Data, Var, Set>::getSkeleton_sequential(
 }
 
 template <typename Data, typename Var, typename Set>
+PCStable<Data, Var, Set>::PCStable(
+  const mxx::comm& comm,
+  const Data& data,
+  const double alpha,
+  const Var maxConditioning
+) : PCStableCommon<Data, Var, Set>(comm, data, alpha, maxConditioning)
+{
+}
+
+template <typename Data, typename Var, typename Set>
+/**
+ * @brief Function that synchronizes the candidate sets by taking an
+ *        intersection of the sets across all the processors.
+ *
+ * @param mySets A map with the neighbors of the variables
+ *               remaining on this processor.
+ */
+void
+PCStable<Data, Var, Set>::syncSets(
+  std::unordered_map<Var, Set>& mySets
+) const
+{
+  TIMER_START(this->m_tMxx);
+  set_allintersect_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
+}
+
+template <typename Data, typename Var, typename Set>
 BayesianNetwork<Var>
 PCStable<Data, Var, Set>::getSkeleton_parallel(
   const bool directEdges,
   const double imbalanceThreshold
 ) const
 {
+  // Initialize the learning in a similar fashion as done sequentially
+  // Create nC2 edges - one for each unordered variable pair
   std::vector<std::tuple<Var, Var, double>> myEdges;
   std::unordered_map<Var, Set> allNeighbors;
-  this->initializeLearning(myEdges, allNeighbors);
+  std::unordered_map<Var, Set> removedNeighbors;
+  this->initializeLearning(myEdges, allNeighbors, removedNeighbors);
   // The following two data structures are used for getting
   // d-separating set and p-value for all the removed edges
   std::vector<std::tuple<Var, Var, double>> myRemoved;
@@ -475,9 +493,8 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
   for (auto s = 0u; (s <= maxSize) && mxx::any_of(myEdges.size() > 0, this->m_comm); ++s) {
     LOG_MESSAGE(debug, "Testing %u edges using sets of size %u", myEdges.size(), s);
     TIMER_DECLARE(tIter);
-    std::unordered_map<Var, Set> removedNeighbors;
     for (auto& e : myEdges) {
-      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s);
+      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s, (s > 0));
       std::get<2>(e) = result.first;
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
@@ -500,8 +517,11 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
                                  [this] (const std::tuple<Var, Var, double>& e)
                                         { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)); });
     myEdges.erase(newEnd, myEdges.end());
-    for (const auto& rn : removedNeighbors) {
-      allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
+    for (auto& rn : removedNeighbors) {
+      if (!rn.second.empty()) {
+        allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
+        rn.second.clear();
+      }
     }
     this->m_comm.barrier();
     TIMER_START(this->m_tSync);
@@ -526,6 +546,154 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
         if (n2 > s + 1) {
           myWeights[e] += boost::math::binomial_coefficient<double>(n2 - 1, s + 1);
         }
+      }
+      TIMER_START(this->m_tDist);
+      this->fixWeightedImbalance(myEdges, myWeights, imbalanceThreshold);
+      TIMER_PAUSE(this->m_tDist);
+    }
+  }
+  if (directEdges) {
+    TIMER_START(this->m_tRemoved);
+    this->storeRemovedEdges(std::move(myRemoved), std::move(myDSepSets), allNeighbors);
+    TIMER_PAUSE(this->m_tRemoved);
+  }
+  return this->constructSkeleton(std::move(allNeighbors));
+}
+
+template <typename Data, typename Var, typename Set>
+PCStable2<Data, Var, Set>::PCStable2(
+  const mxx::comm& comm,
+  const Data& data,
+  const double alpha,
+  const Var maxConditioning
+) : PCStableCommon<Data, Var, Set>(comm, data, alpha, maxConditioning)
+{
+}
+
+template <typename Data, typename Var, typename Set>
+BayesianNetwork<Var>
+PCStable2<Data, Var, Set>::getSkeleton_parallel(
+  const bool directEdges,
+  const double imbalanceThreshold
+) const
+{
+  // Initialize the learning in a similar fashion as done sequentially
+  // Create nC2 edges - one for each unordered variable pair
+  std::vector<std::tuple<Var, Var, double>> myEdges;
+  std::unordered_map<Var, Set> allNeighbors;
+  std::unordered_map<Var, Set> removedNeighbors;
+  this->initializeLearning(myEdges, allNeighbors, removedNeighbors);
+  // The following two data structures are used for getting
+  // d-separating set and p-value for all the removed edges
+  std::vector<std::tuple<Var, Var, double>> myRemoved;
+  std::vector<Set> myDSepSets;
+  std::set<std::tuple<Var, Var, double>> myBackwardRemoved;
+  auto maxSize = std::min(this->m_maxConditioning, static_cast<Var>(this->m_allVars.size() - 2));
+  for (auto s = 0u; (s <= maxSize) && mxx::any_of(myEdges.size() > 0, this->m_comm); ++s) {
+    LOG_MESSAGE(debug, "Testing %u edges using sets of size %u", myEdges.size(), s);
+    TIMER_DECLARE(tIter);
+    for (auto& e : myEdges) {
+      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s, (s > 0));
+      std::get<2>(e) = result.first;
+      // We need to store the removed edges since the d-separating
+      // set may be required for directing edges later
+      if (directEdges && (s > 0) &&
+          this->m_data.isIndependent(this->m_alpha, result.first)) {
+        TIMER_START(this->m_tRemoved);
+        Var x, y;
+        std::tie(x, y, std::ignore) = e;
+        // We only use this information for directing colliders of type x-z-y
+        // However, there is no need to store it if there are no candidates for z
+        // i.e., no common neighbors between x and y
+        if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
+          myRemoved.push_back(e);
+          myDSepSets.push_back(result.second);
+        }
+        TIMER_PAUSE(this->m_tRemoved);
+      }
+    }
+    this->m_comm.barrier();
+    if (this->m_comm.is_first()) {
+      TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
+    }
+    TIMER_START(this->m_tSync);
+    this->syncSets(removedNeighbors);
+    TIMER_PAUSE(this->m_tSync);
+    TIMER_DECLARE(tOther);
+    // Remove all the edges found to be independent on this processor
+    // Also remove all the edges found to be independent on any other processor
+    auto newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
+                                 [this, &removedNeighbors] (const std::tuple<Var, Var, double>& e)
+                                                           { return this->m_data.isIndependent(this->m_alpha, std::get<2>(e)) ||
+                                                                    removedNeighbors.at(std::get<0>(e)).contains(std::get<1>(e)); });
+    myEdges.erase(newEnd, myEdges.end());
+    for (auto& rn : removedNeighbors) {
+      if (!rn.second.empty()) {
+        allNeighbors[rn.first] = set_difference(allNeighbors.at(rn.first), rn.second);
+        rn.second.clear();
+      }
+    }
+    if (s == 0) {
+      // Both direction of edges can be tested simultaneously when s > 0
+      // Create a reverse edge for all the remaining edges
+      auto origSize = myEdges.size();
+      myEdges.resize(origSize * 2);
+      Var x, y;
+      for (auto f = 0u, b = origSize; f < origSize; ++f, ++b) {
+        std::tie(x, y, std::ignore) = myEdges[f];
+        myEdges[b] = std::make_tuple(y, x, 0.0);
+      }
+    }
+    // Remove the edges that can no longer be tested using the first variable's neighborhood
+    newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
+                            [&allNeighbors, &s] (const std::tuple<Var, Var, double>& e)
+                                                { return allNeighbors.at(std::get<0>(e)).size() <= (s + 1); });
+    myEdges.erase(newEnd, myEdges.end());
+    std::set<std::tuple<Var, Var, double>> remove;
+    // Now, copy all the backward edges, i.e., (x, y) such that x > y
+    // and the neighborhood of x is the same as that of y
+    std::copy_if(myEdges.begin(), myEdges.end(), std::inserter(remove, remove.begin()),
+                 [&allNeighbors] (const std::tuple<Var, Var, double>& e)
+                                 { return (std::get<0>(e) > std::get<1>(e)) &&
+                                          (set_difference(allNeighbors.at(std::get<0>(e)),
+                                                          allNeighbors.at(std::get<1>(e))) == Set({std::get<1>(e)})); });
+    newEnd = std::remove_if(myEdges.begin(), myEdges.end(), [&remove] (const std::tuple<Var, Var, double>& e)
+                                                                      { return remove.find(e) != remove.end(); });
+    myEdges.erase(newEnd, myEdges.end());
+    // Check if any of the backward edges removed in previous iterations
+    // can be added back to the list of edges
+    std::set<std::tuple<Var, Var, double>> addBackwardRemoved;
+    Var x, y;
+    for (const auto& e : myBackwardRemoved) {
+      std::tie(x, y, std::ignore) = e;
+      if ((allNeighbors.at(x).size() > (s + 1)) &&
+          (set_difference(allNeighbors.at(x), allNeighbors.at(y)) != Set({y}))) {
+        addBackwardRemoved.insert(e);
+      }
+    }
+    // Remove the edges to be added back from the set of removed edges
+    std::set<std::tuple<Var, Var, double>> remaining;
+    std::set_difference(std::make_move_iterator(myBackwardRemoved.begin()),
+                        std::make_move_iterator(myBackwardRemoved.end()),
+                        addBackwardRemoved.begin(), addBackwardRemoved.end(),
+                        std::inserter(remaining, remaining.begin()));
+    myBackwardRemoved.clear();
+    // Also add the edges removed in this iteration
+    std::set_union(std::make_move_iterator(remaining.begin()),
+                   std::make_move_iterator(remaining.end()),
+                   remove.begin(), remove.end(),
+                   std::inserter(myBackwardRemoved, myBackwardRemoved.begin()));
+    // Re-add the backward edges which now need to be tested
+    myEdges.insert(myEdges.end(), addBackwardRemoved.begin(), addBackwardRemoved.end());
+    this->m_comm.barrier();
+    if (this->m_comm.is_first()) {
+      TIMER_ELAPSED("Time taken in all the bookkeeping: ", tOther);
+    }
+    if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
+      std::vector<double> myWeights(myEdges.size(), 0.0);
+      for (auto e = 0u; e < myEdges.size(); ++e) {
+        auto n = allNeighbors.at(std::get<0>(myEdges[e])).size();
+        myWeights[e] = boost::math::binomial_coefficient<double>(n - 1, s + 1);
       }
       TIMER_START(this->m_tDist);
       this->fixWeightedImbalance(myEdges, myWeights, imbalanceThreshold);

@@ -74,6 +74,10 @@ protected:
   getCandidates(const Var) const;
 
   virtual
+  void
+  syncSets(std::unordered_map<Var, Set>&) const;
+
+  virtual
   BayesianNetwork<Var>
   getSkeleton_sequential(const bool) const = 0;
 

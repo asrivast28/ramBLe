@@ -46,10 +46,7 @@ public:
 
 protected:
   void
-  initializeLearning(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
-
-  void
-  syncSets(std::unordered_map<Var, Set>&) const;
+  initializeLearning(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&) const;
 
   bool
   fixWeightedImbalance(std::vector<std::tuple<Var, Var, double>>&, const std::vector<double>&, const double) const;
@@ -82,20 +79,40 @@ protected:
  * @tparam Set Type of set container.
  */
 template <typename Data, typename Var, typename Set>
-class PCStable : public GlobalLearning<Data, Var, Set> {
+class PCStableCommon : public GlobalLearning<Data, Var, Set> {
+public:
+  PCStableCommon(const mxx::comm&, const Data&, const double, const Var);
+
+protected:
+  std::pair<double, Set>
+  checkEdge(const std::tuple<Var, Var, double>&, const std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>&, const uint32_t, const bool) const;
+
+  BayesianNetwork<Var>
+  getSkeleton_sequential(const bool) const override;
+}; // class PCStableCommon
+
+template <typename Data, typename Var, typename Set>
+class PCStable : public PCStableCommon<Data, Var, Set> {
 public:
   PCStable(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
 
 private:
-  std::pair<double, Set>
-  checkEdge(const std::tuple<Var, Var, double>&, std::unordered_map<Var, Set>&, std::unordered_map<Var, Set>& removedNeighbors, const uint32_t) const;
-
-  BayesianNetwork<Var>
-  getSkeleton_sequential(const bool) const override;
+  void
+  syncSets(std::unordered_map<Var, Set>&) const;
 
   BayesianNetwork<Var>
   getSkeleton_parallel(const bool, const double) const override;
 }; // class PCStable
+
+template <typename Data, typename Var, typename Set>
+class PCStable2 : public PCStableCommon<Data, Var, Set> {
+public:
+  PCStable2(const mxx::comm&, const Data&, const double = 0.05, const Var = std::numeric_limits<Var>::max());
+
+private:
+  BayesianNetwork<Var>
+  getSkeleton_parallel(const bool, const double) const override;
+}; // class PCStable2
 
 #include "detail/GlobalLearning.hpp"
 

@@ -263,24 +263,6 @@ LocalLearning<Data, Var, Set>::parallelInitialize(
 
 template <typename Data, typename Var, typename Set>
 /**
- * @brief Function that synchronizes the candidate sets by taking a
- *        union of the sets across all the processors.
- *
- * @param mySets A map with the candidate MB or PC sets of the
- *               primary variables on this processor.
- */
-void
-LocalLearning<Data, Var, Set>::syncSets(
-  std::unordered_map<Var, Set>& mySets
-) const
-{
-  TIMER_START(this->m_tMxx);
-  set_allunion_indexed(mySets, this->m_allVars, this->m_data.numVars(), this->m_comm);
-  TIMER_PAUSE(this->m_tMxx);
-}
-
-template <typename Data, typename Var, typename Set>
-/**
  * @brief Function that gets the missing candidate sets for the
  *        primary variables on this processor.
  *

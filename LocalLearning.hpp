@@ -57,9 +57,6 @@ protected:
   parallelInitialize(std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
 
   void
-  syncSets(std::unordered_map<Var, Set>&) const;
-
-  void
   syncMissingSets(const std::vector<std::tuple<Var, Var, double>>&, std::unordered_map<Var, Set>&) const;
 
   std::vector<std::pair<Var, Var>>
