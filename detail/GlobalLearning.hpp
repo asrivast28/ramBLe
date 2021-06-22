@@ -593,7 +593,7 @@ PCStable2<Data, Var, Set>::getSkeleton_parallel(
     LOG_MESSAGE(debug, "Testing %u edges using sets of size %u", myEdges.size(), s);
     TIMER_DECLARE(tIter);
     for (auto& e : myEdges) {
-      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s, (s > 0));
+      auto result = this->checkEdge(e, allNeighbors, removedNeighbors, s, false);
       std::get<2>(e) = result.first;
       // We need to store the removed edges since the d-separating
       // set may be required for directing edges later
@@ -690,7 +690,7 @@ PCStable2<Data, Var, Set>::getSkeleton_parallel(
       TIMER_ELAPSED("Time taken in all the bookkeeping: ", tOther);
     }
     if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
-      std::vector<double> myWeights(myEdges.size(), 0.0);
+      std::vector<double> myWeights(myEdges.size());
       for (auto e = 0u; e < myEdges.size(); ++e) {
         auto n = allNeighbors.at(std::get<0>(myEdges[e])).size();
         myWeights[e] = boost::math::binomial_coefficient<double>(n - 1, s + 1);
