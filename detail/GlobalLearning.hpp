@@ -619,7 +619,6 @@ PCStable2<Data, Var, Set>::getSkeleton_parallel(
     TIMER_START(this->m_tSync);
     this->syncSets(removedNeighbors);
     TIMER_PAUSE(this->m_tSync);
-    TIMER_DECLARE(tOther);
     // Remove all the edges found to be independent on this processor
     // Also remove all the edges found to be independent on any other processor
     auto newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
@@ -685,10 +684,6 @@ PCStable2<Data, Var, Set>::getSkeleton_parallel(
                    std::inserter(myBackwardRemoved, myBackwardRemoved.begin()));
     // Re-add the backward edges which now need to be tested
     myEdges.insert(myEdges.end(), addBackwardRemoved.begin(), addBackwardRemoved.end());
-    this->m_comm.barrier();
-    if (this->m_comm.is_first()) {
-      TIMER_ELAPSED("Time taken in all the bookkeeping: ", tOther);
-    }
     if (std::isgreaterequal(imbalanceThreshold, 0.0)) {
       std::vector<double> myWeights(myEdges.size());
       for (auto e = 0u; e < myEdges.size(); ++e) {
