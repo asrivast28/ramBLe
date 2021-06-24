@@ -17,7 +17,7 @@ _Tested with version [3.1.2](https://scons.org/doc/3.1.2/HTML/scons-user.html)._
 * The following repositories are used as submodules:
   * **[BN Utils](https://github.com/asrivast28/bn-utils)** contains common utilities for BN learning in parallel and scripts for post-processing.  
   * **[mxx](https://gitlab.com/patflick/mxx)** is used as a C++ wrapper for MPI.  
-  * **[Graph API](https://github.com/asrivast28/cpp-utils)** is used as a lightweight wrapper around Boost.Graph.  
+  * **[Graph API](https://github.com/asrivast28/graph-api)** is used as a lightweight wrapper around Boost.Graph.  
   * **[C++ Utils](https://github.com/asrivast28/cpp-utils)** are used for logging and timing.  
 * **[Google Test](https://github.com/google/googletest)** (optional) framework is used for unit testing in this project.   
 If this dependency is not satisfied, then the unit tests are not built. See the relevant section in [Building](#unit-tests) for more information.  
