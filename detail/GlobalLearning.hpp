@@ -159,15 +159,15 @@ GlobalLearning<Data, Var, Set>::fixWeightedImbalance(
     TIMER_PAUSE(this->m_tMxx);
     std::vector<uint64_t> sendCounts(this->m_comm.size(), 0);
     if (std::isgreater(myTotalWeight, 0)) {
-      mxx::blk_dist dist(static_cast<uint64_t>(totalWeight), this->m_comm);
-      auto proc = dist.rank_of(globalPrefix);
+      double div = totalWeight / this->m_comm.size();
+      auto proc = static_cast<uint32_t>(std::floor(globalPrefix / div));
       auto procFirst = 0u;
       double localPrefix = 0;
       double leftWeight = myTotalWeight;
       std::vector<double> myWeightsPrefix(myWeights.size());
       std::partial_sum(myWeights.cbegin(), myWeights.cend(), myWeightsPrefix.begin());
       for (; std::isgreater(leftWeight, 0) && (proc < this->m_comm.size()); ++proc) {
-        double sendWeight = std::min<double>(dist.iprefix_size(proc) - globalPrefix, leftWeight);
+        double sendWeight = std::min<double>((div * (proc + 1)) - globalPrefix, leftWeight);
         auto procLast = std::distance(myWeightsPrefix.cbegin(),
                                       std::lower_bound(myWeightsPrefix.cbegin(),
                                                        myWeightsPrefix.cend(),
