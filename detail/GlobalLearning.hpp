@@ -137,7 +137,7 @@ GlobalLearning<Data, Var, Set>::fixWeightedImbalance(
 ) const
 {
   bool fixed = false;
-  double myTotalWeight = std::accumulate(myWeights.cbegin(), myWeights.cend(), 0);
+  double myTotalWeight = std::accumulate(myWeights.cbegin(), myWeights.cend(), 0.0);
   TIMER_START(this->m_tMxx);
   double totalWeight = mxx::allreduce(myTotalWeight, this->m_comm);
   TIMER_PAUSE(this->m_tMxx);
@@ -153,26 +153,27 @@ GlobalLearning<Data, Var, Set>::fixWeightedImbalance(
     //}
   }
   if (std::isgreater(imbalance, imbalanceThreshold)) {
-    std::vector<double> myWeightsPrefix(myWeights.size());
-    std::partial_sum(myWeights.cbegin(), myWeights.cend(), myWeightsPrefix.begin());
-    // Get the weight on previous processors
     TIMER_START(this->m_tMxx);
+    // Get the weight on previous processors
     auto globalPrefix = mxx::exscan(myTotalWeight, this->m_comm);
     TIMER_PAUSE(this->m_tMxx);
     std::vector<uint64_t> sendCounts(this->m_comm.size(), 0);
-    if (myTotalWeight > 0) {
+    if (std::isgreater(myTotalWeight, 0)) {
       mxx::blk_dist dist(static_cast<uint64_t>(totalWeight), this->m_comm);
       auto proc = dist.rank_of(globalPrefix);
       auto procFirst = 0u;
       double localPrefix = 0;
       double leftWeight = myTotalWeight;
-      for (; (leftWeight > 0) && (proc < this->m_comm.size()); ++proc) {
+      std::vector<double> myWeightsPrefix(myWeights.size());
+      std::partial_sum(myWeights.cbegin(), myWeights.cend(), myWeightsPrefix.begin());
+      for (; std::isgreater(leftWeight, 0) && (proc < this->m_comm.size()); ++proc) {
         double sendWeight = std::min<double>(dist.iprefix_size(proc) - globalPrefix, leftWeight);
         auto procLast = std::distance(myWeightsPrefix.cbegin(),
                                       std::lower_bound(myWeightsPrefix.cbegin(),
                                                        myWeightsPrefix.cend(),
                                                        localPrefix + sendWeight));
-        if (myWeightsPrefix[procLast] < (localPrefix + sendWeight)) {
+
+        if (std::isless(myWeightsPrefix[procLast], localPrefix + sendWeight)) {
           ++procLast;
         }
         sendCounts[proc] = (procLast - procFirst) + 1;
