@@ -83,11 +83,23 @@ For example, the performance of _bnlearn_ in learning the network from the _S. c
 
 ### Parallel Execution
 The performance of _ramBLe_ when run in parallel using MPI can be measured as follows:
-<pre><code>mpirun -np 16 ./ramble -n 5716 -m 2577 -f yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i -a gs -o yeast_network.dot -d
+<pre><code>mpirun -np 16 ./ramble -a gs -f yeast_microarray_expression_discretized.tsv -n 5716 -m 2577 -s '\t' -c -v -i -o yeast_network.dot -d
 </code></pre>
+The above command will run _ramBLe_ using 16 MPI processes for the discretized yeast data set and learn a Bayesian network using `gs` algorithm (a list of the algorithms supported by _ramBLe_ for learning can be found in [`README.md`](README.md#algorithms)).
+_ramBLe_ also requires the following details about the layout of the data set in the file in order to read it correctly:
+* number of variables (`-n`),
+* number of observations (`-m`),
+* file delimiter (separator) (`-s`),
+* if the observations are arranged in columns in the file (`-c`; default mode assumes observations are arranged in rows),
+* if the first row/column of variables provides variable names (`-v`), and
+* if the first row/column of observations provides observation identifiers (`-i`).
+
+The learned network will be written to the file `yeast_network.dot` and the command will print out the time taken in getting the network as well as the time taken by different components on the standard output.
 
 ### Scalability Experiments
-We have provided a utility script, [`ramble_experiments.py`](https://github.com/asrivast28/bn-utils/blob/31f4957cbbf4c6cf0451b4139f3b54f9bd4cee90/scripts/ramble_experiments.py), for running the scalability experiments using _ramBLe_.  
-By default, this script runs the scalability experiments for all three data sets while varying the number of processors between 1 and 1024 and records the measured times in a CSV file.
-The runs can be customized using different arguments to the script, which can be seen by executing:
+We have provided a utility script, [`ramble_experiments.py`](https://github.com/asrivast28/bn-utils/blob/31f4957cbbf4c6cf0451b4139f3b54f9bd4cee90/scripts/ramble_experiments.py), for running the scalability experiments using _ramBLe_. This script can be used for experimenting with data sets on different number of processors and record the measured run-times in a CSV file.
+
+As an example, the script can be used for automatically parsing the _ramBLe_ run-times for 5 different runs when running on 16 processes with the discretized yeast data set by executing the following:
+<pre><code>common/scripts/ramble_experiments.py -p 16 -r 5 -a gs -d yeast_microarray_expression_discretized.tsv -s '\t' -c -v -i  --results performance_yeast_p16.csv</code></pre>
+This will generate a file named `performance_yeast_p16.csv` with the run-times for the different runs. The runs can be customized using different arguments to the script, which can be seen by executing:
 <pre><code>common/scripts/ramble_experiments.py -h</code</pre>
