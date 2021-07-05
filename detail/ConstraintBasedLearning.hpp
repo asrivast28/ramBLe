@@ -54,6 +54,7 @@ ConstraintBasedLearning<Data, Var, Set>::ConstraintBasedLearning(
     m_allVars.insert(m_allVars.end(), i);
   }
   TIMER_RESET(m_tMxx);
+  TIMER_RESET(m_tDirect);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -68,6 +69,7 @@ ConstraintBasedLearning<Data, Var, Set>::~ConstraintBasedLearning(
   auto maxMxx= mxx::reduce(myMxx, 0, mxx::max<float>(), m_comm);
   if (m_comm.is_first()) {
     std::cout << "Time taken in mxx calls: " << maxMxx << std::endl;
+    TIMER_ELAPSED_NONZERO("Time taken in directing the edges: ", m_tDirect);
   }
 #endif
 }
@@ -233,7 +235,7 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
   auto bn = isParallel ? this->getSkeleton_parallel(directEdges, imbalanceThreshold) :
                          this->getSkeleton_sequential(directEdges);
   if (directEdges) {
-    TIMER_DECLARE(tDirect);
+    TIMER_START(m_tDirect);
     // First, orient the v-structures
     auto vStructures = this->findVStructures(isParallel);
     bn.applyVStructures(std::move(vStructures));
@@ -248,9 +250,7 @@ ConstraintBasedLearning<Data, Var, Set>::getNetwork(
     while (changed) {
       changed = bn.applyMeekRules();
     }
-    if (m_comm.is_first()) {
-      TIMER_ELAPSED("Time taken in directing the edges: ", tDirect);
-    }
+    TIMER_PAUSE(m_tDirect);
   }
   return bn;
 }

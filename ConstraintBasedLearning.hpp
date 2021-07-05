@@ -103,6 +103,7 @@ protected:
   const double m_alpha;
   const Var m_maxConditioning;
   TIMER_DECLARE(m_tMxx, mutable);
+  TIMER_DECLARE(m_tDirect, mutable);
 }; // class ConstraintBasedLearning
 
 #include "detail/ConstraintBasedLearning.hpp"

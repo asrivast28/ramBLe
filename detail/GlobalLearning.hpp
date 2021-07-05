@@ -41,7 +41,6 @@ GlobalLearning<Data, Var, Set>::GlobalLearning(
 {
   TIMER_RESET(m_tSync);
   TIMER_RESET(m_tDist);
-  TIMER_RESET(m_tRemoved);
 }
 
 template <typename Data, typename Var, typename Set>
@@ -54,7 +53,6 @@ GlobalLearning<Data, Var, Set>::~GlobalLearning(
   if (this->m_comm.is_first()) {
     TIMER_ELAPSED_NONZERO("Time taken in redistributing: ", m_tDist);
     TIMER_ELAPSED_NONZERO("Time taken in synchronizing neighbors: ", m_tSync);
-    TIMER_ELAPSED_NONZERO("Time taken in tracking removed edges: ", m_tRemoved);
   }
 }
 
@@ -210,47 +208,68 @@ template <typename Data, typename Var, typename Set>
  */
 void
 GlobalLearning<Data, Var, Set>::storeRemovedEdges(
-  std::vector<std::tuple<Var, Var, double>>&& myRemoved,
-  std::vector<Set>&& myDSepSets,
-  const std::unordered_map<Var, Set>& allNeighbors
+  const std::vector<std::tuple<Var, Var, double>>&& myRemoved,
+  const std::vector<Set>&& myDSepSets,
+  const std::unordered_map<Var, Set>& allNeighbors,
+  const bool duplicateEdges
 ) const
 {
   LOG_MESSAGE_IF(myRemoved.size() != myDSepSets.size(),
                  error, "Mismatch between number of edges and d-separating sets.");
-  // Only retain information which can be used for directing edges later
-  auto e = myRemoved.begin();
-  auto s = myDSepSets.begin();
-  while (e != myRemoved.end()) {
-    Var x, y;
-    std::tie(x, y, std::ignore) = *e;
-    if (set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
-      e = myRemoved.erase(e);
-      s = myDSepSets.erase(s);
-    }
-    else {
-      ++e;
-      ++s;
-    }
-  }
-  LOG_MESSAGE_IF(myRemoved.size() != myDSepSets.size(),
-                 error, "Mismatch between number of edges and d-separating sets.");
-  // Gather this information from all the processes
   TIMER_START(this->m_tMxx);
+  // Get the prefix size of all the d-separating sets
   auto removedSizes = mxx::allgather(myRemoved.size(), this->m_comm);
-  auto allRemoved = mxx::allgatherv(myRemoved, removedSizes, this->m_comm);
+  auto removedPrefix = std::accumulate(removedSizes.begin(), removedSizes.begin() + this->m_comm.rank(), 0u);
+  // Also, gather all the d-separating sets on all the processors
+  // XXX: We can not use Set as part of a std::tuple during communication
+  //      Therefore, we gather all the sets separately
   auto allDSepSets = set_allgatherv(myDSepSets, removedSizes, this->m_data.numVars(), this->m_comm);
   TIMER_PAUSE(this->m_tMxx);
-  // Store this information in expected format
+  std::vector<std::tuple<Var, Var, double, uint32_t>> myRemovedEdges(myRemoved.size());
+  auto r = 0u;
   Var x, y;
   double pv;
-  m_removedEdges.resize(allRemoved.size());
-  for (auto e = 0u; e < allRemoved.size(); ++e) {
-    std::tie(x, y, pv) = allRemoved.at(e);
-    m_removedEdges[e] = std::make_tuple(x, y, pv, allDSepSets.at(e));
+  for (auto e = 0u; e < myRemoved.size(); ++e) {
+    std::tie(x, y, pv) = myRemoved.at(e);
+    if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
+      myRemovedEdges[r] = std::make_tuple(x, y, pv, removedPrefix + e);
+      ++r;
+    }
   }
-  std::sort(m_removedEdges.begin(), m_removedEdges.end(),
-            [] (const std::tuple<Var, Var, double, Set>& a, const std::tuple<Var, Var, double, Set>& b)
-               { return std::make_pair(std::get<0>(a), std::get<1>(a)) < std::make_pair(std::get<0>(b), std::get<1>(b)); });
+  myRemovedEdges.resize(r);
+  TIMER_START(this->m_tMxx);
+  // Block redistribute all the removed edges
+  mxx::stable_distribute_inplace(myRemovedEdges, this->m_comm);
+  // Sort the removed edges in parallel
+  mxx::comm nonzero_comm(static_cast<MPI_Comm>(this->m_comm));
+  if (mxx::any_of(myRemovedEdges.size() == 0, this->m_comm)) {
+    nonzero_comm = this->m_comm.split(myRemovedEdges.size() > 0);
+  }
+  if (myRemovedEdges.size() > 0) {
+    auto sortEdges = [] (const std::tuple<Var, Var, double, uint32_t>& a, const std::tuple<Var, Var, double, uint32_t>& b)
+                        { return std::make_pair(std::get<0>(a), std::get<1>(a)) < std::make_pair(std::get<0>(b), std::get<1>(b)); };
+    if (!duplicateEdges) {
+      mxx::sort(myRemovedEdges.begin(), myRemovedEdges.end(), sortEdges, nonzero_comm);
+    }
+    else {
+      mxx::stable_sort(myRemovedEdges.begin(), myRemovedEdges.end(), sortEdges, nonzero_comm);
+      auto newEnd = mxx::unique(myRemovedEdges.begin(), myRemovedEdges.end(),
+                                [] (const std::tuple<Var, Var, double, uint32_t>& a, const std::tuple<Var, Var, double, uint32_t>& b)
+                                   { return std::make_pair(std::get<0>(a), std::get<1>(a)) == std::make_pair(std::get<0>(b), std::get<1>(b)); },
+                                nonzero_comm);
+      myRemovedEdges.erase(newEnd, myRemovedEdges.end());
+    }
+  }
+  // Gather all the removed edges on all the processors
+  auto allRemovedEdges = mxx::allgatherv(myRemovedEdges, this->m_comm);
+  TIMER_PAUSE(this->m_tMxx);
+  // Finally, store the removed edges with the corresponding d-separating sets
+  m_removedEdges.resize(allRemovedEdges.size());
+  uint32_t idx;
+  for (auto e = 0u; e < allRemovedEdges.size(); ++e) {
+    std::tie(x, y, pv, idx) = allRemovedEdges.at(e);
+    m_removedEdges[e] = std::make_tuple(x, y, pv, allDSepSets.at(idx));
+  }
 }
 
 template <typename Data, typename Var, typename Set>
@@ -296,15 +315,9 @@ GlobalLearning<Data, Var, Set>::checkCollider(
 {
   static auto findPair = [] (const std::tuple<Var, Var, double, Set>& t, const std::pair<Var, Var>& e)
                             { return std::make_pair(std::get<0>(t), std::get<1>(t)) < e; };
-  // First, try to find the forward edge
-  auto edge = std::make_pair(y, z);
+  // Always try to find the forward edge
+  auto edge = (y < z) ? std::make_pair(y, z) : std::make_pair(z, y);
   auto eIt = std::lower_bound(m_removedEdges.begin(), m_removedEdges.end(), edge, findPair);
-  if ((eIt == m_removedEdges.end()) ||
-      (std::make_pair(std::get<0>(*eIt), std::get<1>(*eIt)) != edge)) {
-    // If the forward edge does not exist, then try to find the backward edge
-    edge = std::make_pair(z, y);
-    eIt = std::lower_bound(m_removedEdges.begin(), m_removedEdges.end(), edge, findPair);
-  }
   if ((eIt == m_removedEdges.end()) ||
       (std::make_pair(std::get<0>(*eIt), std::get<1>(*eIt)) != edge)) {
     auto pv = this->m_data.pValue(y, z);
@@ -404,16 +417,16 @@ PCStableCommon<Data, Var, Set>::getSkeleton_sequential(
       // set may be required for directing edges later
       if (directEdges && (s > 0) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
+        TIMER_START(this->m_tDirect);
         Var x, y;
         std::tie(x, y, std::ignore) = e;
-        TIMER_START(this->m_tRemoved);
         // We only use this information for directing colliders of type x-z-y
         // However, there is no need to store it if there are no candidates for z
         // i.e., no common neighbors between x and y
         if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
           this->m_removedEdges.push_back(std::make_tuple(x, y, result.first, result.second));
         }
-        TIMER_PAUSE(this->m_tRemoved);
+        TIMER_PAUSE(this->m_tDirect);
       }
     }
     for (auto& rn : removedNeighbors) {
@@ -432,16 +445,22 @@ PCStableCommon<Data, Var, Set>::getSkeleton_sequential(
       TIMER_ELAPSED("Time taken in testing all sets of size " + std::to_string(s) + ": ", tIter);
     }
     if (directEdges) {
+      TIMER_START(this->m_tDirect);
       auto newEnd = std::remove_if(this->m_removedEdges.begin(), this->m_removedEdges.end(),
                                    [&allNeighbors] (const std::tuple<Var, Var, double, Set>& t)
                                                    { return set_intersection(allNeighbors.at(std::get<0>(t)),
                                                                              allNeighbors.at(std::get<1>(t))).empty(); });
       this->m_removedEdges.erase(newEnd, this->m_removedEdges.end());
+      TIMER_PAUSE(this->m_tDirect);
     }
   }
-  std::sort(this->m_removedEdges.begin(), this->m_removedEdges.end(),
-            [] (const std::tuple<Var, Var, double, Set>& a, const std::tuple<Var, Var, double, Set>& b)
-               { return std::make_pair(std::get<0>(a), std::get<1>(a)) < std::make_pair(std::get<0>(b), std::get<1>(b)); });
+  if (directEdges) {
+    TIMER_START(this->m_tDirect);
+    std::sort(this->m_removedEdges.begin(), this->m_removedEdges.end(),
+              [] (const std::tuple<Var, Var, double, Set>& a, const std::tuple<Var, Var, double, Set>& b)
+                 { return std::make_pair(std::get<0>(a), std::get<1>(a)) < std::make_pair(std::get<0>(b), std::get<1>(b)); });
+    TIMER_PAUSE(this->m_tDirect);
+  }
   return this->constructSkeleton(std::move(allNeighbors));
 }
 
@@ -501,7 +520,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
       // set may be required for directing edges later
       if (directEdges && (s > 0) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
-        TIMER_START(this->m_tRemoved);
+        TIMER_START(this->m_tDirect);
         Var x, y;
         std::tie(x, y, std::ignore) = e;
         // We only use this information for directing colliders of type x-z-y
@@ -511,7 +530,7 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
           myRemoved.push_back(e);
           myDSepSets.push_back(result.second);
         }
-        TIMER_PAUSE(this->m_tRemoved);
+        TIMER_PAUSE(this->m_tDirect);
       }
     }
     auto newEnd = std::remove_if(myEdges.begin(), myEdges.end(),
@@ -554,9 +573,9 @@ PCStable<Data, Var, Set>::getSkeleton_parallel(
     }
   }
   if (directEdges) {
-    TIMER_START(this->m_tRemoved);
+    TIMER_START(this->m_tDirect);
     this->storeRemovedEdges(std::move(myRemoved), std::move(myDSepSets), allNeighbors);
-    TIMER_PAUSE(this->m_tRemoved);
+    TIMER_PAUSE(this->m_tDirect);
   }
   return this->constructSkeleton(std::move(allNeighbors));
 }
@@ -600,17 +619,18 @@ PCStable2<Data, Var, Set>::getSkeleton_parallel(
       // set may be required for directing edges later
       if (directEdges && (s > 0) &&
           this->m_data.isIndependent(this->m_alpha, result.first)) {
-        TIMER_START(this->m_tRemoved);
+        TIMER_START(this->m_tDirect);
         Var x, y;
-        std::tie(x, y, std::ignore) = e;
+        double pv;
+        std::tie(x, y, pv) = e;
         // We only use this information for directing colliders of type x-z-y
         // However, there is no need to store it if there are no candidates for z
         // i.e., no common neighbors between x and y
         if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
-          myRemoved.push_back(e);
+          myRemoved.push_back((x < y) ? e : std::make_tuple(y, x, pv));
           myDSepSets.push_back(result.second);
         }
-        TIMER_PAUSE(this->m_tRemoved);
+        TIMER_PAUSE(this->m_tDirect);
       }
     }
     this->m_comm.barrier();
@@ -697,9 +717,9 @@ PCStable2<Data, Var, Set>::getSkeleton_parallel(
     }
   }
   if (directEdges) {
-    TIMER_START(this->m_tRemoved);
-    this->storeRemovedEdges(std::move(myRemoved), std::move(myDSepSets), allNeighbors);
-    TIMER_PAUSE(this->m_tRemoved);
+    TIMER_START(this->m_tDirect);
+    this->storeRemovedEdges(std::move(myRemoved), std::move(myDSepSets), allNeighbors, true);
+    TIMER_PAUSE(this->m_tDirect);
   }
   return this->constructSkeleton(std::move(allNeighbors));
 }
