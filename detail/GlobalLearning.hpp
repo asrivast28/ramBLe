@@ -24,6 +24,9 @@
 #include "utils/Logging.hpp"
 
 #include <boost/math/special_functions/binomial.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/zip_iterator.hpp>
+#include <boost/tuple/tuple.hpp>
 
 
 template <typename Data, typename Var, typename Set>
@@ -208,35 +211,32 @@ template <typename Data, typename Var, typename Set>
  */
 void
 GlobalLearning<Data, Var, Set>::storeRemovedEdges(
-  const std::vector<std::tuple<Var, Var, double>>&& myRemoved,
-  const std::vector<Set>&& myDSepSets,
+  std::vector<std::tuple<Var, Var, double>>&& myRemoved,
+  std::vector<Set>&& myDSepSets,
   const std::unordered_map<Var, Set>& allNeighbors,
   const bool duplicateEdges
 ) const
 {
   LOG_MESSAGE_IF(myRemoved.size() != myDSepSets.size(),
                  error, "Mismatch between number of edges and d-separating sets.");
+  // Only retain information which can be used for directing edges later
+  auto newEnd = std::remove_if(boost::make_zip_iterator(boost::make_tuple(myRemoved.begin(), myDSepSets.begin())),
+                               boost::make_zip_iterator(boost::make_tuple(myRemoved.end(), myDSepSets.end())),
+                               [&allNeighbors] (const boost::tuple<std::tuple<Var, Var, double>, Set>& e)
+                                               { return set_intersection(allNeighbors.at(std::get<0>(boost::get<0>(e))),
+                                                                         allNeighbors.at(std::get<1>(boost::get<0>(e)))).empty(); });
+  myRemoved.erase(boost::get<0>(newEnd.get_iterator_tuple()), myRemoved.end());
+  myDSepSets.erase(boost::get<1>(newEnd.get_iterator_tuple()), myDSepSets.end());
   TIMER_START(this->m_tMxx);
   // Get the prefix size of all the d-separating sets
   auto removedSizes = mxx::allgather(myRemoved.size(), this->m_comm);
-  auto removedPrefix = std::accumulate(removedSizes.begin(), removedSizes.begin() + this->m_comm.rank(), 0u);
-  // Also, gather all the d-separating sets on all the processors
-  // XXX: We can not use Set as part of a std::tuple during communication
-  //      Therefore, we gather all the sets separately
-  auto allDSepSets = set_allgatherv(myDSepSets, removedSizes, this->m_data.numVars(), this->m_comm);
   TIMER_PAUSE(this->m_tMxx);
+  auto removedPrefix = std::accumulate(removedSizes.begin(), removedSizes.begin() + this->m_comm.rank(), 0u);
   std::vector<std::tuple<Var, Var, double, uint32_t>> myRemovedEdges(myRemoved.size());
-  auto r = 0u;
-  Var x, y;
-  double pv;
-  for (auto e = 0u; e < myRemoved.size(); ++e) {
-    std::tie(x, y, pv) = myRemoved.at(e);
-    if (!set_intersection(allNeighbors.at(x), allNeighbors.at(y)).empty()) {
-      myRemovedEdges[r] = std::make_tuple(x, y, pv, removedPrefix + e);
-      ++r;
-    }
-  }
-  myRemovedEdges.resize(r);
+  std::transform(std::make_move_iterator(myRemoved.begin()), std::make_move_iterator(myRemoved.end()),
+                 boost::counting_iterator<uint32_t>(removedPrefix), myRemovedEdges.begin(),
+                 [] (const std::tuple<Var, Var, double>&& e, const uint32_t idx)
+                    { return std::make_tuple(std::get<0>(e), std::get<1>(e), std::get<2>(e), idx); });
   TIMER_START(this->m_tMxx);
   // Block redistribute all the removed edges
   mxx::stable_distribute_inplace(myRemovedEdges, this->m_comm);
@@ -261,15 +261,18 @@ GlobalLearning<Data, Var, Set>::storeRemovedEdges(
     }
   }
   // Gather all the removed edges on all the processors
-  auto allRemovedEdges = mxx::allgatherv(myRemovedEdges, this->m_comm);
+  auto allRemovedEdges = mxx::allgatherv(std::move(myRemovedEdges), this->m_comm);
+  // Also gather all the d-separating sets on all the processors
+  // XXX: We can not use Set as part of a std::tuple during communication
+  //      Therefore, we gather all the sets separately
+  auto allDSepSets = set_allgatherv(std::move(myDSepSets), removedSizes, this->m_data.numVars(), this->m_comm);
   TIMER_PAUSE(this->m_tMxx);
   // Finally, store the removed edges with the corresponding d-separating sets
   m_removedEdges.resize(allRemovedEdges.size());
-  uint32_t idx;
-  for (auto e = 0u; e < allRemovedEdges.size(); ++e) {
-    std::tie(x, y, pv, idx) = allRemovedEdges.at(e);
-    m_removedEdges[e] = std::make_tuple(x, y, pv, allDSepSets.at(idx));
-  }
+  std::transform(std::make_move_iterator(allRemovedEdges.begin()), std::make_move_iterator(allRemovedEdges.end()),
+                 m_removedEdges.begin(),
+                 [&allDSepSets] (const std::tuple<Var, Var, double, uint32_t>&& e)
+                                { return std::make_tuple(std::get<0>(e), std::get<1>(e), std::get<2>(e), allDSepSets.at(std::get<3>(e))); });
 }
 
 template <typename Data, typename Var, typename Set>
